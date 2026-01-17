@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quiz-gen"
+version = "0.1.0"
+description = "AI-powered quiz generator for regulatory, certification, and educational documentation"
+readme = "README.md"
+authors = [{name = "Yauheniya Varabyova", email = "yauheniya.ai@gmail.com"}]
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+keywords = ["quiz", "regulation", "certification", "education"]
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "certifi",
+    "charset-normalizer>=3.3.0",
+    "idna",
+    "lxml>=5.0.0",
+    "requests>=2.32.5",
+    "soupsieve>=2.5",
+    "typing-extensions",
+    "urllib3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.4.0",
+]
+
+[project.urls]
+"Documentation" = "https://quiz-gen.readthedocs.io"
+"Repository" = "https://github.com/yauheniya-ai/quiz-gen"
+"Bug Tracker" = "https://github.com/yauheniya-ai/quiz-gen/issues"
+
+[project.scripts]
+quiz-gen = "quiz_gen.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
