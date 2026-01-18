@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Example: Parsing EASA Regulation (EU) 2018/1139
+Example: Parsing EU AI Act
 Chunks the document into structured pieces with proper citations.
 
 Note: Install the package first with: pip install -e .
@@ -14,7 +14,8 @@ def main():
     """Parse and chunk the AI Act regulation document"""
     
     url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L_202401689"
-    
+    doc_id = "2024_1689"
+
     print(f"Parsing: {url}\n")
     
     # Parse document - returns (chunks, toc)
@@ -37,8 +38,8 @@ def main():
         print(f"  {t}: {count}")
     
     # Save chunks and TOC
-    output_file = "data/processed/aiact_2024_1689_chunks.json"
-    toc_file = "data/processed/aiact_2024_1689_toc.json"
+    output_file = f"data/processed/{doc_id}_chunks.json"
+    toc_file = f"data/processed/{doc_id}_toc.json"
     Path(output_file).parent.mkdir(parents=True, exist_ok=True)
     parser.save_chunks(output_file)
     parser.save_toc(toc_file)

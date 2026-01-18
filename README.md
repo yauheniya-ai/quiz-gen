@@ -26,7 +26,7 @@ pip install quiz-gen
 ### Parsing EUR-Lex Documents
 
 ```python
-from quiz_gen_ai import EURLexParser
+from quiz_gen import EURLexParser
 
 # Parse a regulation document
 url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139"
@@ -134,7 +134,7 @@ Currently supports:
 ### Custom Parsing Workflows
 
 ```python
-from quiz_gen_ai import EURLexParser
+from quiz_gen import EURLexParser
 
 parser = EURLexParser(url=document_url)
 
@@ -151,7 +151,7 @@ chunks = parser.chunks  # Content chunks only
 ### Filtering Chunks by Type
 
 ```python
-from quiz_gen_ai import SectionType
+from quiz_gen import SectionType
 
 # Get only recitals
 recitals = [c for c in chunks if c.section_type == SectionType.RECITAL]
@@ -324,3 +324,11 @@ Initial release:
 - Table of contents generation
 - JSON export for chunks and TOC
 
+### Version 0.1.1 (2026-01-18)
+
+Parser enhancements:
+- Added regulation title extraction and chunking
+- Support for flexible 3-4 level hierarchy with sections within chapters
+- Complete annexes extraction including table-based content
+- Combined citations into single chunk matching EU-Lex structure
+- Added concluding formulas parsing

@@ -1,4 +1,11 @@
 notes/
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+data/documents/
+data/quizzes/
 
 __pycache__/
 *.py[cod]
@@ -29,7 +36,3 @@ venv/
 htmlcov/
 *.log
 .DS_Store
-data/raw/*
-data/processed/*
-!data/raw/.gitkeep
-!data/processed/.gitkeep

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 EUR-Lex Regulation HTML Parser - Simplified version
-Builds TOC and chunks only recitals and articles (level 3 elements)
+Builds flexible TOC (3-4 levels) and chunks only recitals and articles
+Supports: Preamble > Chapters > Sections (optional) > Articles
 """
 
 import re
@@ -15,6 +16,9 @@ import json
 
 class SectionType(Enum):
     """Types of regulation sections"""
+    # Level 0 - Document title
+    TITLE = "title"  # CHUNK THIS
+    
     # Level 1 - Major sections
     PREAMBLE = "preamble"
     ENACTING_TERMS = "enacting_terms"
@@ -23,14 +27,14 @@ class SectionType(Enum):
     APPENDIX = "appendix"
     
     # Level 2 - Preamble elements
-    CITATION = "citation"
+    CITATION = "citation" # CHUNK THIS
     RECITAL = "recital"  # CHUNK THIS
     
     # Level 2/3 - Structural
     CHAPTER = "chapter"
     SECTION = "section"
     
-    # Level 3 - Content
+    # Level 3/4 - Content
     ARTICLE = "article"  # CHUNK THIS
 
 
@@ -64,8 +68,9 @@ class EURLexParser:
         self.html_content = html_content
         self.soup = None
         self.chunks: List[RegulationChunk] = []
-        self.toc: Dict = {'title': 'Regulation', 'sections': []}
+        self.toc: Dict = {'title': '', 'sections': []}
         self.current_hierarchy: List[str] = []
+        self.regulation_title: str = ''
         
     def fetch(self) -> str:
         """Fetch HTML content from URL"""
@@ -89,31 +94,84 @@ class EURLexParser:
         self.soup = BeautifulSoup(self.html_content, 'lxml-xml')
         
         # Parse document structure
+        self._parse_title()
         self._parse_preamble()
         self._parse_enacting_terms()
+        self._parse_concluding_formulas()
         self._parse_annexes()
         
-        print(f"\n✓ TOC built with {len(self.toc['sections'])} major sections and 3 levels")
+        print(f"\n✓ TOC built with {len(self.toc['sections'])} major sections (flexible 3-4 levels)")
         print(f"✓ Created {len(self.chunks)} chunks (recitals + articles)")
         
         return self.chunks, self.toc
     
+    def _parse_title(self):
+        """Parse main title and create a chunk for it"""
+        title_div = self.soup.find('div', class_='eli-main-title')
+        if title_div:
+            # Get all paragraphs from the title
+            title_paragraphs = title_div.find_all('p', class_='oj-doc-ti')
+            title_parts = [self._clean_text(p.get_text()) for p in title_paragraphs if p]
+            
+            # First paragraph is typically the main title
+            if title_parts:
+                main_title = title_parts[0]
+                full_content = '\n\n'.join(title_parts)
+                
+                # Store for use in hierarchy
+                self.regulation_title = main_title
+                self.toc['title'] = main_title
+                
+                # CHUNK IT
+                chunk = RegulationChunk(
+                    section_type=SectionType.TITLE,
+                    number=None,
+                    title=main_title,
+                    content=full_content,
+                    hierarchy_path=[main_title],
+                    metadata={'id': title_div.get('id', '')}
+                )
+                self.chunks.append(chunk)
+                
+                print(f"Parsed title: {main_title[:80]}...")
+    
     def _parse_preamble(self):
-        """Parse preamble: add citations and recitals to TOC, chunk recitals"""
+        """Parse preamble: add single citation entry and recitals to TOC, chunk citation and recitals"""
         preamble_section = {'type': 'preamble', 'title': 'Preamble', 'children': []}
         
-        # Parse citations
+        # Parse citations - combine all into one chunk
         citations = self.soup.find_all('div', class_='eli-subdivision', id=re.compile(r'^cit_\d+'))
-        for cit in citations:
-            num = cit.get('id', '').replace('cit_', '')
-            para = cit.find('p', class_='oj-normal')
-            if para:
-                text = self._clean_text(para.get_text())
+        if citations:
+            # Collect all citation text
+            citation_parts = []
+            citation_ids = []
+            for cit in citations:
+                para = cit.find('p', class_='oj-normal')
+                if para:
+                    text = self._clean_text(para.get_text())
+                    if text:
+                        citation_parts.append(text)
+                        citation_ids.append(cit.get('id', ''))
+            
+            if citation_parts:
+                # Add single citation entry to TOC
                 preamble_section['children'].append({
                     'type': 'citation',
-                    'number': num,
-                    'title': f"Citation {num}"
+                    'title': 'Citation'
                 })
+                
+                # CHUNK IT - single chunk with all citations
+                # Use first citation ID for navigation (cit_1)
+                hierarchy = [self.regulation_title, "Preamble", "Citation"] if self.regulation_title else ["Preamble", "Citation"]
+                chunk = RegulationChunk(
+                    section_type=SectionType.CITATION,
+                    number=None,
+                    title="Citation",
+                    content='\n\n'.join(citation_parts),
+                    hierarchy_path=hierarchy,
+                    metadata={'id': citation_ids[0] if citation_ids else 'cit_1', 'citation_ids': citation_ids}
+                )
+                self.chunks.append(chunk)
         
         # Parse recitals
         recitals = self.soup.find_all('div', class_='eli-subdivision', id=re.compile(r'^rct_\d+'))
@@ -139,12 +197,13 @@ class EURLexParser:
                             })
                             
                             # CHUNK IT
+                            hierarchy = [self.regulation_title, "Preamble", f"Recital {num}"] if self.regulation_title else ["Preamble", f"Recital {num}"]
                             chunk = RegulationChunk(
                                 section_type=SectionType.RECITAL,
                                 number=num,
                                 title=f"Recital {num}",
                                 content=content,
-                                hierarchy_path=["Preamble", f"Recital {num}"],
+                                hierarchy_path=hierarchy,
                                 metadata={'id': rct.get('id', '')}
                             )
                             self.chunks.append(chunk)
@@ -171,8 +230,14 @@ class EURLexParser:
             if chapter_match:
                 chapter_num = chapter_match.group(1)
                 
-                # Get subtitle
+                # Get subtitle (might be in oj-ti-section-2 or in eli-title)
                 subtitle_p = chapter_div.find('p', class_='oj-ti-section-2')
+                if not subtitle_p:
+                    # Try to find title in eli-title container
+                    title_div = chapter_div.find('div', class_='eli-title')
+                    if title_div:
+                        subtitle_p = title_div.find('p', class_='oj-ti-section-2')
+                
                 chapter_title = self._clean_text(subtitle_p.get_text()) if subtitle_p else ''
                 
                 full_title = f"CHAPTER {chapter_num}" + (f" - {chapter_title}" if chapter_title else "")
@@ -185,67 +250,259 @@ class EURLexParser:
                 }
                 
                 # Update hierarchy
-                self.current_hierarchy = [full_title]
+                self.current_hierarchy = [self.regulation_title, full_title] if self.regulation_title else [full_title]
                 
-                # Find articles within this chapter
-                articles = chapter_div.find_all('div', class_='eli-subdivision', id=re.compile(r'^art_\d+'))
+                # Check if this chapter has sections
+                sections = chapter_div.find_all('div', id=re.compile(r'^cpt_[^.]+\.sct_'), recursive=False)
                 
-                for art_div in articles:
-                    art_p = art_div.find('p', class_='oj-ti-art')
-                    if not art_p:
-                        continue
+                if sections:
+                    # Chapter has sections - parse them
+                    for section_div in sections:
+                        section_id = section_div.get('id', '')
                         
-                    art_text = self._clean_text(art_p.get_text())
-                    art_match = re.search(r'Article\s+(\d+[a-z]*)', art_text, re.I)
+                        # Get section title - look for SECTION I, SECTION II, etc.
+                        section_title_p = section_div.find('p', class_='oj-ti-section-1')
+                        if section_title_p:
+                            section_text = self._clean_text(section_title_p.get_text())
+                            section_match = re.match(r'SECTION\s+([IVXLCDM]+|\d+)', section_text, re.I)
+                            
+                            if section_match:
+                                section_num = section_match.group(1)
+                                
+                                # Get section subtitle
+                                section_subtitle_p = section_div.find('p', class_='oj-ti-section-2')
+                                if not section_subtitle_p:
+                                    # Try in eli-title
+                                    title_div = section_div.find('div', class_='eli-title')
+                                    if title_div:
+                                        section_subtitle_p = title_div.find('p', class_='oj-ti-section-2')
+                                
+                                section_title = self._clean_text(section_subtitle_p.get_text()) if section_subtitle_p else ''
+                                
+                                section_full_title = f"SECTION {section_num}" + (f" - {section_title}" if section_title else "")
+                                
+                                section_toc = {
+                                    'type': 'section',
+                                    'number': section_num,
+                                    'title': section_full_title,
+                                    'children': []
+                                }
+                                
+                                # Update hierarchy to include section
+                                section_hierarchy = self.current_hierarchy + [section_full_title]
+                                
+                                # Find articles within this section
+                                articles = section_div.find_all('div', class_='eli-subdivision', id=re.compile(r'^art_\d+'))
+                                
+                                for art_div in articles:
+                                    self._parse_article(art_div, section_toc, section_hierarchy)
+                                
+                                chapter_toc['children'].append(section_toc)
+                else:
+                    # No sections - articles directly under chapter
+                    articles = chapter_div.find_all('div', class_='eli-subdivision', id=re.compile(r'^art_\d+'))
                     
-                    if art_match:
-                        art_num = art_match.group(1)
-                        
-                        # Get article subtitle
-                        art_subtitle_p = art_div.find('p', class_='oj-sti-art')
-                        art_subtitle = self._clean_text(art_subtitle_p.get_text()) if art_subtitle_p else ''
-                        
-                        art_full_title = f"Article {art_num}" + (f" - {art_subtitle}" if art_subtitle else "")
-                        
-                        # Collect article content
-                        content_parts = []
-                        content_divs = art_div.find_all('div', id=re.compile(r'^\d+\.\d+'))
-                        for content_div in content_divs:
-                            paras = content_div.find_all('p', class_='oj-normal')
-                            for para in paras:
-                                text = self._clean_text(para.get_text())
-                                if text:
-                                    content_parts.append(text)
-                        
-                        full_content = '\n\n'.join(content_parts)
-                        
-                        # Add to TOC
-                        chapter_toc['children'].append({
-                            'type': 'article',
-                            'number': art_num,
-                            'title': art_full_title
-                        })
-                        
-                        # CHUNK IT
-                        chunk = RegulationChunk(
-                            section_type=SectionType.ARTICLE,
-                            number=art_num,
-                            title=art_full_title,
-                            content=full_content or art_subtitle,
-                            hierarchy_path=self.current_hierarchy + [art_full_title],
-                            metadata={'id': art_div.get('id', ''), 'subtitle': art_subtitle}
-                        )
-                        self.chunks.append(chunk)
+                    for art_div in articles:
+                        self._parse_article(art_div, chapter_toc, self.current_hierarchy)
                 
                 enacting_section['children'].append(chapter_toc)
         
         self.toc['sections'].append(enacting_section)
         print(f"Parsed enacting terms: {len(chapters)} chapters")
     
+    def _parse_article(self, art_div, parent_toc, hierarchy_path):
+        """Parse a single article and add to TOC and chunks"""
+        art_p = art_div.find('p', class_='oj-ti-art')
+        if not art_p:
+            return
+            
+        art_text = self._clean_text(art_p.get_text())
+        art_match = re.search(r'Article\s+(\d+[a-z]*)', art_text, re.I)
+        
+        if art_match:
+            art_num = art_match.group(1)
+            
+            # Get article subtitle
+            art_subtitle_p = art_div.find('p', class_='oj-sti-art')
+            art_subtitle = self._clean_text(art_subtitle_p.get_text()) if art_subtitle_p else ''
+            
+            art_full_title = f"Article {art_num}" + (f" - {art_subtitle}" if art_subtitle else "")
+            
+            # Collect article content
+            content_parts = []
+            content_divs = art_div.find_all('div', id=re.compile(r'^\d+\.\d+'))
+            for content_div in content_divs:
+                paras = content_div.find_all('p', class_='oj-normal')
+                for para in paras:
+                    text = self._clean_text(para.get_text())
+                    if text:
+                        content_parts.append(text)
+            
+            full_content = '\n\n'.join(content_parts)
+            
+            # Add to TOC
+            parent_toc['children'].append({
+                'type': 'article',
+                'number': art_num,
+                'title': art_full_title
+            })
+            
+            # CHUNK IT
+            chunk = RegulationChunk(
+                section_type=SectionType.ARTICLE,
+                number=art_num,
+                title=art_full_title,
+                content=full_content or art_subtitle,
+                hierarchy_path=hierarchy_path + [art_full_title],
+                metadata={'id': art_div.get('id', ''), 'subtitle': art_subtitle}
+            )
+            self.chunks.append(chunk)
+    
+    def _parse_concluding_formulas(self):
+        """Parse concluding formulas and create a chunk"""
+        concluding_div = self.soup.find('div', class_='eli-subdivision', id=re.compile(r'^fnp_\d+'))
+        if concluding_div:
+            # Get all content from the concluding formulas
+            final_div = concluding_div.find('div', class_='oj-final')
+            if final_div:
+                content_parts = []
+                paras = final_div.find_all('p', class_='oj-normal')
+                for para in paras:
+                    text = self._clean_text(para.get_text())
+                    if text:
+                        content_parts.append(text)
+                
+                # Get signatory information
+                signatories = final_div.find_all('div', class_='oj-signatory')
+                for sig in signatories:
+                    sig_paras = sig.find_all('p', class_='oj-signatory')
+                    sig_parts = [self._clean_text(p.get_text()) for p in sig_paras if p]
+                    if sig_parts:
+                        content_parts.append('\n'.join(sig_parts))
+                
+                full_content = '\n\n'.join(content_parts)
+                
+                if full_content:
+                    # Add to TOC
+                    concluding_section = {
+                        'type': 'concluding_formulas',
+                        'title': 'Concluding formulas'
+                    }
+                    self.toc['sections'].append(concluding_section)
+                    
+                    # CHUNK IT
+                    hierarchy = [self.regulation_title, "Concluding formulas"] if self.regulation_title else ["Concluding formulas"]
+                    chunk = RegulationChunk(
+                        section_type=SectionType.CONCLUDING_FORMULAS,
+                        number=None,
+                        title="Concluding formulas",
+                        content=full_content,
+                        hierarchy_path=hierarchy,
+                        metadata={'id': concluding_div.get('id', '')}
+                    )
+                    self.chunks.append(chunk)
+                    print(f"Parsed concluding formulas")
+    
     def _parse_annexes(self):
-        """Parse annexes"""
-        # TODO: Implement if needed
-        pass
+        """Parse annexes and create chunks for each"""
+        # Find all annexes
+        annexes = self.soup.find_all('div', class_='eli-container', id=re.compile(r'^anx_'))
+        
+        if not annexes:
+            return
+        
+        for annex_div in annexes:
+            # Get annex number/identifier
+            annex_id = annex_div.get('id', '')
+            annex_match = re.match(r'^anx_([IVXLCDM]+|\d+[A-Z]?)', annex_id, re.I)
+            annex_num = annex_match.group(1) if annex_match else annex_id.replace('anx_', '')
+            
+            # Get annex title
+            title_p = annex_div.find('p', class_='oj-doc-ti')
+            if title_p:
+                title_text = self._clean_text(title_p.get_text())
+            else:
+                title_text = f"ANNEX {annex_num}"
+            
+            # Get annex subtitle if exists
+            subtitle_p = annex_div.find('p', class_='oj-ti-grseq-1')
+            subtitle = ''
+            if subtitle_p:
+                subtitle = self._clean_text(subtitle_p.get_text())
+            
+            full_title = title_text + (f" - {subtitle}" if subtitle else "")
+            
+            # Collect annex content (all text from paragraphs and tables)
+            content_parts = []
+            
+            # Get all normal paragraphs
+            paras = annex_div.find_all('p', class_='oj-normal')
+            for para in paras:
+                text = self._clean_text(para.get_text())
+                if text and len(text) > 10:  # Filter out very short text
+                    content_parts.append(text)
+            
+            # Check if this is a table-based annex (like correlation tables)
+            tables = annex_div.find_all('table', class_='oj-table')
+            for table in tables:
+                # Get table headers
+                headers = []
+                header_cells = table.find_all('p', class_='oj-tbl-hdr')
+                for hdr in header_cells:
+                    text = self._clean_text(hdr.get_text())
+                    if text:
+                        headers.append(text)
+                
+                if headers:
+                    content_parts.append(' | '.join(headers))
+                    content_parts.append('-' * 40)
+                
+                # Get table rows
+                rows = table.find_all('tr', class_='oj-table')
+                for row in rows:
+                    cells = row.find_all('td', class_='oj-table')
+                    cell_texts = []
+                    for cell in cells:
+                        cell_para = cell.find('p')
+                        if cell_para:
+                            text = self._clean_text(cell_para.get_text())
+                            if text and 'oj-tbl-hdr' not in cell_para.get('class', []):
+                                cell_texts.append(text)
+                    
+                    if cell_texts:
+                        content_parts.append(' | '.join(cell_texts))
+            
+            # Limit content to avoid extremely large chunks
+            full_content = '\n\n'.join(content_parts[:100])  # Take first 100 items (paragraphs or table rows)
+            if len(content_parts) > 100:
+                full_content += '\n\n[Content truncated...]'
+            
+            # Create chunk even if content is just title/subtitle (for index purposes)
+            if not full_content and subtitle:
+                full_content = subtitle
+            
+            if full_content or subtitle:
+                # Add to TOC
+                annex_toc = {
+                    'type': 'annex',
+                    'number': annex_num,
+                    'title': full_title
+                }
+                self.toc['sections'].append(annex_toc)
+                
+                # CHUNK IT
+                hierarchy = [self.regulation_title, full_title] if self.regulation_title else [full_title]
+                chunk = RegulationChunk(
+                    section_type=SectionType.ANNEX,
+                    number=annex_num,
+                    title=full_title,
+                    content=full_content,
+                    hierarchy_path=hierarchy,
+                    metadata={'id': annex_id, 'subtitle': subtitle}
+                )
+                self.chunks.append(chunk)
+        
+        print(f"Parsed {len(annexes)} annexes")
     
     @staticmethod
     def _clean_text(text: str) -> str:
@@ -267,14 +524,22 @@ class EURLexParser:
         print(f"Saved TOC to {filepath}")
     
     def print_toc(self):
-        """Print formatted TOC showing 3-level hierarchy"""
+        """Print formatted TOC showing flexible hierarchy (3-4 levels)"""
         print("\n" + "="*70)
-        print("TABLE OF CONTENTS (3 LEVELS)")
+        print("TABLE OF CONTENTS")
         print("="*70)
+        
+        # Print regulation title
+        if self.toc.get('title'):
+            print(f"\n{self.toc['title']}")
         
         for section in self.toc['sections']:
             # Level 1: Major sections
             print(f"\n{section['title'].upper()}")
+            
+            # Handle sections without children (like concluding formulas, annexes)
+            if 'children' not in section:
+                continue
             
             for child in section.get('children', []):
                 if child['type'] in ['citation', 'recital']:
@@ -283,9 +548,17 @@ class EURLexParser:
                 elif child['type'] == 'chapter':
                     # Level 2: Chapters
                     print(f"  {child['title']}")
-                    # Level 3: Articles within chapters
-                    for art in child.get('children', []):
-                        print(f"    {art['title']}")
+                    # Level 3: Sections or Articles
+                    for item in child.get('children', []):
+                        if item['type'] == 'section':
+                            # Level 3: Sections
+                            print(f"    {item['title']}")
+                            # Level 4: Articles within sections
+                            for art in item.get('children', []):
+                                print(f"      {art['title']}")
+                        elif item['type'] == 'article':
+                            # Level 3: Articles (when no sections)
+                            print(f"    {item['title']}")
 
 
 def main():
