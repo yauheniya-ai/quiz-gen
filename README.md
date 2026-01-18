@@ -1,4 +1,11 @@
-# Quiz Gen AI
+# quiz-gen
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://img.shields.io/pypi/v/quiz-gen?color=blue&label=PyPI)](https://pypi.org/project/quiz-gen/)
+[![GitHub last commit](https://img.shields.io/github/last-commit/yauheniya-ai/quiz-gen)](https://github.com/yauheniya-ai/quiz-gen/commits/main)
+[![Downloads](https://pepy.tech/badge/quiz-gen)](https://pepy.tech/project/quiz-gen)
+
 
 AI-powered quiz generator for regulatory, certification, and educational documentation. Extract structured content from complex legal and technical documents to create comprehensive learning materials.
 
@@ -29,7 +36,7 @@ pip install quiz-gen
 from quiz_gen import EURLexParser
 
 # Parse a regulation document
-url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139"
+url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L_202401689"
 parser = EURLexParser(url=url)
 chunks, toc = parser.parse()
 
@@ -51,14 +58,16 @@ The parser extracts documents into a 3-level hierarchy:
 - Enacting Terms
 - Annexes
 
-**Level 2**: Structural Divisions
-- Citations
-- Recitals (chunked)
+**Level 2/3**: Structural Divisions
 - Chapters
 - Sections
 
-**Level 3**: Content Elements
-- Articles (chunked)
+**Level 3/4**: Content Elements
+- Citation
+- Recitals
+- Articles
+- Concluding formulas
+- Annex
 
 ### Working with Chunks
 
@@ -120,7 +129,6 @@ parser.print_toc()
 Currently supports:
 
 - **EUR-Lex HTML Documents**: European Union regulations, directives, decisions
-- **EASA Regulations**: Aviation safety regulations and technical standards
 - **Legislative Acts**: Structured legal documents with formal hierarchies
 
 ### Document Format Requirements
@@ -223,12 +231,6 @@ ruff check .
 black .
 ```
 
-### Running Examples
-
-```bash
-# Parse EASA regulation
-python examples/eu_lex_toc_chunks.py
-```
 
 ### Contributing
 
@@ -283,7 +285,7 @@ Enumeration of document section types.
 Future enhancements planned:
 
 - AI-powered quiz generation from extracted content
-- Support for additional document formats (PDF, DOCX)
+- Support for additional document formats (PDF, DOCX, PPTX)
 - Multi-language support
 - Question validation and quality metrics
 - Integration with learning management systems
@@ -332,3 +334,12 @@ Parser enhancements:
 - Complete annexes extraction including table-based content
 - Combined citations into single chunk matching EU-Lex structure
 - Added concluding formulas parsing
+
+### Version 0.1.2 (2026-01-18)
+
+Text formatting and tooling:
+- Implemented smart text cleaning for proper list formatting (removes extra newlines after list markers)
+- Fixed numbered paragraph spacing
+- Added professional command-line interface (CLI)
+- Created comprehensive documentation with MkDocs and Material theme
+- Published package to PyPI with proper dependencies

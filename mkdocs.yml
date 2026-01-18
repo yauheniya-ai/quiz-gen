@@ -12,8 +12,10 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
-  - Parsers: parsers.md
+  - Cli: cli.md
   - API Reference: api.md
+  - Parsers: parsers.md
+  - Agents: agents.md
   - Examples: examples.md
 
 markdown_extensions:
