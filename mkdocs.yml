@@ -1,0 +1,23 @@
+site_name: Quiz-Gen Documentation
+site_description: AI-powered quiz generator for regulatory documentation
+site_author: Yauheniya Varabyova
+repo_url: https://github.com/yauheniya-ai/quiz-gen
+
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: indigo
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Parsers: parsers.md
+  - API Reference: api.md
+  - Examples: examples.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true

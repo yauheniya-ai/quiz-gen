@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quiz-gen"
-version = "0.1.1"
+version = "0.1.2"
 description = "AI-powered quiz generator for regulatory, certification, and educational documentation"
 readme = "README.md"
 authors = [{name = "Yauheniya Varabyova", email = "yauheniya.ai@gmail.com"}]
@@ -22,17 +22,11 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-keywords = ["quiz", "regulation", "certification", "education"]
+keywords = ["quiz", "regulation", "certification", "education", "eur-lex", "cfr"]
 dependencies = [
-    "beautifulsoup4>=4.14.3",
-    "certifi",
-    "charset-normalizer>=3.3.0",
-    "idna",
+    "beautifulsoup4>=4.12.0",
     "lxml>=5.0.0",
-    "requests>=2.32.5",
-    "soupsieve>=2.5",
-    "typing-extensions",
-    "urllib3",
+    "requests>=2.31.0",
 ]
 
 [project.optional-dependencies]
@@ -43,6 +37,9 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.5.0",
     "pre-commit>=3.4.0",
+    "twine>=4.0.0",
+    "mkdocs",
+    "mkdocs-material",
 ]
 
 [project.urls]

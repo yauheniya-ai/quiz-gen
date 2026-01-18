@@ -339,6 +339,8 @@ class EURLexParser:
                         content_parts.append(text)
             
             full_content = '\n\n'.join(content_parts)
+            # Apply cleaning to the combined content to fix list formatting
+            full_content = self._clean_combined_text(full_content)
             
             # Add to TOC
             parent_toc['children'].append({
@@ -506,9 +508,20 @@ class EURLexParser:
     
     @staticmethod
     def _clean_text(text: str) -> str:
-        """Clean and normalize text"""
+        """Clean and normalize text for individual paragraphs"""
         text = re.sub(r'\s+', ' ', text)
         return text.strip()
+    
+    @staticmethod
+    def _clean_combined_text(text: str) -> str:
+        """Clean combined text content, fixing list and paragraph formatting"""
+        # Fix list items: (a)\n\n should become (a) with text on same line
+        text = re.sub(r'\(([a-z]+|[ivx]+)\)\n\n', r'(\1) ', text)
+        
+        # Fix numbered list items within content
+        text = re.sub(r'\n\n(\d+\.)\n\n', r'\n\n\1 ', text)
+        
+        return text
     
     def save_chunks(self, filepath: str):
         """Save chunks to JSON"""
