@@ -373,3 +373,12 @@ List structure preservation:
 - Fixed extraction of nested list structures by processing direct content only
 - Preserved list markers like (8), (a), (b), (—) with their corresponding text
 - Separated handling of list tables vs data tables for appropriate formatting
+
+### Version 0.1.8 (2026-01-19)
+
+Complete text extraction:
+- Simplified part content extraction to use natural text flow from HTML structure
+- Fixed content duplication caused by nested table processing
+- Fixed missing content (e.g., item (8)) by extracting all sibling elements between PART headers
+- Switched from selective element processing to comprehensive text extraction using get_text()
+- Ensures complete and accurate extraction without repetition for legal document compliance
