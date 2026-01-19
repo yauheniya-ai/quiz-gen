@@ -482,7 +482,8 @@ class EURLexParser:
             if title_paragraphs:
                 # Get first paragraph as main title
                 title_text = self._clean_text(title_paragraphs[0].get_text())
-                # If there are multiple title paragraphs, combine them
+                # If there are multiple oj-doc-ti paragraphs, combine them as subtitle
+                # (but NOT oj-ti-grseq-1 which typically contains PART numbers within the annex)
                 if len(title_paragraphs) > 1:
                     subtitle_parts = [self._clean_text(p.get_text()) for p in title_paragraphs[1:]]
                     subtitle = ' '.join(subtitle_parts)
@@ -496,84 +497,193 @@ class EURLexParser:
                     title_text = f"ANNEX {identifier}"
                 subtitle = ''
             
-            # Also check for additional subtitle in oj-ti-grseq-1
-            subtitle_p = annex_div.find('p', class_='oj-ti-grseq-1')
-            if subtitle_p:
-                extra_subtitle = self._clean_text(subtitle_p.get_text())
-                if extra_subtitle:
-                    subtitle = f"{subtitle} {extra_subtitle}" if subtitle else extra_subtitle
-            
             full_title = title_text + (f" - {subtitle}" if subtitle else "")
             
-            # Collect annex content (all text from paragraphs and tables)
-            content_parts = []
+            # Create a base title with identifier for use in parts
+            # This ensures parts are titled like "ANNEX 1 - PART 1" not just "ANNEX - PART 1"
+            if is_appendix:
+                base_title_with_id = f"APPENDIX {identifier}"
+            else:
+                # Check if title_text already contains the identifier
+                if identifier and identifier.upper() not in title_text.upper():
+                    base_title_with_id = f"ANNEX {identifier}"
+                else:
+                    base_title_with_id = title_text
             
-            # Get all normal paragraphs
-            paras = annex_div.find_all('p', class_='oj-normal')
-            for para in paras:
-                text = self._clean_text(para.get_text())
-                if text and len(text) > 10:  # Filter out very short text
-                    content_parts.append(text)
+            # Check if annex contains parts (oj-ti-grseq-1 with PART X pattern)
+            part_headers = annex_div.find_all('p', class_='oj-ti-grseq-1')
+            parts_detected = []
+            for part_header in part_headers:
+                part_text = self._clean_text(part_header.get_text())
+                # Match "PART 1", "PART I", "Part 1", etc.
+                part_match = re.match(r'^PART\s+([IVXLCDM]+|\d+)', part_text, re.I)
+                if part_match:
+                    parts_detected.append({
+                        'element': part_header,
+                        'number': part_match.group(1),
+                        'title': part_text
+                    })
             
-            # Check if this is a table-based annex (like correlation tables)
-            tables = annex_div.find_all('table', class_='oj-table')
-            for table in tables:
-                # Get table headers
-                headers = []
-                header_cells = table.find_all('p', class_='oj-tbl-hdr')
-                for hdr in header_cells:
-                    text = self._clean_text(hdr.get_text())
-                    if text:
-                        headers.append(text)
-                
-                if headers:
-                    content_parts.append(' | '.join(headers))
-                    content_parts.append('-' * 40)
-                
-                # Get table rows
-                rows = table.find_all('tr', class_='oj-table')
-                for row in rows:
-                    cells = row.find_all('td', class_='oj-table')
-                    cell_texts = []
-                    for cell in cells:
-                        cell_para = cell.find('p')
-                        if cell_para:
-                            text = self._clean_text(cell_para.get_text())
-                            if text and 'oj-tbl-hdr' not in cell_para.get('class', []):
-                                cell_texts.append(text)
-                    
-                    if cell_texts:
-                        content_parts.append(' | '.join(cell_texts))
-            
-            # Limit content to avoid extremely large chunks
-            full_content = '\n\n'.join(content_parts[:100])  # Take first 100 items (paragraphs or table rows)
-            if len(content_parts) > 100:
-                full_content += '\n\n[Content truncated...]'
-            
-            # Create chunk even if content is just title/subtitle (for index purposes)
-            if not full_content and subtitle:
-                full_content = subtitle
-            
-            if full_content or subtitle:
-                # Add to TOC
+            # If parts detected, create separate chunks for each part
+            if parts_detected:
+                # Add annex to TOC with parts as children
                 toc_entry = {
                     'type': 'appendix' if is_appendix else 'annex',
                     'number': identifier,
-                    'title': full_title
+                    'title': full_title,
+                    'children': []
                 }
+                
+                hierarchy_base = [self.regulation_title, full_title] if self.regulation_title else [full_title]
+                
+                # Process each part
+                for i, part_info in enumerate(parts_detected):
+                    part_elem = part_info['element']
+                    part_num = part_info['number']
+                    part_title = part_info['title']
+                    
+                    # Collect content from this part until the next part or end of annex
+                    content_parts = []
+                    
+                    # Get all siblings after this part header until next part
+                    next_part_elem = parts_detected[i + 1]['element'] if i + 1 < len(parts_detected) else None
+                    current = part_elem.find_next_sibling()
+                    
+                    while current:
+                        # Stop if we hit the next part header
+                        if next_part_elem and current == next_part_elem:
+                            break
+                        
+                        # Collect paragraphs
+                        if current.name == 'p' and 'oj-normal' in current.get('class', []):
+                            text = self._clean_text(current.get_text())
+                            if text and len(text) > 10:
+                                content_parts.append(text)
+                        
+                        # Collect tables
+                        elif current.name == 'table' and 'oj-table' in current.get('class', []):
+                            # Get table headers
+                            headers = []
+                            header_cells = current.find_all('p', class_='oj-tbl-hdr')
+                            for hdr in header_cells:
+                                text = self._clean_text(hdr.get_text())
+                                if text:
+                                    headers.append(text)
+                            
+                            if headers:
+                                content_parts.append(' | '.join(headers))
+                                content_parts.append('-' * 40)
+                            
+                            # Get table rows
+                            rows = current.find_all('tr', class_='oj-table')
+                            for row in rows:
+                                cells = row.find_all('td', class_='oj-table')
+                                cell_texts = []
+                                for cell in cells:
+                                    cell_para = cell.find('p')
+                                    if cell_para:
+                                        text = self._clean_text(cell_para.get_text())
+                                        if text and 'oj-tbl-hdr' not in cell_para.get('class', []):
+                                            cell_texts.append(text)
+                                
+                                if cell_texts:
+                                    content_parts.append(' | '.join(cell_texts))
+                        
+                        current = current.find_next_sibling()
+                    
+                    part_content = '\n\n'.join(content_parts)
+                    # Use base_title_with_id to include annex/appendix number in part titles
+                    part_full_title = f"{base_title_with_id} - {part_title}"
+                    
+                    # Add to TOC
+                    toc_entry['children'].append({
+                        'type': 'part',
+                        'number': part_num,
+                        'title': part_title
+                    })
+                    
+                    # CHUNK IT
+                    chunk = RegulationChunk(
+                        section_type=section_type,
+                        number=f"{identifier}.{part_num}",
+                        title=part_full_title,
+                        content=part_content,
+                        hierarchy_path=hierarchy_base + [part_title],
+                        metadata={'id': annex_id, 'part': part_num}
+                    )
+                    self.chunks.append(chunk)
+                
                 self.toc['sections'].append(toc_entry)
                 
-                # CHUNK IT
-                hierarchy = [self.regulation_title, full_title] if self.regulation_title else [full_title]
-                chunk = RegulationChunk(
-                    section_type=section_type,
-                    number=identifier,
-                    title=full_title,
-                    content=full_content,
-                    hierarchy_path=hierarchy,
-                    metadata={'id': annex_id, 'subtitle': subtitle}
-                )
-                self.chunks.append(chunk)
+            else:
+                # No parts - treat as single chunk (original behavior)
+                # Collect annex content (all text from paragraphs and tables)
+                content_parts = []
+                
+                # Get all normal paragraphs
+                paras = annex_div.find_all('p', class_='oj-normal')
+                for para in paras:
+                    text = self._clean_text(para.get_text())
+                    if text and len(text) > 10:  # Filter out very short text
+                        content_parts.append(text)
+                
+                # Check if this is a table-based annex (like correlation tables)
+                tables = annex_div.find_all('table', class_='oj-table')
+                for table in tables:
+                    # Get table headers
+                    headers = []
+                    header_cells = table.find_all('p', class_='oj-tbl-hdr')
+                    for hdr in header_cells:
+                        text = self._clean_text(hdr.get_text())
+                        if text:
+                            headers.append(text)
+                    
+                    if headers:
+                        content_parts.append(' | '.join(headers))
+                        content_parts.append('-' * 40)
+                    
+                    # Get table rows
+                    rows = table.find_all('tr', class_='oj-table')
+                    for row in rows:
+                        cells = row.find_all('td', class_='oj-table')
+                        cell_texts = []
+                        for cell in cells:
+                            cell_para = cell.find('p')
+                            if cell_para:
+                                text = self._clean_text(cell_para.get_text())
+                                if text and 'oj-tbl-hdr' not in cell_para.get('class', []):
+                                    cell_texts.append(text)
+                        
+                        if cell_texts:
+                            content_parts.append(' | '.join(cell_texts))
+                
+                # Join all content parts - no truncation
+                full_content = '\n\n'.join(content_parts)
+                
+                # Create chunk even if content is just title/subtitle (for index purposes)
+                if not full_content and subtitle:
+                    full_content = subtitle
+                
+                if full_content or subtitle:
+                    # Add to TOC
+                    toc_entry = {
+                        'type': 'appendix' if is_appendix else 'annex',
+                        'number': identifier,
+                        'title': full_title
+                    }
+                    self.toc['sections'].append(toc_entry)
+                    
+                    # CHUNK IT
+                    hierarchy = [self.regulation_title, full_title] if self.regulation_title else [full_title]
+                    chunk = RegulationChunk(
+                        section_type=section_type,
+                        number=identifier,
+                        title=full_title,
+                        content=full_content,
+                        hierarchy_path=hierarchy,
+                        metadata={'id': annex_id, 'subtitle': subtitle}
+                    )
+                    self.chunks.append(chunk)
         
         # Count annexes vs appendices for reporting
         annex_count = sum(1 for a in annexes if '.app_' not in a.get('id', ''))

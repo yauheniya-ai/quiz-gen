@@ -344,3 +344,12 @@ Parser robustness improvements:
 - Enhanced article content extraction to handle table-based list items (e.g., (a), (b), (c) in table cells)
 - Added proper appendix detection and parsing (distinguishes appendices from annexes)
 - Improved title extraction for multi-paragraph appendix titles
+
+### Version 0.1.4 (2026-01-19)
+
+Annex parsing improvements:
+- Added intelligent detection and parsing of parts within annexes (PART 1, PART 2, etc.)
+- Fixed annex titles to exclude internal section markers (PART X no longer appears in annex title)
+- Improved part titles to include annex identifier (e.g., "ANNEX 1 - PART 1" instead of "ANNEX - PART 1")
+- Removed arbitrary content truncation in annexes and appendices - all content now preserved in full
+- Enhanced content collection for parts with proper boundary detection between sections
