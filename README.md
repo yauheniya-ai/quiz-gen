@@ -365,3 +365,11 @@ Content extraction improvements:
 - Fixed missing section titles and numbered headings in annex parts
 - Lowered text length threshold to capture short titles (5 chars instead of 10)
 - Added smart filtering to skip only PART headers while collecting all other content
+
+### Version 0.1.7 (2026-01-19)
+
+List structure preservation:
+- Added detection and proper handling of list-item tables (numbered and lettered items)
+- Fixed extraction of nested list structures by processing direct content only
+- Preserved list markers like (8), (a), (b), (—) with their corresponding text
+- Separated handling of list tables vs data tables for appropriate formatting

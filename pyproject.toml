@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quiz-gen"
-version = "0.1.6"
+version = "0.1.7"
 description = "AI-powered quiz generator for regulatory, certification, and educational documentation"
 readme = "README.md"
 authors = [{name = "Yauheniya Varabyova", email = "yauheniya.ai@gmail.com"}]

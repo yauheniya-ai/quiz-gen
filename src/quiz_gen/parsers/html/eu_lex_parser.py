@@ -579,34 +579,71 @@ class EURLexParser:
                             if text and len(text) > 5:  # Lowered threshold to catch short titles
                                 content_parts.append(text)
                         
-                        # Collect tables
-                        elif elem.name == 'table' and 'oj-table' in elem.get('class', []):
-                            # Get table headers
-                            headers = []
-                            header_cells = elem.find_all('p', class_='oj-tbl-hdr')
-                            for hdr in header_cells:
-                                text = self._clean_text(hdr.get_text())
-                                if text:
-                                    headers.append(text)
+                        # Collect tables (both oj-table and regular tables for list items)
+                        elif elem.name == 'table':
+                            classes = elem.get('class', [])
                             
-                            if headers:
-                                content_parts.append(' | '.join(headers))
-                                content_parts.append('-' * 40)
+                            # Check if this is a list-item table (2 columns: marker + text)
+                            rows = elem.find_all('tr')
+                            is_list_table = False
+                            for row in rows[:3]:  # Check first few rows
+                                cells = row.find_all('td')
+                                if len(cells) == 2:
+                                    first_cell_text = self._clean_text(cells[0].get_text())
+                                    # Check if first cell looks like a list marker: (1), (a), (i), —, etc.
+                                    if re.match(r'^\([\da-z]+\)$|^—$|^\d+\.$', first_cell_text, re.I):
+                                        is_list_table = True
+                                        break
                             
-                            # Get table rows
-                            rows = elem.find_all('tr', class_='oj-table')
-                            for row in rows:
-                                cells = row.find_all('td', class_='oj-table')
-                                cell_texts = []
-                                for cell in cells:
-                                    cell_para = cell.find('p')
-                                    if cell_para:
-                                        text = self._clean_text(cell_para.get_text())
-                                        if text and 'oj-tbl-hdr' not in cell_para.get('class', []):
-                                            cell_texts.append(text)
+                            if is_list_table:
+                                # Handle as list items: combine marker and text
+                                for row in rows:
+                                    cells = row.find_all('td')
+                                    if len(cells) == 2:
+                                        marker = self._clean_text(cells[0].get_text())
+                                        
+                                        # Get only direct text from second cell, excluding nested tables
+                                        # Find all direct <p> children, not nested ones
+                                        direct_paras = cells[1].find_all('p', class_='oj-normal', recursive=False)
+                                        if direct_paras:
+                                            # Get text from direct paragraphs only
+                                            text_parts = [self._clean_text(p.get_text()) for p in direct_paras]
+                                            text = ' '.join(text_parts)
+                                        else:
+                                            # Fallback: get all text (for simple cases without nested tables)
+                                            text = self._clean_text(cells[1].get_text())
+                                        
+                                        if text:
+                                            # Combine marker and text
+                                            content_parts.append(f"{marker} {text}" if marker else text)
+                            
+                            elif 'oj-table' in classes:
+                                # Handle as data table with headers and rows
+                                # Get table headers
+                                headers = []
+                                header_cells = elem.find_all('p', class_='oj-tbl-hdr')
+                                for hdr in header_cells:
+                                    text = self._clean_text(hdr.get_text())
+                                    if text:
+                                        headers.append(text)
                                 
-                                if cell_texts:
-                                    content_parts.append(' | '.join(cell_texts))
+                                if headers:
+                                    content_parts.append(' | '.join(headers))
+                                    content_parts.append('-' * 40)
+                                
+                                # Get table rows
+                                for row in rows:
+                                    cells = row.find_all('td', class_='oj-table')
+                                    cell_texts = []
+                                    for cell in cells:
+                                        cell_para = cell.find('p')
+                                        if cell_para:
+                                            text = self._clean_text(cell_para.get_text())
+                                            if text and 'oj-tbl-hdr' not in cell_para.get('class', []):
+                                                cell_texts.append(text)
+                                    
+                                    if cell_texts:
+                                        content_parts.append(' | '.join(cell_texts))
                     
                     part_content = '\n\n'.join(content_parts)
                     # Use base_title_with_id to include annex/appendix number in part titles
