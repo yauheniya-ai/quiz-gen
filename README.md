@@ -357,3 +357,11 @@ Annex parsing improvements:
 Bug fixes:
 - Fixed annex TOC title to display with identifier (e.g., "ANNEX 1" instead of "ANNEX")
 - Fixed empty content in annex parts by switching from sibling navigation to descendants iteration
+
+### Version 0.1.6 (2026-01-19)
+
+Content extraction improvements:
+- Enhanced part content extraction to include all paragraph types (titles, headings, body text)
+- Fixed missing section titles and numbered headings in annex parts
+- Lowered text length threshold to capture short titles (5 chars instead of 10)
+- Added smart filtering to skip only PART headers while collecting all other content

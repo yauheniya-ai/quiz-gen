@@ -556,17 +556,27 @@ class EURLexParser:
                             collecting = True
                             continue
                         
-                        # Stop if we hit the next part header
+                        # Stop if we hit the next part header (check if it's a PART marker)
                         if next_part_elem and elem == next_part_elem:
                             break
                         
                         if not collecting:
                             continue
                         
-                        # Collect normal paragraphs
-                        if elem.name == 'p' and 'oj-normal' in elem.get('class', []):
+                        # Collect all paragraph types (normal text, titles, headings)
+                        if elem.name == 'p':
+                            classes = elem.get('class', [])
+                            # Collect normal paragraphs, titles, and headings
+                            # Exclude only the part headers themselves (oj-ti-grseq-1 with PART X)
+                            if 'oj-ti-grseq-1' in classes:
+                                # Check if this is a PART header (skip it)
+                                text = self._clean_text(elem.get_text())
+                                if re.match(r'^PART\s+([IVXLCDM]+|\d+)', text, re.I):
+                                    continue  # Skip PART headers
+                            
+                            # Collect the text from this paragraph
                             text = self._clean_text(elem.get_text())
-                            if text and len(text) > 10:
+                            if text and len(text) > 5:  # Lowered threshold to catch short titles
                                 content_parts.append(text)
                         
                         # Collect tables
