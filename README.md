@@ -335,7 +335,6 @@ Text formatting and tooling:
 - Fixed numbered paragraph spacing
 - Added professional command-line interface (CLI)
 - Created comprehensive documentation with MkDocs and Material theme
-- Published package to PyPI with proper dependencies
 
 ### Version 0.1.3 (2026-01-19)
 
@@ -349,7 +348,12 @@ Parser robustness improvements:
 
 Annex parsing improvements:
 - Added intelligent detection and parsing of parts within annexes (PART 1, PART 2, etc.)
-- Fixed annex titles to exclude internal section markers (PART X no longer appears in annex title)
 - Improved part titles to include annex identifier (e.g., "ANNEX 1 - PART 1" instead of "ANNEX - PART 1")
 - Removed arbitrary content truncation in annexes and appendices - all content now preserved in full
 - Enhanced content collection for parts with proper boundary detection between sections
+
+### Version 0.1.5 (2026-01-19)
+
+Bug fixes:
+- Fixed annex TOC title to display with identifier (e.g., "ANNEX 1" instead of "ANNEX")
+- Fixed empty content in annex parts by switching from sibling navigation to descendants iteration

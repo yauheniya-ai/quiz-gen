@@ -530,11 +530,11 @@ class EURLexParser:
                 toc_entry = {
                     'type': 'appendix' if is_appendix else 'annex',
                     'number': identifier,
-                    'title': full_title,
+                    'title': base_title_with_id,  # Use base_title_with_id to show "ANNEX 1" not "ANNEX"
                     'children': []
                 }
                 
-                hierarchy_base = [self.regulation_title, full_title] if self.regulation_title else [full_title]
+                hierarchy_base = [self.regulation_title, base_title_with_id] if self.regulation_title else [base_title_with_id]
                 
                 # Process each part
                 for i, part_info in enumerate(parts_detected):
@@ -545,26 +545,35 @@ class EURLexParser:
                     # Collect content from this part until the next part or end of annex
                     content_parts = []
                     
-                    # Get all siblings after this part header until next part
+                    # Get the next part element to know where to stop
                     next_part_elem = parts_detected[i + 1]['element'] if i + 1 < len(parts_detected) else None
-                    current = part_elem.find_next_sibling()
                     
-                    while current:
+                    # Find all elements in the annex_div, and collect those between current and next part
+                    collecting = False
+                    for elem in annex_div.descendants:
+                        # Start collecting after we find the part header
+                        if elem == part_elem:
+                            collecting = True
+                            continue
+                        
                         # Stop if we hit the next part header
-                        if next_part_elem and current == next_part_elem:
+                        if next_part_elem and elem == next_part_elem:
                             break
                         
-                        # Collect paragraphs
-                        if current.name == 'p' and 'oj-normal' in current.get('class', []):
-                            text = self._clean_text(current.get_text())
+                        if not collecting:
+                            continue
+                        
+                        # Collect normal paragraphs
+                        if elem.name == 'p' and 'oj-normal' in elem.get('class', []):
+                            text = self._clean_text(elem.get_text())
                             if text and len(text) > 10:
                                 content_parts.append(text)
                         
                         # Collect tables
-                        elif current.name == 'table' and 'oj-table' in current.get('class', []):
+                        elif elem.name == 'table' and 'oj-table' in elem.get('class', []):
                             # Get table headers
                             headers = []
-                            header_cells = current.find_all('p', class_='oj-tbl-hdr')
+                            header_cells = elem.find_all('p', class_='oj-tbl-hdr')
                             for hdr in header_cells:
                                 text = self._clean_text(hdr.get_text())
                                 if text:
@@ -575,7 +584,7 @@ class EURLexParser:
                                 content_parts.append('-' * 40)
                             
                             # Get table rows
-                            rows = current.find_all('tr', class_='oj-table')
+                            rows = elem.find_all('tr', class_='oj-table')
                             for row in rows:
                                 cells = row.find_all('td', class_='oj-table')
                                 cell_texts = []
@@ -588,8 +597,6 @@ class EURLexParser:
                                 
                                 if cell_texts:
                                     content_parts.append(' | '.join(cell_texts))
-                        
-                        current = current.find_next_sibling()
                     
                     part_content = '\n\n'.join(content_parts)
                     # Use base_title_with_id to include annex/appendix number in part titles
