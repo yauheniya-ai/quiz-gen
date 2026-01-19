@@ -82,8 +82,6 @@ Currently supports EUR-Lex HTML documents:
 - ✅ EU Regulations
 - ✅ EU Directives
 - ✅ EU Decisions
-- ✅ Aviation regulations (EASA)
-- ✅ Documents with complex hierarchies (chapters, sections, articles)
 - ✅ Annexes with tables
 
 ## Architecture

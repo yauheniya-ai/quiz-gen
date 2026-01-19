@@ -23,11 +23,6 @@ AI-powered quiz generator for regulatory, certification, and educational documen
 pip install quiz-gen
 ```
 
-### Requirements
-
-- Python 3.10 or higher
-- Dependencies: beautifulsoup4, lxml, requests, soupsieve
-
 ## Quick Start
 
 ### Parsing EUR-Lex Documents
@@ -51,23 +46,24 @@ parser.save_toc('output_toc.json')
 
 ### Document Structure
 
-The parser extracts documents into a 3-level hierarchy:
+The parser extracts documents into a multi-level hierarchy:
 
 **Level 1**: Major Sections
 - Preamble
 - Enacting Terms
-- Annexes
 
 **Level 2/3**: Structural Divisions
 - Chapters
 - Sections
 
-**Level 3/4**: Content Elements
+**Level 1/2/3/4**: Content Elements
+- Title
 - Citation
 - Recitals
 - Articles
 - Concluding formulas
 - Annex
+- Appendix
 
 ### Working with Chunks
 
@@ -90,8 +86,7 @@ parser.print_toc()
 
 # Output:
 # PREAMBLE
-#   Citation 1
-#   Citation 2
+#   Citation 
 #   Recital 1
 #   Recital 2
 #   ...
@@ -100,17 +95,9 @@ parser.print_toc()
 #   CHAPTER I - PRINCIPLES
 #     Article 1 - Subject matter and objectives
 #     Article 2 - Scope
-#   CHAPTER II - AVIATION SAFETY MANAGEMENT
-#     Article 3 - ...
 ```
 
 ## Use Cases
-
-### Education and Training
-
-- Generate study materials from regulatory documents
-- Create structured learning paths for certification programs
-- Extract key concepts for examination preparation
 
 ### Compliance and Legal
 
@@ -123,6 +110,12 @@ parser.print_toc()
 - Convert unstructured documents into structured data
 - Build citation networks and cross-references
 - Support automated document analysis workflows
+
+### Education and Training
+
+- Generate study materials from regulatory documents
+- Create structured learning paths for certification programs
+- Extract key concepts for examination preparation
 
 ## Supported Document Types
 
@@ -343,3 +336,11 @@ Text formatting and tooling:
 - Added professional command-line interface (CLI)
 - Created comprehensive documentation with MkDocs and Material theme
 - Published package to PyPI with proper dependencies
+
+### Version 0.1.3 (2026-01-19)
+
+Parser robustness improvements:
+- Fixed parsing of articles directly under enacting terms (without chapter hierarchy)
+- Enhanced article content extraction to handle table-based list items (e.g., (a), (b), (c) in table cells)
+- Added proper appendix detection and parsing (distinguishes appendices from annexes)
+- Improved title extraction for multi-paragraph appendix titles

@@ -100,7 +100,7 @@ class EURLexParser:
         self._parse_concluding_formulas()
         self._parse_annexes()
         
-        print(f"\n✓ TOC built with {len(self.toc['sections'])} major sections (flexible 3-4 levels)")
+        print(f"\n✓ TOC built with {len(self.toc['sections'])} major sections (flexible 2-4 levels)")
         print(f"✓ Created {len(self.chunks)} chunks (recitals + articles)")
         
         return self.chunks, self.toc
@@ -218,6 +218,22 @@ class EURLexParser:
         # Find all chapters
         chapters = self.soup.find_all('div', id=re.compile(r'^cpt_'))
         
+        # Check if there are chapters
+        if not chapters:
+            # No chapters found - articles might be directly under enacting terms
+            # Look for articles at the top level
+            articles = self.soup.find_all('div', class_='eli-subdivision', id=re.compile(r'^art_\d+'))
+            
+            if articles:
+                # Articles without chapters - parse them directly
+                hierarchy = [self.regulation_title, "Enacting Terms"] if self.regulation_title else ["Enacting Terms"]
+                for art_div in articles:
+                    self._parse_article(art_div, enacting_section, hierarchy)
+                
+                self.toc['sections'].append(enacting_section)
+                print(f"Parsed enacting terms: {len(articles)} articles (no chapters)")
+                return
+        
         for chapter_div in chapters:
             # Get chapter number and title
             chapter_p = chapter_div.find('p', class_='oj-ti-section-1')
@@ -330,6 +346,8 @@ class EURLexParser:
             
             # Collect article content
             content_parts = []
+            
+            # Method 1: Look for content divs (numbered paragraphs like 1.1, 1.2)
             content_divs = art_div.find_all('div', id=re.compile(r'^\d+\.\d+'))
             for content_div in content_divs:
                 paras = content_div.find_all('p', class_='oj-normal')
@@ -337,6 +355,27 @@ class EURLexParser:
                     text = self._clean_text(para.get_text())
                     if text:
                         content_parts.append(text)
+            
+            # Method 2: Look for direct paragraphs (intro text before tables)
+            direct_paras = art_div.find_all('p', class_='oj-normal', recursive=False)
+            for para in direct_paras:
+                text = self._clean_text(para.get_text())
+                if text:
+                    content_parts.append(text)
+            
+            # Method 3: Look for tables (list items like (a), (b), (c))
+            tables = art_div.find_all('table')
+            for table in tables:
+                rows = table.find_all('tr')
+                for row in rows:
+                    cells = row.find_all('td')
+                    if len(cells) == 2:
+                        # First cell is typically the list marker (a), (b), etc.
+                        marker = self._clean_text(cells[0].get_text())
+                        text = self._clean_text(cells[1].get_text())
+                        if text:
+                            # Combine marker and text
+                            content_parts.append(f"{marker} {text}")
             
             full_content = '\n\n'.join(content_parts)
             # Apply cleaning to the combined content to fix list formatting
@@ -406,31 +445,63 @@ class EURLexParser:
                     print(f"Parsed concluding formulas")
     
     def _parse_annexes(self):
-        """Parse annexes and create chunks for each"""
-        # Find all annexes
+        """Parse annexes and appendices and create chunks for each"""
+        # Find all annexes and appendices
         annexes = self.soup.find_all('div', class_='eli-container', id=re.compile(r'^anx_'))
         
         if not annexes:
             return
         
         for annex_div in annexes:
-            # Get annex number/identifier
+            # Get annex/appendix ID
             annex_id = annex_div.get('id', '')
-            annex_match = re.match(r'^anx_([IVXLCDM]+|\d+[A-Z]?)', annex_id, re.I)
-            annex_num = annex_match.group(1) if annex_match else annex_id.replace('anx_', '')
             
-            # Get annex title
-            title_p = annex_div.find('p', class_='oj-doc-ti')
-            if title_p:
-                title_text = self._clean_text(title_p.get_text())
+            # Check if this is an appendix (contains .app_)
+            is_appendix = '.app_' in annex_id
+            
+            if is_appendix:
+                # Parse as appendix: anx_1.app_1
+                app_match = re.match(r'^anx_(\d+)\.app_(\d+)', annex_id)
+                if app_match:
+                    annex_num = app_match.group(1)
+                    app_num = app_match.group(2)
+                    section_type = SectionType.APPENDIX
+                    identifier = f"{annex_num}.{app_num}"
+                else:
+                    # Fallback
+                    identifier = annex_id.replace('anx_', '').replace('.app_', '.')
+                    section_type = SectionType.APPENDIX
             else:
-                title_text = f"ANNEX {annex_num}"
+                # Parse as annex: anx_1, anx_I, etc.
+                annex_match = re.match(r'^anx_([IVXLCDM]+|\d+[A-Z]?)', annex_id, re.I)
+                identifier = annex_match.group(1) if annex_match else annex_id.replace('anx_', '')
+                section_type = SectionType.ANNEX
             
-            # Get annex subtitle if exists
+            # Get title from first oj-doc-ti paragraph
+            title_paragraphs = annex_div.find_all('p', class_='oj-doc-ti')
+            if title_paragraphs:
+                # Get first paragraph as main title
+                title_text = self._clean_text(title_paragraphs[0].get_text())
+                # If there are multiple title paragraphs, combine them
+                if len(title_paragraphs) > 1:
+                    subtitle_parts = [self._clean_text(p.get_text()) for p in title_paragraphs[1:]]
+                    subtitle = ' '.join(subtitle_parts)
+                else:
+                    subtitle = ''
+            else:
+                # Fallback title
+                if is_appendix:
+                    title_text = f"APPENDIX {identifier}"
+                else:
+                    title_text = f"ANNEX {identifier}"
+                subtitle = ''
+            
+            # Also check for additional subtitle in oj-ti-grseq-1
             subtitle_p = annex_div.find('p', class_='oj-ti-grseq-1')
-            subtitle = ''
             if subtitle_p:
-                subtitle = self._clean_text(subtitle_p.get_text())
+                extra_subtitle = self._clean_text(subtitle_p.get_text())
+                if extra_subtitle:
+                    subtitle = f"{subtitle} {extra_subtitle}" if subtitle else extra_subtitle
             
             full_title = title_text + (f" - {subtitle}" if subtitle else "")
             
@@ -485,18 +556,18 @@ class EURLexParser:
             
             if full_content or subtitle:
                 # Add to TOC
-                annex_toc = {
-                    'type': 'annex',
-                    'number': annex_num,
+                toc_entry = {
+                    'type': 'appendix' if is_appendix else 'annex',
+                    'number': identifier,
                     'title': full_title
                 }
-                self.toc['sections'].append(annex_toc)
+                self.toc['sections'].append(toc_entry)
                 
                 # CHUNK IT
                 hierarchy = [self.regulation_title, full_title] if self.regulation_title else [full_title]
                 chunk = RegulationChunk(
-                    section_type=SectionType.ANNEX,
-                    number=annex_num,
+                    section_type=section_type,
+                    number=identifier,
                     title=full_title,
                     content=full_content,
                     hierarchy_path=hierarchy,
@@ -504,7 +575,15 @@ class EURLexParser:
                 )
                 self.chunks.append(chunk)
         
-        print(f"Parsed {len(annexes)} annexes")
+        # Count annexes vs appendices for reporting
+        annex_count = sum(1 for a in annexes if '.app_' not in a.get('id', ''))
+        appendix_count = sum(1 for a in annexes if '.app_' in a.get('id', ''))
+        if annex_count and appendix_count:
+            print(f"Parsed {annex_count} annexes and {appendix_count} appendices")
+        elif annex_count:
+            print(f"Parsed {annex_count} annexes")
+        elif appendix_count:
+            print(f"Parsed {appendix_count} appendices")
     
     @staticmethod
     def _clean_text(text: str) -> str:
@@ -537,7 +616,7 @@ class EURLexParser:
         print(f"Saved TOC to {filepath}")
     
     def print_toc(self):
-        """Print formatted TOC showing flexible hierarchy (3-4 levels)"""
+        """Print formatted TOC showing flexible hierarchy (2-4 levels)"""
         print("\n" + "="*70)
         print("TABLE OF CONTENTS")
         print("="*70)
@@ -576,7 +655,7 @@ class EURLexParser:
 
 def main():
     """Test the parser"""
-    url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139"
+    url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32019R0947"
     
     print(f"Parsing: {url}\n")
     
