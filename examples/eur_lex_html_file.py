@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
-Example: Parsing EU AI Act
+Parsing EU-Lex Regulation
 Chunks the document into structured pieces with proper citations.
-
-Note: Install the package first with: pip install -e .
 """
 
 from pathlib import Path
@@ -11,15 +9,20 @@ from quiz_gen import EURLexParser
 
 
 def main():
-    """Parse and chunk the AI Act regulation document"""
+    """Parse and chunk the EU-Lex HTML document"""
     
-    url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L_202401689"
+    #url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32019R0945"
+    html_file = "data/documents/html/OJ%3AL_202401689%3AEN%3ATXT.html"
     doc_id = "2024_1689"
 
-    print(f"Parsing: {url}\n")
+    print(f"Parsing: {html_file}\n")
+    
+    # Read the HTML content from file
+    with open(html_file, 'r', encoding='utf-8') as f:
+        html_content = f.read()
     
     # Parse document - returns (chunks, toc)
-    parser = EURLexParser(url=url)
+    parser = EURLexParser(html_content=html_content)
     chunks, toc = parser.parse()
     
     # Display TOC

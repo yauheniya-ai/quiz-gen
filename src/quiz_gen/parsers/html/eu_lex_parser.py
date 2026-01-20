@@ -510,23 +510,34 @@ class EURLexParser:
                 else:
                     base_title_with_id = title_text
             
-            # Check if annex contains parts (oj-ti-grseq-1 with PART X pattern)
+            # Check if annex contains parts or sections (oj-ti-grseq-1 with PART X or Section X pattern)
             part_headers = annex_div.find_all('p', class_='oj-ti-grseq-1')
             parts_detected = []
             for part_header in part_headers:
                 part_text = self._clean_text(part_header.get_text())
                 # Match "PART 1", "PART I", "Part 1", etc.
                 part_match = re.match(r'^PART\s+([IVXLCDM]+|\d+)', part_text, re.I)
+                # Also match "Section A", "Section B", "SECTION 1", etc.
+                section_match = re.match(r'^Section\s+([A-Z]|\d+)', part_text, re.I)
+                
                 if part_match:
                     parts_detected.append({
                         'element': part_header,
                         'number': part_match.group(1),
-                        'title': part_text
+                        'title': part_text,
+                        'type': 'part'
+                    })
+                elif section_match:
+                    parts_detected.append({
+                        'element': part_header,
+                        'number': section_match.group(1),
+                        'title': part_text,
+                        'type': 'section'
                     })
             
-            # If parts detected, create separate chunks for each part
+            # If parts/sections detected, create separate chunks for each
             if parts_detected:
-                # Add annex to TOC with parts as children
+                # Add annex to TOC with parts/sections as children
                 toc_entry = {
                     'type': 'appendix' if is_appendix else 'annex',
                     'number': identifier,
@@ -536,13 +547,14 @@ class EURLexParser:
                 
                 hierarchy_base = [self.regulation_title, base_title_with_id] if self.regulation_title else [base_title_with_id]
                 
-                # Process each part
+                # Process each part/section
                 for i, part_info in enumerate(parts_detected):
                     part_elem = part_info['element']
                     part_num = part_info['number']
                     part_title = part_info['title']
+                    part_type = part_info.get('type', 'part')  # 'part' or 'section'
                     
-                    # Simple approach: Extract all text between this PART header and the next one
+                    # Simple approach: Extract all text between this header and the next one
                     # This preserves natural text flow without duplication
                     
                     # Find the container that has content between parts
@@ -563,13 +575,35 @@ class EURLexParser:
                         current_elem = current_elem.find_next_sibling()
                     
                     # Extract text from collected elements
-                    # Use get_text() with separator to preserve structure
+                    # Handle tables specially to avoid line breaks in numbered lists
                     part_content_parts = []
                     for elem in content_elements:
-                        # Get all text with line breaks as separators
-                        text = elem.get_text(separator='\n', strip=True)
-                        if text:
-                            part_content_parts.append(text)
+                        # Check if this element contains tables (common in annex sections)
+                        tables = elem.find_all('table') if hasattr(elem, 'find_all') else []
+                        
+                        if tables:
+                            # Extract table rows properly
+                            for table in tables:
+                                rows = table.find_all('tr')
+                                for row in rows:
+                                    cells = row.find_all('td')
+                                    if len(cells) >= 2:
+                                        # First cell is typically the number, second is the content
+                                        num_text = self._clean_text(cells[0].get_text())
+                                        content_text = self._clean_text(cells[1].get_text())
+                                        if num_text and content_text:
+                                            # Combine on same line
+                                            part_content_parts.append(f"{num_text} {content_text}")
+                                    elif len(cells) == 1:
+                                        # Single cell, just get text
+                                        text = self._clean_text(cells[0].get_text())
+                                        if text:
+                                            part_content_parts.append(text)
+                        else:
+                            # For non-table elements, get text normally
+                            text = self._clean_text(elem.get_text())
+                            if text:
+                                part_content_parts.append(text)
                     
                     part_content = '\n\n'.join(part_content_parts)
                     # Use base_title_with_id to include annex/appendix number in part titles
@@ -577,7 +611,7 @@ class EURLexParser:
                     
                     # Add to TOC
                     toc_entry['children'].append({
-                        'type': 'part',
+                        'type': part_type,
                         'number': part_num,
                         'title': part_title
                     })
@@ -589,14 +623,14 @@ class EURLexParser:
                         title=part_full_title,
                         content=part_content,
                         hierarchy_path=hierarchy_base + [part_title],
-                        metadata={'id': annex_id, 'part': part_num}
+                        metadata={'id': annex_id, part_type: part_num}
                     )
                     self.chunks.append(chunk)
                 
                 self.toc['sections'].append(toc_entry)
                 
             else:
-                # No parts - treat as single chunk (original behavior)
+                # No parts/sections - treat as single chunk (original behavior)
                 # Collect annex content (all text from paragraphs and tables)
                 content_parts = []
                 

@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quiz-gen"
-version = "0.1.8"
+version = "0.1.9"
 description = "AI-powered quiz generator for regulatory, certification, and educational documentation"
 readme = "README.md"
-authors = [{name = "Yauheniya Varabyova", email = "yauheniya.ai@gmail.com"}]
+authors = [{name = "Yauheniya Varabyova"}]
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -45,7 +45,6 @@ dev = [
 [project.urls]
 "Documentation" = "https://quiz-gen.readthedocs.io"
 "Repository" = "https://github.com/yauheniya-ai/quiz-gen"
-"Bug Tracker" = "https://github.com/yauheniya-ai/quiz-gen/issues"
 
 [project.scripts]
 quiz-gen = "quiz_gen.cli:main"

@@ -382,3 +382,11 @@ Complete text extraction:
 - Fixed missing content (e.g., item (8)) by extracting all sibling elements between PART headers
 - Switched from selective element processing to comprehensive text extraction using get_text()
 - Ensures complete and accurate extraction without repetition for legal document compliance
+
+### Version 0.1.9 (2026-01-20)
+
+Annex section parsing enhancements:
+- Added support for detecting and extracting annex sections (Section A, Section B, etc.) in addition to parts
+- Fixed line break formatting in numbered lists within annex sections to keep numbers and content on same line
+- Fixed content extraction for annex sections by searching for tables within container elements rather than direct table siblings
+- Enhanced section pattern matching to support both "PART" and "Section" patterns with letter/number identifiers
