@@ -12,8 +12,8 @@ def main():
     """Parse and chunk the EU-Lex HTML document"""
     
     #url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32019R0945"
-    html_file = "data/documents/html/OJ%3AL_202401689%3AEN%3ATXT.html"
-    doc_id = "2024_1689"
+    html_file = "data/documents/html/2018_1139_Common_Rules_Civil_Aviation.html"
+    doc_id = "2018_1139"
 
     print(f"Parsing: {html_file}\n")
     

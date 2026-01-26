@@ -136,9 +136,42 @@ class EURLexParser:
                 print(f"Parsed title: {main_title[:80]}...")
     
     def _parse_preamble(self):
-        """Parse preamble: add single citation entry and recitals to TOC, chunk citation and recitals"""
+        """Parse preamble: extract preamble content, citations, and recitals"""
         preamble_section = {'type': 'preamble', 'title': 'Preamble', 'children': []}
-        
+
+        # --- Extract preamble content before first citation ---
+        preamble_div = self.soup.find('div', class_='eli-subdivision', id=re.compile(r'^pbl_\d+'))
+        if preamble_div:
+            # Find the first citation div inside preamble
+            first_cit = preamble_div.find('div', class_='eli-subdivision', id=re.compile(r'^cit_\d+'))
+            preamble_content_parts = []
+            for child in preamble_div.children:
+                # Stop at first citation div
+                child_id = getattr(child, 'get', lambda x, y=None: None)('id', '')
+                if isinstance(child_id, str) and child_id.startswith('cit_'):
+                    break
+                # Collect text from <p class="oj-normal">
+                if getattr(child, 'name', None) == 'p' and 'oj-normal' in child.get('class', []):
+                    text = self._clean_text(child.get_text())
+                    if text:
+                        preamble_content_parts.append(text)
+            if preamble_content_parts:
+                # Add to TOC and as a chunk
+                preamble_section['children'].append({
+                    'type': 'preamble_content',
+                    'title': 'Preamble Content'
+                })
+                hierarchy = [self.regulation_title, "Preamble", "Preamble Content"] if self.regulation_title else ["Preamble", "Preamble Content"]
+                chunk = RegulationChunk(
+                    section_type=SectionType.PREAMBLE,
+                    number=None,
+                    title="Preamble Content",
+                    content='\n\n'.join(preamble_content_parts),
+                    hierarchy_path=hierarchy,
+                    metadata={'id': preamble_div.get('id', '')}
+                )
+                self.chunks.append(chunk)
+
         # Parse citations - combine all into one chunk
         citations = self.soup.find_all('div', class_='eli-subdivision', id=re.compile(r'^cit_\d+'))
         if citations:
@@ -152,16 +185,11 @@ class EURLexParser:
                     if text:
                         citation_parts.append(text)
                         citation_ids.append(cit.get('id', ''))
-            
             if citation_parts:
-                # Add single citation entry to TOC
                 preamble_section['children'].append({
                     'type': 'citation',
                     'title': 'Citation'
                 })
-                
-                # CHUNK IT - single chunk with all citations
-                # Use first citation ID for navigation (cit_1)
                 hierarchy = [self.regulation_title, "Preamble", "Citation"] if self.regulation_title else ["Preamble", "Citation"]
                 chunk = RegulationChunk(
                     section_type=SectionType.CITATION,
@@ -172,7 +200,7 @@ class EURLexParser:
                     metadata={'id': citation_ids[0] if citation_ids else 'cit_1', 'citation_ids': citation_ids}
                 )
                 self.chunks.append(chunk)
-        
+
         # Parse recitals
         recitals = self.soup.find_all('div', class_='eli-subdivision', id=re.compile(r'^rct_\d+'))
         for rct in recitals:

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional
 
 from quiz_gen.__version__ import __version__
-from quiz_gen.parsers.html.eu_lex_parser import EURLexParser
+from quiz_gen.parsers.html.eur_lex_parser import EURLexParser
 
 
 def create_parser() -> argparse.ArgumentParser:
