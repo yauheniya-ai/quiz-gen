@@ -143,7 +143,6 @@ class EURLexParser:
         preamble_div = self.soup.find('div', class_='eli-subdivision', id=re.compile(r'^pbl_\d+'))
         if preamble_div:
             # Find the first citation div inside preamble
-            first_cit = preamble_div.find('div', class_='eli-subdivision', id=re.compile(r'^cit_\d+'))
             preamble_content_parts = []
             for child in preamble_div.children:
                 # Stop at first citation div
@@ -156,16 +155,12 @@ class EURLexParser:
                     if text:
                         preamble_content_parts.append(text)
             if preamble_content_parts:
-                # Add to TOC and as a chunk
-                preamble_section['children'].append({
-                    'type': 'preamble_content',
-                    'title': 'Preamble Content'
-                })
-                hierarchy = [self.regulation_title, "Preamble", "Preamble Content"] if self.regulation_title else ["Preamble", "Preamble Content"]
+                # Only chunk, do not add a separate TOC entry
+                hierarchy = [self.regulation_title, "Preamble"] if self.regulation_title else ["Preamble"]
                 chunk = RegulationChunk(
                     section_type=SectionType.PREAMBLE,
                     number=None,
-                    title="Preamble Content",
+                    title="Preamble",
                     content='\n\n'.join(preamble_content_parts),
                     hierarchy_path=hierarchy,
                     metadata={'id': preamble_div.get('id', '')}
