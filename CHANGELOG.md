@@ -4,7 +4,8 @@
 ### Version 0.1.11 (2026-01-26)
 
 TOC cleanup:
-- Removed 'Preamble content' as a separate TOC entry; only 'Preamble' appears as the section header for a clean TOC
+- Removed 'Preamble content' as a separate TOC entry 
+- Only 'Preamble' appears as the section header for a clean TOC
 
 
 ### Version 0.1.10 (2026-01-26)

@@ -224,6 +224,21 @@ ruff check .
 black .
 ```
 
+### Project Structure
+```
+quiz-gen/
+├── src/
+│   └── quiz_gen/          # Module code here
+│       ├── agents/
+│       ├── parsers/
+│       └── ...
+├── examples/              # Example scripts
+│   ├── easa_example.py
+│   ├── test_article_47.py
+│   └── run_workflow.py
+├── pyproject.toml
+└── .env
+```
 
 ### Contributing
 
