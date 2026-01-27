@@ -1,5 +1,18 @@
 ## Changelog
 
+### Version 0.2.1 (2026-01-27)
+
+Parallel workflow support:
+- Introduced true parallel execution for conceptual and practical question generation
+- Added a fan-out/fan-in node structure to safely merge parallel branches
+- Updated human feedback loop to return to parallel start node instead of a single branch
+
+### Version 0.2.0 (2026-01-27)
+
+Initial LangGraph workflow setup:
+- Defined the quiz generation workflow with sequential nodes: conceptual → practical → judge → validate → human feedback
+- Added conditional branching based on human feedback (accept, reject, improve)
+- Implemented node functions for conceptual/practical generation, judging, validation, and human feedback placeholder
 
 ### Version 0.1.11 (2026-01-26)
 

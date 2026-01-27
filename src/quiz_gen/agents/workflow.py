@@ -5,7 +5,7 @@ Orchestrates: Conceptual Gen (OpenAI) || Practical Gen (Claude) -> Judge (Claude
 """
 
 from typing import TypedDict, Optional, List, Dict
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 import json
 from pathlib import Path
@@ -80,113 +80,112 @@ class QuizGenerationWorkflow:
         self.app = self.graph.compile(checkpointer=MemorySaver())
     
     def _build_graph(self) -> StateGraph:
-        """Build the LangGraph workflow"""
-        
         workflow = StateGraph(QuizGenerationState)
-        
-        # Add nodes
+
+        # Nodes
+        workflow.add_node("parallel_start", lambda state: {})  # dummy node for parallel fan-out
         workflow.add_node("generate_conceptual", self._generate_conceptual)
         workflow.add_node("generate_practical", self._generate_practical)
         workflow.add_node("judge_questions", self._judge_questions)
         workflow.add_node("validate_questions", self._validate_questions)
         workflow.add_node("await_human_feedback", self._await_human_feedback)
-        
-        # Define edges
-        workflow.set_entry_point("generate_conceptual")
-        
-        # Parallel generation
-        workflow.add_edge("generate_conceptual", "generate_practical")
+
+        # Entry point
+        workflow.set_entry_point("parallel_start")
+
+        # Fan-out
+        workflow.add_edge("parallel_start", "generate_conceptual")
+        workflow.add_edge("parallel_start", "generate_practical")
+
+        # Fan-in
+        workflow.add_edge("generate_conceptual", "judge_questions")
         workflow.add_edge("generate_practical", "judge_questions")
-        
-        # Judge -> Validator
+
+        # Sequential tail
         workflow.add_edge("judge_questions", "validate_questions")
-        
-        # Validator -> Human feedback
         workflow.add_edge("validate_questions", "await_human_feedback")
-        
-        # Conditional edge from human feedback
+
+        # Conditional loop
         workflow.add_conditional_edges(
             "await_human_feedback",
             self._route_after_human_feedback,
             {
                 "accept": END,
                 "reject": END,
-                "improve": "generate_conceptual"  # Loop back with feedback
-            }
+                "improve": "parallel_start",
+            },
         )
-        
+
         return workflow
+
     
-    def _generate_conceptual(self, state: QuizGenerationState) -> QuizGenerationState:
-        """Generate conceptual question (OpenAI)"""
+    def _generate_conceptual(self, state: QuizGenerationState):
+        print("🧠 Generating conceptual question...")
+
         try:
-            print("🧠 Generating conceptual question...")
-            state["current_step"] = "generate_conceptual"
-            
             conceptual_qa = self.conceptual_gen.generate(
                 chunk=state["chunk"],
                 improvement_feedback=state.get("improvement_feedback")
             )
-            
-            state["conceptual_qa"] = conceptual_qa
+
             print(f"✓ Conceptual question generated: {conceptual_qa.get('question', '')[:60]}...")
-            
+
+            return {
+                "conceptual_qa": conceptual_qa
+            }
+
         except Exception as e:
-            errors = state.get("errors", [])
-            errors.append(f"Conceptual generation error: {str(e)}")
-            state["errors"] = errors
-            print(f"✗ Error: {e}")
-        
-        return state
+            return {
+                "errors": [f"Conceptual generation error: {str(e)}"]
+            }
+
     
-    def _generate_practical(self, state: QuizGenerationState) -> QuizGenerationState:
-        """Generate practical question (Claude)"""
+    def _generate_practical(self, state: QuizGenerationState):
+        print("🔧 Generating practical question...")
+
         try:
-            print("🔧 Generating practical question...")
-            state["current_step"] = "generate_practical"
-            
             practical_qa = self.practical_gen.generate(
                 chunk=state["chunk"],
                 improvement_feedback=state.get("improvement_feedback")
             )
-            
-            state["practical_qa"] = practical_qa
+
             print(f"✓ Practical question generated: {practical_qa.get('question', '')[:60]}...")
-            
+
+            return {
+                "practical_qa": practical_qa
+            }
+
         except Exception as e:
-            errors = state.get("errors", [])
-            errors.append(f"Practical generation error: {str(e)}")
-            state["errors"] = errors
-            print(f"✗ Error: {e}")
-        
-        return state
+            return {
+                "errors": [f"Practical generation error: {str(e)}"]
+            }
+
     
-    def _judge_questions(self, state: QuizGenerationState) -> QuizGenerationState:
-        """Judge both questions (Claude)"""
+    def _judge_questions(self, state: QuizGenerationState):
+        print("⚖️  Judging questions...")
+
         try:
-            print("⚖️  Judging questions...")
-            state["current_step"] = "judge_questions"
-            
             judge_result = self.judge.judge(
                 conceptual_qa=state["conceptual_qa"],
                 practical_qa=state["practical_qa"],
                 chunk=state["chunk"]
             )
-            
-            state["judge_decision"] = judge_result["decision"]
-            state["judge_reasoning"] = judge_result["reasoning"]
-            state["judged_qas"] = judge_result["output"]
-            
+
             print(f"✓ Judge decision: {judge_result['decision']}")
             print(f"  Reasoning: {judge_result['reasoning']}")
-            
+
+            return {
+                "current_step": "judge_questions",
+                "judge_decision": judge_result["decision"],
+                "judge_reasoning": judge_result["reasoning"],
+                "judged_qas": judge_result["output"],
+            }
+
         except Exception as e:
-            errors = state.get("errors", [])
-            errors.append(f"Judge error: {str(e)}")
-            state["errors"] = errors
-            print(f"✗ Error: {e}")
-        
-        return state
+            return {
+                "errors": [f"Judge error: {str(e)}"]
+            }
+
     
     def _validate_questions(self, state: QuizGenerationState) -> QuizGenerationState:
         """Validate questions (OpenAI)"""
