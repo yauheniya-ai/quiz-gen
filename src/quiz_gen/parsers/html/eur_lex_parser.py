@@ -696,13 +696,13 @@ class EURLexParser:
                 # No parts/sections - treat as single chunk (original behavior)
                 for p in annex_div.find_all('p', class_='oj-doc-ti'):
                     p.decompose()
-                for p in annex_div.find_all('p', class_='oj-ti-grseq-1'):
-                    p.decompose()
                 full_content = annex_div.get_text(separator='\n')
                 full_content = '\n'.join([line.strip() for line in full_content.splitlines() if line.strip()])
                 import re
                 full_content = re.sub(r'\n\(([a-zA-Z]+|[ivxlcdmIVXLCDM]+|\d+)\)\n', r'\n(\1) ', full_content)
                 full_content = re.sub(r'\n—\n', '\n— ', full_content)
+                # Fix: join 'm\n3' (meter-cube) and similar unit splits
+                full_content = re.sub(r'm\s*\n\s*3', 'm3', full_content)
                 if not full_content and subtitle:
                     full_content = subtitle
                 

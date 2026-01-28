@@ -1,5 +1,12 @@
 ## Changelog
 
+### Version 0.2.3 (2026-01-28)
+
+Annex content completeness:
+- Fixed missing section and numbered headings (e.g., 1., 1.1., 1.2.) in annexes for full content fidelity
+- Only the main annex title is removed; all other headings and structure are preserved
+- Ensured all content, including section numbers and titles, is included in parsed output
+
 ### Version 0.2.2 (2026-01-28)
 
 Annex parsing:
