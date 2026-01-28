@@ -1,9 +1,4 @@
-#!/usr/bin/env python3
-"""
-EUR-Lex Regulation HTML Parser - Simplified version
-Builds flexible TOC (3-4 levels) and chunks only recitals and articles
-Supports: Preamble > Chapters > Sections (optional) > Articles
-"""
+
 
 import re
 import requests
@@ -58,6 +53,50 @@ class RegulationChunk:
         data = asdict(self)
         data['section_type'] = self.section_type.value
         return data
+
+
+    def _extract_annex_content(self, element, prefix=""):
+        """Recursively extract all visible text from an element, preserving structure and markers."""
+        parts = []
+        if element is None:
+            return parts
+        # If it's a NavigableString, just return the text
+        from bs4 import NavigableString, Tag
+        if isinstance(element, NavigableString):
+            text = str(element).strip()
+            if text:
+                parts.append(prefix + text)
+            return parts
+        # If it's a <p> or <span>, get its text
+        if element.name in ["p", "span"]:
+            text = self._clean_text(element.get_text())
+            if text:
+                parts.append(prefix + text)
+        # If it's a <table>, process each row
+        elif element.name == "table":
+            for row in element.find_all("tr", recursive=False):
+                cells = row.find_all(["td", "th"], recursive=False)
+                if len(cells) == 2:
+                    left = self._extract_annex_content(cells[0])
+                    right = self._extract_annex_content(cells[1])
+                    # Combine marker and content
+                    if left and right:
+                        for l in left:
+                            for r in right:
+                                parts.append(f"{l} {r}")
+                    elif right:
+                        parts.extend(right)
+                elif len(cells) == 1:
+                    parts.extend(self._extract_annex_content(cells[0]))
+        # If it's a <ul> or <ol>, process each <li>
+        elif element.name in ["ul", "ol"]:
+            for li in element.find_all("li", recursive=False):
+                parts.extend(self._extract_annex_content(li, prefix=prefix+"- "))
+        # Otherwise, process children
+        else:
+            for child in element.children:
+                parts.extend(self._extract_annex_content(child, prefix=prefix))
+        return parts
 
 
 class EURLexParser:
@@ -469,6 +508,7 @@ class EURLexParser:
     
     def _parse_annexes(self):
         """Parse annexes and appendices and create chunks for each"""
+        import re  # Ensure re is always the module, not a local variable
         # Find all annexes and appendices
         annexes = self.soup.find_all('div', class_='eli-container', id=re.compile(r'^anx_'))
         
@@ -654,50 +694,15 @@ class EURLexParser:
                 
             else:
                 # No parts/sections - treat as single chunk (original behavior)
-                # Collect annex content (all text from paragraphs and tables)
-                content_parts = []
-                
-                # Get all normal paragraphs
-                paras = annex_div.find_all('p', class_='oj-normal')
-                for para in paras:
-                    text = self._clean_text(para.get_text())
-                    if text and len(text) > 10:  # Filter out very short text
-                        content_parts.append(text)
-                
-                # Check if this is a table-based annex (like correlation tables)
-                tables = annex_div.find_all('table', class_='oj-table')
-                for table in tables:
-                    # Get table headers
-                    headers = []
-                    header_cells = table.find_all('p', class_='oj-tbl-hdr')
-                    for hdr in header_cells:
-                        text = self._clean_text(hdr.get_text())
-                        if text:
-                            headers.append(text)
-                    
-                    if headers:
-                        content_parts.append(' | '.join(headers))
-                        content_parts.append('-' * 40)
-                    
-                    # Get table rows
-                    rows = table.find_all('tr', class_='oj-table')
-                    for row in rows:
-                        cells = row.find_all('td', class_='oj-table')
-                        cell_texts = []
-                        for cell in cells:
-                            cell_para = cell.find('p')
-                            if cell_para:
-                                text = self._clean_text(cell_para.get_text())
-                                if text and 'oj-tbl-hdr' not in cell_para.get('class', []):
-                                    cell_texts.append(text)
-                        
-                        if cell_texts:
-                            content_parts.append(' | '.join(cell_texts))
-                
-                # Join all content parts - no truncation
-                full_content = '\n\n'.join(content_parts)
-                
-                # Create chunk even if content is just title/subtitle (for index purposes)
+                for p in annex_div.find_all('p', class_='oj-doc-ti'):
+                    p.decompose()
+                for p in annex_div.find_all('p', class_='oj-ti-grseq-1'):
+                    p.decompose()
+                full_content = annex_div.get_text(separator='\n')
+                full_content = '\n'.join([line.strip() for line in full_content.splitlines() if line.strip()])
+                import re
+                full_content = re.sub(r'\n\(([a-zA-Z]+|[ivxlcdmIVXLCDM]+|\d+)\)\n', r'\n(\1) ', full_content)
+                full_content = re.sub(r'\n—\n', '\n— ', full_content)
                 if not full_content and subtitle:
                     full_content = subtitle
                 

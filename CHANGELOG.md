@@ -1,5 +1,13 @@
 ## Changelog
 
+### Version 0.2.2 (2026-01-28)
+
+Annex parsing:
+- Simplified annex content extraction using BeautifulSoup's get_text for robust, complete text output
+- Improved formatting for list markers in annexes (e.g., (a), (i), —) to appear on the same line as their content
+- Fixed and removed all AI/explanatory comments for a cleaner codebase
+- Ensured no UnboundLocalError for re module in annex parsing
+
 ### Version 0.2.1 (2026-01-27)
 
 Parallel workflow support:
