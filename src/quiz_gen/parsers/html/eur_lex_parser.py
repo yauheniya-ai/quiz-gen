@@ -15,7 +15,7 @@ class SectionType(Enum):
     TITLE = "title"  # CHUNK THIS
     
     # Level 1 - Major sections
-    PREAMBLE = "preamble"
+    PREAMBLE = "preamble" # CHUNK THIS
     ENACTING_TERMS = "enacting_terms"
     CONCLUDING_FORMULAS = "concluding_formulas"
     ANNEX = "annex"
@@ -29,7 +29,7 @@ class SectionType(Enum):
     CHAPTER = "chapter"
     SECTION = "section"
     
-    # Level 3/4 - Content
+    # Level 2/3/4 - Content
     ARTICLE = "article"  # CHUNK THIS
 
 
@@ -699,10 +699,15 @@ class EURLexParser:
                 full_content = annex_div.get_text(separator='\n')
                 full_content = '\n'.join([line.strip() for line in full_content.splitlines() if line.strip()])
                 import re
+                # Join lines where a number and period (e.g., '1.') is followed by a newline and then text (e.g., '1.\nCategories' -> '1. Categories')
+                full_content = re.sub(r'(\b\d+(?:\.\d+)*\.)\s*\n\s*([A-Z(])', r'\1 \2', full_content)
+                # Also handle (a)\nText, (i)\nText, etc.
                 full_content = re.sub(r'\n\(([a-zA-Z]+|[ivxlcdmIVXLCDM]+|\d+)\)\n', r'\n(\1) ', full_content)
                 full_content = re.sub(r'\n—\n', '\n— ', full_content)
                 # Fix: join 'm\n3' (meter-cube) and similar unit splits
                 full_content = re.sub(r'm\s*\n\s*3', 'm3', full_content)
+                # Fix: join punctuation after m3 (e.g., 'm3\n,' -> 'm3,')
+                full_content = re.sub(r'(m3)\s*\n\s*([,;.])', r'\1\2', full_content)
                 if not full_content and subtitle:
                     full_content = subtitle
                 

@@ -1,5 +1,11 @@
 ## Changelog
 
+### Version 0.2.4 (2026-01-29)
+
+Annex formatting fixes:
+- Fixed line breaks after section/numbered headings (e.g., '1.', '2.') in annexes so numbers and text appear on the same line
+- Ensured robust joining of list markers and their content for improved readability
+
 ### Version 0.2.3 (2026-01-28)
 
 Annex content completeness:
