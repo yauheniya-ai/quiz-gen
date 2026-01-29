@@ -12,8 +12,8 @@ The system consists of four agents, each with a specific responsibility:
 
 1. **Conceptual Generator (OpenAI GPT-4)**: Generates questions focused on theoretical understanding, definitions, and fundamental principles
 2. **Practical Generator (Claude Sonnet 4)**: Creates scenario-based questions testing real-world application of regulations
-3. **Judge (Claude Sonnet 4)**: Reviews both generated questions and decides whether to accept, refine, or unify them
-4. **Validator (OpenAI GPT-4)**: Performs formal validation to ensure questions meet structural and content requirements
+3. **Validator (OpenAI GPT-4)**: Performs strict validation to ensure questions meet structural and content requirements
+4. **Judge (Claude Sonnet 4)**: Receives both Q&As and their validation results, and makes the final decision on which questions (0, 1, or 2) to accept, refine, or unify for the end user
 
 ### Workflow Pipeline
 
@@ -30,27 +30,28 @@ The system consists of four agents, each with a specific responsibility:
 │  ┌────────────────┐              │
 │  │ Conceptual Gen │ (OpenAI)     │
 │  └────────┬───────┘              │
-│           │                       │
-│           v                       │
+│           │                      │
+│           v                      │
 │  ┌────────────────┐              │
 │  │ Practical Gen  │ (Claude)     │
 │  └────────┬───────┘              │
-└───────────┼───────────────────────┘
+└───────────┼──────────────────────┘
             │
             v
-┌───────────────────────┐
-│  Judge                │ (Claude)
-│  - Accept Both        │
-│  - Refine Both        │
-│  - Unify              │
-└──────────┬────────────┘
-           │
-           v
 ┌───────────────────────┐
 │  Validator            │ (OpenAI)
 │  - Format Check       │
 │  - Content Check      │
 │  - Quality Score      │
+└──────────┬────────────┘
+           │
+           v
+┌───────────────────────┐
+│  Judge                │ (Claude)
+│  - Accept Both        │
+│  - Accept One         │
+│  - Unify              │
+│  - Reject Both        │
 └──────────┬────────────┘
            │
            v
@@ -121,11 +122,14 @@ The system consists of four agents, each with a specific responsibility:
 
 **Decision Types**:
 
-1. **Accept Both**: Both questions are high quality and test different aspects
-2. **Refine Both**: Both have issues that can be improved
-3. **Unify**: Questions are too similar or can be combined into one superior question
+1. **accept_both**: Both questions are high quality and test different aspects
+2. **accept_conceptual**: Only the conceptual question is valid and high quality
+3. **accept_practical**: Only the practical question is valid and high quality
+4. **unify**: Questions are too similar or can be combined into one superior question
+5. **reject_both**: Neither question is suitable
 
 **Evaluation Criteria**:
+- Validator's pass/fail and issues for each question (primary filter)
 - Accuracy: Does it correctly reflect the regulation?
 - Clarity: Is the question unambiguous?
 - Quality: Are all options plausible? Are explanations clear?
@@ -135,12 +139,12 @@ The system consists of four agents, each with a specific responsibility:
 **Output Format**:
 ```json
 {
-  "decision": "accept_both|refine_both|unify",
-  "reasoning": "Explanation of the decision",
+  "decision": "accept_both|accept_conceptual|accept_practical|reject_both|unify",
+  "reasoning": "Brief explanation of your decision, referencing validator results",
   "output": {
-    "conceptual": {...},
-    "practical": {...},
-    "unified": {...}
+    "conceptual": {...},  // Only if accepted
+    "practical": {...},   // Only if accepted
+    "unified": {...}      // Only if decision is "unify"
   },
   "improvements_made": ["List of improvements if refined"]
 }
@@ -148,11 +152,12 @@ The system consists of four agents, each with a specific responsibility:
 
 ### Validator
 
-**Purpose**: Perform strict validation of question format and content requirements.
+**Purpose**: Perform strict validation of question format and content requirements before judging.
+
 
 **Model**: OpenAI GPT-4
 
-**Validation Checks**:
+**Validation Checks (run before judging):**
 
 **Structural Requirements**:
 1. Has exactly 4 multiple choice options (A, B, C, D)
@@ -204,14 +209,15 @@ The workflow uses LangGraph's state management to track progress through the pip
   "conceptual_qa": Dict,           # Output from conceptual generator
   "practical_qa": Dict,            # Output from practical generator
   
-  # Judge output
-  "judge_decision": str,           # accept_both|refine_both|unify
-  "judge_reasoning": str,          # Explanation
-  "judged_qas": Dict,              # Final Q&As after judging
-  
-  # Validation results
+
+  # Validation results (before judging)
   "validation_results": List[Dict], # Results for each question
   "all_valid": bool,               # Whether all passed validation
+
+  # Judge output
+  "judge_decision": str,           # accept_both|accept_conceptual|accept_practical|reject_both|unify
+  "judge_reasoning": str,          # Explanation (references validator results)
+  "judged_qas": Dict,              # Final Q&As after judging
   
   # Final output
   "final_questions": List[Dict],   # Questions ready for use
