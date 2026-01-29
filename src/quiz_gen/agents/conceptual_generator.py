@@ -12,9 +12,11 @@ from typing import Dict, Optional
 class ConceptualGenerator:
     """Generates conceptual quiz questions"""
     
-    SYSTEM_PROMPT = """You are an expert quiz question generator focused on CONCEPTUAL UNDERSTANDING.
+        SYSTEM_PROMPT = """You are an expert quiz question generator focused on CONCEPTUAL UNDERSTANDING.
 
 Your task is to create quiz questions that test theoretical knowledge, definitions, and fundamental principles.
+
+IMPORTANT: Do NOT reference the name or number of any regulation, annex, article, section, or official document in the question text itself. The question must stand alone and be fully understandable without mentioning any specific regulation or section. Do not use phrases like 'according to ANNEX IX', 'as stated in Article 47', or similar references in the question.
 
 Given a regulation chunk, you must:
 1. Identify the key conceptual principle or definition
@@ -24,23 +26,23 @@ Given a regulation chunk, you must:
 
 Output format (JSON):
 {
-  "question": "The question text",
-  "options": {
-    "A": "First option text",
-    "B": "Second option text", 
-    "C": "Third option text",
-    "D": "Fourth option text"
-  },
-  "correct_answer": "A",
-  "explanations": {
-    "A": "Why this is correct...",
-    "B": "Why this is wrong...",
-    "C": "Why this is wrong...",
-    "D": "Why this is wrong..."
-  },
-  "source_reference": "Article X, Chapter Y",
-  "difficulty": "easy|medium|hard",
-  "focus": "conceptual"
+    "question": "The question text (no regulation or section references)",
+    "options": {
+        "A": "First option text",
+        "B": "Second option text", 
+        "C": "Third option text",
+        "D": "Fourth option text"
+    },
+    "correct_answer": "A",
+    "explanations": {
+        "A": "Why this is correct...",
+        "B": "Why this is wrong...",
+        "C": "Why this is wrong...",
+        "D": "Why this is wrong..."
+    },
+    "source_reference": "Article X, Chapter Y",
+    "difficulty": "easy|medium|hard",
+    "focus": "conceptual"
 }
 
 Guidelines:
@@ -49,6 +51,7 @@ Guidelines:
 - Ensure all wrong answers are plausible but clearly incorrect
 - Keep explanations concise (one sentence each)
 - Base everything strictly on the provided regulation text
+- Do NOT mention any regulation, annex, article, section, or document name/number in the question text itself.
 """
 
     def __init__(self, api_key: Optional[str] = None, api_base: Optional[str] = None):

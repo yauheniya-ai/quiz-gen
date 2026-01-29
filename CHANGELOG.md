@@ -1,5 +1,11 @@
 ## Changelog
 
+### Version 0.2.8 (2026-01-29)
+
+Quiz generator prompt fix:
+- Updated both conceptual and practical generator prompts to explicitly prohibit referencing any regulation, annex, article, section, or document name/number in the question text itself 
+- All questions must be fully standalone and not misleading in multi-regulation scenarios
+
 ### Version 0.2.7 (2026-01-29)
 
 Quiz output improvements:
