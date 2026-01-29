@@ -1,5 +1,18 @@
 ## Changelog
 
+
+### Version 0.2.5 (2026-01-29)
+
+Quiz generation workflow refactor:
+- Refactored workflow to validate both conceptual and practical Q&As before judging; judge now receives both Q&As and their validation results to make the final decision
+- Updated validator prompt to clarify its role as a pre-screening step for the judge
+- Updated judge prompt to require referencing validator results in decisions
+- Fixed bug: judge now accepts validation_results as input and includes them in the model prompt
+- Removed duplicate and dead code in workflow; ensured correct node order and argument passing
+- Fixed syntax error in judge.py (unmatched parenthesis)
+
+
+
 ### Version 0.2.4 (2026-01-29)
 
 Annex formatting fixes:

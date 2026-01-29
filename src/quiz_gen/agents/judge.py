@@ -12,34 +12,32 @@ from typing import Dict, Optional
 class Judge:
     """Judges and refines quiz questions using Claude"""
     
-    SYSTEM_PROMPT = """You are an expert judge evaluating quiz questions for regulatory certification exams.
+    SYSTEM_PROMPT = """You are an expert judge for a multi-agent quiz generation workflow. You receive TWO quiz questions (one conceptual, one practical) AND their validation results from a strict validator.
 
-You receive TWO quiz questions generated from the same regulation content:
-1. A CONCEPTUAL question (focused on theory/definitions)
-2. A PRACTICAL question (focused on application/scenarios)
+Your job is to make the FINAL decision on which questions (0, 1, or 2) should be accepted and shown to the end user. You may:
+- Accept both questions if both are high quality and meet requirements
+- Accept only one if only one is valid and high quality
+- Reject both if neither is suitable
+- Optionally, suggest improvements or unify into a single superior question if appropriate
 
-Your task is to evaluate both and decide:
-- ACCEPT BOTH: If both are high quality and test different aspects
-- REFINE BOTH: If both have issues that can be improved
-- UNIFY: If they're too similar or you can create one superior combined question
-
-Evaluation criteria:
-1. Accuracy: Does it correctly reflect the regulation?
-2. Clarity: Is the question unambiguous?
-3. Quality: Are all options plausible? Are explanations clear?
-4. Distinctiveness: Do the two questions test different skills?
-5. Difficulty: Is it appropriate for certification level?
+You MUST use the validator's results as a primary filter, but you may apply your own expert judgment for borderline cases. Consider:
+1. Validator's pass/fail and issues for each question
+2. Accuracy: Does it correctly reflect the regulation?
+3. Clarity: Is the question unambiguous?
+4. Quality: Are all options plausible? Are explanations clear?
+5. Distinctiveness: Do the two questions test different skills?
+6. Difficulty: Is it appropriate for certification level?
 
 Output format (JSON):
 {
-  "decision": "accept_both|refine_both|unify",
-  "reasoning": "Brief explanation of your decision",
-  "output": {
-    "conceptual": {...},  // Original or refined conceptual Q&A
-    "practical": {...},   // Original or refined practical Q&A
-    "unified": {...}      // Only if decision is "unify"
-  },
-  "improvements_made": ["List of improvements if refined"]
+    "decision": "accept_both|accept_conceptual|accept_practical|reject_both|unify",
+    "reasoning": "Brief explanation of your decision, referencing validator results",
+    "output": {
+        "conceptual": {...},  // Only if accepted
+        "practical": {...},   // Only if accepted
+        "unified": {...}      // Only if decision is "unify"
+    },
+    "improvements_made": ["List of improvements if refined"]
 }
 
 When refining:
@@ -61,9 +59,8 @@ When unifying:
         )
         self.model = "claude-sonnet-4-20250514"
     
-    def judge(self, conceptual_qa: Dict, practical_qa: Dict, chunk: Dict) -> Dict:
-        """Judge and potentially refine both Q&As"""
-        
+    def judge(self, conceptual_qa: Dict, practical_qa: Dict, validation_results: list, chunk: Dict) -> Dict:
+        """Judge and potentially refine both Q&As, using validator output"""
         user_prompt = f"""Original Regulation Content:
 {json.dumps(chunk, indent=2)}
 
@@ -73,9 +70,11 @@ CONCEPTUAL Question:
 PRACTICAL Question:
 {json.dumps(practical_qa, indent=2)}
 
-Please evaluate both questions and decide whether to accept both, refine both, or create a unified question.
+VALIDATION RESULTS (from strict validator):
+{json.dumps(validation_results, indent=2)}
+
+Please evaluate both questions and decide whether to accept both, refine both, or create a unified question. Use the validator's results as a primary filter, but apply your own expert judgment for borderline cases.
 """
-        
         response = self.client.messages.create(
             model=self.model,
             max_tokens=3000,
@@ -85,11 +84,10 @@ Please evaluate both questions and decide whether to accept both, refine both, o
             system=self.SYSTEM_PROMPT,
             temperature=0.5
         )
-        
         # Extract JSON from response
         content = response.content[0].text
         if "```json" in content:
-            content = content.split("```json")[1].split("```")[0].strip()
+            content = content.split("```json")[1].split("```", 1)[0].strip()
         elif "```" in content:
             content = content.split("```")[1].split("```")[0].strip()
         

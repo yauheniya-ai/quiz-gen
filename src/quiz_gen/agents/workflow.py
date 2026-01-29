@@ -86,8 +86,8 @@ class QuizGenerationWorkflow:
         workflow.add_node("parallel_start", lambda state: {})  # dummy node for parallel fan-out
         workflow.add_node("generate_conceptual", self._generate_conceptual)
         workflow.add_node("generate_practical", self._generate_practical)
-        workflow.add_node("judge_questions", self._judge_questions)
         workflow.add_node("validate_questions", self._validate_questions)
+        workflow.add_node("judge_questions", self._judge_questions)
         workflow.add_node("await_human_feedback", self._await_human_feedback)
 
         # Entry point
@@ -98,12 +98,12 @@ class QuizGenerationWorkflow:
         workflow.add_edge("parallel_start", "generate_practical")
 
         # Fan-in
-        workflow.add_edge("generate_conceptual", "judge_questions")
-        workflow.add_edge("generate_practical", "judge_questions")
+        workflow.add_edge("generate_conceptual", "validate_questions")
+        workflow.add_edge("generate_practical", "validate_questions")
 
         # Sequential tail
-        workflow.add_edge("judge_questions", "validate_questions")
-        workflow.add_edge("validate_questions", "await_human_feedback")
+        workflow.add_edge("validate_questions", "judge_questions")
+        workflow.add_edge("judge_questions", "await_human_feedback")
 
         # Conditional loop
         workflow.add_conditional_edges(
@@ -117,8 +117,39 @@ class QuizGenerationWorkflow:
         )
 
         return workflow
-
     
+    def _validate_questions(self, state: QuizGenerationState) -> QuizGenerationState:
+        """Validate both Q&As before judging"""
+        try:
+            print("✅ Validating questions...")
+            state["current_step"] = "validate_questions"
+            # Collect Q&As to validate
+            questions_to_validate = []
+            if state.get("conceptual_qa"):
+                questions_to_validate.append(state["conceptual_qa"])
+            if state.get("practical_qa"):
+                questions_to_validate.append(state["practical_qa"])
+            # Validate each question
+            validation_results = self.validator.validate_batch(
+                qas=questions_to_validate,
+                chunk=state["chunk"]
+            )
+            state["validation_results"] = validation_results
+            state["all_valid"] = all(v["valid"] for v in validation_results)
+            # Store all individually valid questions (for legacy output)
+            state["final_questions"] = [q for q, v in zip(questions_to_validate, validation_results) if v["valid"]]
+            for i, result in enumerate(validation_results, 1):
+                status = "✓ VALID" if result["valid"] else "✗ INVALID"
+                print(f"  Question {i}: {status} (score: {result['score']}/8)")
+                if result["issues"]:
+                    print(f"    Issues: {', '.join(result['issues'])}")
+        except Exception as e:
+            errors = state.get("errors", [])
+            errors.append(f"Validation error: {str(e)}")
+            state["errors"] = errors
+            print(f"✗ Error: {e}")
+        return state
+
     def _generate_conceptual(self, state: QuizGenerationState):
         print("🧠 Generating conceptual question...")
 
@@ -128,7 +159,7 @@ class QuizGenerationWorkflow:
                 improvement_feedback=state.get("improvement_feedback")
             )
 
-            print(f"✓ Conceptual question generated: {conceptual_qa.get('question', '')[:60]}...")
+            print(f"✓ Conceptual question generated: {conceptual_qa.get('question', '')[:100]}...")
 
             return {
                 "conceptual_qa": conceptual_qa
@@ -149,7 +180,7 @@ class QuizGenerationWorkflow:
                 improvement_feedback=state.get("improvement_feedback")
             )
 
-            print(f"✓ Practical question generated: {practical_qa.get('question', '')[:60]}...")
+            print(f"✓ Practical question generated: {practical_qa.get('question', '')[:100]}...")
 
             return {
                 "practical_qa": practical_qa
@@ -161,82 +192,79 @@ class QuizGenerationWorkflow:
             }
 
     
-    def _judge_questions(self, state: QuizGenerationState):
-        print("⚖️  Judging questions...")
-
-        try:
-            judge_result = self.judge.judge(
-                conceptual_qa=state["conceptual_qa"],
-                practical_qa=state["practical_qa"],
-                chunk=state["chunk"]
-            )
-
-            print(f"✓ Judge decision: {judge_result['decision']}")
-            print(f"  Reasoning: {judge_result['reasoning']}")
-
-            return {
-                "current_step": "judge_questions",
-                "judge_decision": judge_result["decision"],
-                "judge_reasoning": judge_result["reasoning"],
-                "judged_qas": judge_result["output"],
-            }
-
-        except Exception as e:
-            return {
-                "errors": [f"Judge error: {str(e)}"]
-            }
-
-    
     def _validate_questions(self, state: QuizGenerationState) -> QuizGenerationState:
-        """Validate questions (OpenAI)"""
+        """Validate both Q&As before judging"""
         try:
             print("✅ Validating questions...")
             state["current_step"] = "validate_questions"
-            
-            # Collect questions to validate based on judge decision
+            # Collect Q&As to validate
             questions_to_validate = []
-            
-            if state["judge_decision"] == "unify":
-                questions_to_validate = [state["judged_qas"]["unified"]]
-            else:
-                if state["judged_qas"].get("conceptual"):
-                    questions_to_validate.append(state["judged_qas"]["conceptual"])
-                if state["judged_qas"].get("practical"):
-                    questions_to_validate.append(state["judged_qas"]["practical"])
-            
+            if state.get("conceptual_qa"):
+                questions_to_validate.append(state["conceptual_qa"])
+            if state.get("practical_qa"):
+                questions_to_validate.append(state["practical_qa"])
             # Validate each question
             validation_results = self.validator.validate_batch(
                 qas=questions_to_validate,
                 chunk=state["chunk"]
             )
-            
             state["validation_results"] = validation_results
             state["all_valid"] = all(v["valid"] for v in validation_results)
-            
-            # Store final questions if all valid (without duplicating)
-            if state["all_valid"]:
-                state["final_questions"] = questions_to_validate
-            else:
-                state["final_questions"] = []
-            
+            # Store all individually valid questions (for legacy output)
+            state["final_questions"] = [q for q, v in zip(questions_to_validate, validation_results) if v["valid"]]
             for i, result in enumerate(validation_results, 1):
                 status = "✓ VALID" if result["valid"] else "✗ INVALID"
                 print(f"  Question {i}: {status} (score: {result['score']}/8)")
                 if result["issues"]:
                     print(f"    Issues: {', '.join(result['issues'])}")
-            
         except Exception as e:
             errors = state.get("errors", [])
             errors.append(f"Validation error: {str(e)}")
             state["errors"] = errors
             print(f"✗ Error: {e}")
-        
         return state
+
+
+    def _judge_questions(self, state: QuizGenerationState):
+        print("⚖️  Judging questions...")
+        try:
+            judge_result = self.judge.judge(
+                conceptual_qa=state.get("conceptual_qa"),
+                practical_qa=state.get("practical_qa"),
+                validation_results=state.get("validation_results"),
+                chunk=state["chunk"]
+            )
+            print(f"✓ Judge decision: {judge_result['decision']}")
+            print(f"  Reasoning: {judge_result['reasoning']}")
+            # Use judge output for final_questions
+            judged_qas = judge_result.get("output", {})
+            final_questions = []
+            if judge_result["decision"] == "unify" and "unified" in judged_qas:
+                final_questions.append(judged_qas["unified"])
+            else:
+                if "conceptual" in judged_qas:
+                    final_questions.append(judged_qas["conceptual"])
+                if "practical" in judged_qas:
+                    final_questions.append(judged_qas["practical"])
+            state["final_questions"] = final_questions
+            state["judge_decision"] = judge_result["decision"]
+            state["judge_reasoning"] = judge_result["reasoning"]
+            state["judged_qas"] = judged_qas
+            state["current_step"] = "judge_questions"
+            return state
+        except Exception as e:
+            errors = state.get("errors", [])
+            errors.append(f"Judge error: {str(e)}")
+            state["errors"] = errors
+            print(f"✗ Error: {e}")
+            return state
+
+    
     
     def _await_human_feedback(self, state: QuizGenerationState) -> QuizGenerationState:
         """Placeholder for human feedback - will be implemented in UI"""
         print("\n👤 Awaiting human feedback...")
-        print("   (In production, this will be handled by UI)")
+        print("   (This will be handled by UI)")
         
         state["current_step"] = "await_human_feedback"
         
