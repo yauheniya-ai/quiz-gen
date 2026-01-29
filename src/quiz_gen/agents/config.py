@@ -229,7 +229,7 @@ class AgentConfig:
         print(f"  Temperature: {self.temperature}")
         print(f"  Max Tokens: {self.max_tokens}")
         print(f"\nValidation Settings:")
-        print(f"  Min Validation Score: {self.min_validation_score}/8")
+        print(f"  Min Validation Score: {self.min_validation_score}/10")
         print(f"  Strict Validation: {self.strict_validation}")
         print(f"\nWorkflow Settings:")
         print(f"  Auto-accept Valid: {self.auto_accept_valid}")

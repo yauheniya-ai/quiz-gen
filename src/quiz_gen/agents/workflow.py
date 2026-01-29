@@ -140,7 +140,6 @@ class QuizGenerationWorkflow:
             state["final_questions"] = [q for q, v in zip(questions_to_validate, validation_results) if v["valid"]]
             for i, result in enumerate(validation_results, 1):
                 status = "✓ VALID" if result["valid"] else "✗ INVALID"
-                print(f"  Question {i}: {status} (score: {result['score']}/8)")
                 print(f"  Question {i}: {status} (score: {result['score']}/10)")
                 if result["issues"]:
                     print(f"    Issues: {', '.join(result['issues'])}")
@@ -160,7 +159,7 @@ class QuizGenerationWorkflow:
                 improvement_feedback=state.get("improvement_feedback")
             )
 
-            print(f"✓ Conceptual question generated: {conceptual_qa.get('question', '')[:100]}...")
+            print(f"✓ Conceptual question generated: {conceptual_qa.get('question', '')}...")
 
             return {
                 "conceptual_qa": conceptual_qa
@@ -181,7 +180,7 @@ class QuizGenerationWorkflow:
                 improvement_feedback=state.get("improvement_feedback")
             )
 
-            print(f"✓ Practical question generated: {practical_qa.get('question', '')[:100]}...")
+            print(f"✓ Practical question generated: {practical_qa.get('question', '')}...")
 
             return {
                 "practical_qa": practical_qa
@@ -215,7 +214,6 @@ class QuizGenerationWorkflow:
             state["final_questions"] = [q for q, v in zip(questions_to_validate, validation_results) if v["valid"]]
             for i, result in enumerate(validation_results, 1):
                 status = "✓ VALID" if result["valid"] else "✗ INVALID"
-                print(f"  Question {i}: {status} (score: {result['score']}/8)")
                 print(f"  Question {i}: {status} (score: {result['score']}/10)")
                 if result["issues"]:
                     print(f"    Issues: {', '.join(result['issues'])}")
