@@ -1,5 +1,11 @@
 ## Changelog
 
+### Version 0.2.7 (2026-01-29)
+
+Quiz output improvements:
+- Remove duplicate print output
+- Remove output print truncation
+
 ### Version 0.2.6 (2026-01-29)
 
 Quiz workflow and output improvements:
