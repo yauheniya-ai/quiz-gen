@@ -22,19 +22,29 @@ from quiz_gen.agents.config import AgentConfig
 
 ANNEX_IX = {
     "section_type": "annex",
-    "number": "ix",
-    "title": "Essential requirements for unmanned aircraft",
-    "content": """Essential requirements for unmanned aircraft
-1.   ESSENTIAL REQUIREMENTS FOR THE DESIGN, PRODUCTION, MAINTENANCE AND OPERATION OF UNMANNED AIRCRAFT
-1.1.   The operator and the remote pilot of an unmanned aircraft must be aware of the applicable Union and national rules relating to the intended operations, in particular with regard to safety, privacy, data protection, liability, insurance, security and environmental protection. The operator and the remote pilot must be able to ensure the safety of operation and safe separation of the unmanned aircraft from people on the ground and from other airspace users. This includes good knowledge of the operating instructions provided by the producer, of safe and environmentally-friendly use of unmanned aircraft in the airspace, and of all relevant functionalities of the unmanned aircraft and applicable rules of the air and ATM/ANS procedures.
-1.2.   An unmanned aircraft must be designed and constructed so that it is fit for its intended function, and can be operated, adjusted and maintained without putting persons at risk.
-1.3.   If necessary to mitigate risks pertaining to safety, privacy, protection of personal data, security or the environment, arising from the operation, the unmanned aircraft must have the corresponding and specific features and functionalities which take into account the principles of privacy and protection of personal data by design and by default. According to the needs those features and functionalities must ensure easy identification of the aircraft and of the nature and purpose of the operation; and must ensure that applicable limitations, prohibitions or conditions be complied with, in particular with respect to the operation in particular geographical zones, beyond certain distances from the operator or at certain altitudes.
-1.4.   The organisation responsible for the production or for the marketing of the unmanned aircraft must provide information to the operator of an unmanned aircraft and, where relevant, to the maintenance organisation on the kind of operations for which the unmanned aircraft is designed together with the limitations and information necessary for its safe operation, including operational and environmental performance, airworthiness limitations and emergency procedures. This information shall be given in a clear, consistent and unambiguous manner. The operational capabilities of unmanned aircraft that can be used in operations that do not require a certificate or declaration must allow the possibility to introduce limitations which meet airspace rules applicable to such operations..""",
-    "parent_section": None,
-    "hierarchy_path": ["annex ix"],
+    "number": "IX",
+    "title": "ANNEX IX",
+    "content": """
+4.   ESSENTIAL REQUIREMENTS FOR REGISTRATION OF UNMANNED AIRCRAFT AND THEIR OPERATORS AND MARKING OF UNMANNED AIRCRAFT
+
+4.1.   Without prejudice to obligations of Member States under the Chicago Convention unmanned aircraft the design of which is subject to certification pursuant to Article 56(1) shall be registered in accordance with the implementing acts referred to in Article 57.
+
+4.2.   Operators of unmanned aircraft shall be registered in accordance with the implementing acts referred to in Article 57, where they operate any of the following:
+
+(a) unmanned aircraft which, in the case of impact, can transfer, to a human, kinetic energy above 80 Joules;
+
+(b) unmanned aircraft the operation of which presents risks to privacy, protection of personal data, security or the environment;
+
+(c) unmanned aircraft the design of which is subject to certification pursuant to Article 56(1).
+
+4.3.   Where a requirement of registration applies pursuant to point 4.1 or 4.2, the unmanned aircraft concerned shall be individually marked and identified, in accordance with the implementing acts referred to in Article 57.""",
+    "hierarchy_path": [
+      "REGULATION (EU) 2018/1139 OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL",
+      "ANNEX IX"
+    ],
     "metadata": {
-        "article_number": "ix",
-        "chapter": None
+      "id": "anx_IX",
+      "subtitle": ""
     }
 }
 
@@ -91,20 +101,20 @@ def main():
     print("="*70)
     print()
     
-    # Judge decision
-    print(f"Judge Decision: {result.get('judge_decision', 'N/A')}")
-    print(f"Judge Reasoning: {result.get('judge_reasoning', 'N/A')}")
-    print()
-    
     # Validation
     print(f"All Valid: {result.get('all_valid', False)}")
     if result.get('validation_results'):
         for i, val_result in enumerate(result['validation_results'], 1):
             print(f"\nValidation {i}:")
             print(f"  Valid: {val_result.get('valid', False)}")
-            print(f"  Score: {val_result.get('score', 0)}/8")
+            print(f"  Score: {val_result.get('score', 0)}/10")
             if val_result.get('issues'):
                 print(f"  Issues: {', '.join(val_result['issues'])}")
+    print()
+
+    # Judge decision
+    print(f"Judge Decision: {result.get('judge_decision', 'N/A')}")
+    print(f"Judge Reasoning: {result.get('judge_reasoning', 'N/A')}")
     print()
     
     # Generated questions

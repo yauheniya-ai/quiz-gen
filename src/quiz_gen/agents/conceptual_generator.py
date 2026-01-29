@@ -1,5 +1,5 @@
 """
-Conceptual Generator Agent (OpenAI)
+Conceptual Generator Agent
 Focuses on theoretical understanding and foundational concepts
 """
 
@@ -10,7 +10,7 @@ from typing import Dict, Optional
 
 
 class ConceptualGenerator:
-    """Generates conceptual quiz questions using OpenAI"""
+    """Generates conceptual quiz questions"""
     
     SYSTEM_PROMPT = """You are an expert quiz question generator focused on CONCEPTUAL UNDERSTANDING.
 

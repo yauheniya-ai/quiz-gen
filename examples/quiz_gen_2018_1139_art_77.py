@@ -72,18 +72,17 @@ def main():
     print("RESULTS")
     print("="*70)
     print()
-    print(f"Judge Decision: {result.get('judge_decision', 'N/A')}")
-    print(f"Judge Reasoning: {result.get('judge_reasoning', 'N/A')}")
     print(f"All Valid: {result.get('all_valid', False)}\n")
-
     if result.get('validation_results'):
         for i, val_result in enumerate(result['validation_results'], 1):
             print(f"Validation {i}:")
             print(f"  Valid: {val_result.get('valid', False)}")
-            print(f"  Score: {val_result.get('score', 0)}/8")
+            print(f"  Score: {val_result.get('score', 0)}/10")
             if val_result.get('issues'):
                 print(f"  Issues: {', '.join(val_result['issues'])}")
         print()
+    print(f"Judge Decision: {result.get('judge_decision', 'N/A')}")
+    print(f"Judge Reasoning: {result.get('judge_reasoning', 'N/A')}")
 
     if result.get('final_questions'):
         print("="*70)

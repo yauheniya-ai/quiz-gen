@@ -97,11 +97,11 @@ class QuizGenerationWorkflow:
         workflow.add_edge("parallel_start", "generate_conceptual")
         workflow.add_edge("parallel_start", "generate_practical")
 
-        # Fan-in
+        # Fan-in: after both generators, go to validation
         workflow.add_edge("generate_conceptual", "validate_questions")
         workflow.add_edge("generate_practical", "validate_questions")
 
-        # Sequential tail
+        # Sequential: validation -> judge -> human feedback
         workflow.add_edge("validate_questions", "judge_questions")
         workflow.add_edge("judge_questions", "await_human_feedback")
 
@@ -141,6 +141,7 @@ class QuizGenerationWorkflow:
             for i, result in enumerate(validation_results, 1):
                 status = "✓ VALID" if result["valid"] else "✗ INVALID"
                 print(f"  Question {i}: {status} (score: {result['score']}/8)")
+                print(f"  Question {i}: {status} (score: {result['score']}/10)")
                 if result["issues"]:
                     print(f"    Issues: {', '.join(result['issues'])}")
         except Exception as e:
@@ -151,7 +152,7 @@ class QuizGenerationWorkflow:
         return state
 
     def _generate_conceptual(self, state: QuizGenerationState):
-        print("🧠 Generating conceptual question...")
+        print("💡 Generating conceptual question...")
 
         try:
             conceptual_qa = self.conceptual_gen.generate(
@@ -172,7 +173,7 @@ class QuizGenerationWorkflow:
 
     
     def _generate_practical(self, state: QuizGenerationState):
-        print("🔧 Generating practical question...")
+        print("⚙️ Generating practical question...")
 
         try:
             practical_qa = self.practical_gen.generate(
@@ -195,7 +196,7 @@ class QuizGenerationWorkflow:
     def _validate_questions(self, state: QuizGenerationState) -> QuizGenerationState:
         """Validate both Q&As before judging"""
         try:
-            print("✅ Validating questions...")
+            print("📝 Validating questions...")
             state["current_step"] = "validate_questions"
             # Collect Q&As to validate
             questions_to_validate = []
@@ -215,6 +216,7 @@ class QuizGenerationWorkflow:
             for i, result in enumerate(validation_results, 1):
                 status = "✓ VALID" if result["valid"] else "✗ INVALID"
                 print(f"  Question {i}: {status} (score: {result['score']}/8)")
+                print(f"  Question {i}: {status} (score: {result['score']}/10)")
                 if result["issues"]:
                     print(f"    Issues: {', '.join(result['issues'])}")
         except Exception as e:
@@ -226,7 +228,7 @@ class QuizGenerationWorkflow:
 
 
     def _judge_questions(self, state: QuizGenerationState):
-        print("⚖️  Judging questions...")
+        print("⚖️ Judging questions...")
         try:
             judge_result = self.judge.judge(
                 conceptual_qa=state.get("conceptual_qa"),
@@ -236,20 +238,21 @@ class QuizGenerationWorkflow:
             )
             print(f"✓ Judge decision: {judge_result['decision']}")
             print(f"  Reasoning: {judge_result['reasoning']}")
-            # Use judge output for final_questions
-            judged_qas = judge_result.get("output", {})
-            final_questions = []
-            if judge_result["decision"] == "unify" and "unified" in judged_qas:
-                final_questions.append(judged_qas["unified"])
-            else:
-                if "conceptual" in judged_qas:
-                    final_questions.append(judged_qas["conceptual"])
-                if "practical" in judged_qas:
-                    final_questions.append(judged_qas["practical"])
+            # Use judge questions array for final_questions
+            final_questions = judge_result.get("questions", [])
+            # Ensure generator and model metadata are present
+            for q in final_questions:
+                if "generator" not in q or not q["generator"]:
+                    if q.get("focus") == "conceptual":
+                        q["generator"] = "conceptual"
+                        q["model"] = getattr(self.conceptual_gen, "model", "gpt-4o")
+                    elif q.get("focus") == "practical":
+                        q["generator"] = "practical"
+                        q["model"] = getattr(self.practical_gen, "model", "claude-sonnet-4-20250514")
             state["final_questions"] = final_questions
             state["judge_decision"] = judge_result["decision"]
             state["judge_reasoning"] = judge_result["reasoning"]
-            state["judged_qas"] = judged_qas
+            state["judged_qas"] = final_questions
             state["current_step"] = "judge_questions"
             return state
         except Exception as e:
@@ -298,11 +301,11 @@ class QuizGenerationWorkflow:
             "improvement_feedback": improvement_feedback,
             "conceptual_qa": None,
             "practical_qa": None,
+            "validation_results": None,
+            "all_valid": None,
             "judge_decision": None,
             "judge_reasoning": None,
             "judged_qas": None,
-            "validation_results": None,
-            "all_valid": None,
             "final_questions": [],
             "human_feedback": None,
             "human_action": None,

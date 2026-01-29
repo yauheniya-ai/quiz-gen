@@ -1,5 +1,5 @@
 """
-Validator Agent (OpenAI)
+Validator Agent 
 Checks formal requirements and structure compliance
 """
 
@@ -10,7 +10,7 @@ from typing import Dict, List, Optional
 
 
 class Validator:
-    """Validates quiz question format and structure using OpenAI"""
+    """Validates quiz question format and structure"""
     
     SYSTEM_PROMPT = """You are a strict validator for a multi-agent quiz generation workflow. Your job is to pre-screen each quiz question for structural and content compliance BEFORE it is shown to the judge or end user.
 
@@ -41,11 +41,13 @@ Output format (JSON):
         "has_all_explanations": true/false,
         "explanations_concise": true/false,
         "question_clear": true/false,
+        "correct_explanation": true/false,
+        "wrong_explanations_are_hints": true/false,
         "options_plausible": true/false,
-        "unambiguous": true/false,
-        "regulation_based": true/false
+        "question_unambiguous": true/false,
+        "regulation_based": true/false,
     },
-    "score": 8  // Number of checks passed out of 8
+    "score": 10  // Number of checks passed out of 10
 }
 
 Be strict but fair. Mark as invalid only if critical requirements are missing. Your output will be used by the judge agent to make the final decision on which questions to accept for the end user.

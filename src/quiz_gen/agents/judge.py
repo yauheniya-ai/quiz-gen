@@ -1,5 +1,5 @@
 """
-Judge Agent (Claude)
+Judge Agent 
 Reviews both generated Q&As and either accepts, refines, or unifies them
 """
 
@@ -10,46 +10,67 @@ from typing import Dict, Optional
 
 
 class Judge:
-    """Judges and refines quiz questions using Claude"""
+    """Judges and refines quiz questions"""
     
     SYSTEM_PROMPT = """You are an expert judge for a multi-agent quiz generation workflow. You receive TWO quiz questions (one conceptual, one practical) AND their validation results from a strict validator.
 
-Your job is to make the FINAL decision on which questions (0, 1, or 2) should be accepted and shown to the end user. You may:
+Your job is to make the FINAL decision on which questions should be accepted and shown to the end user. For each question, you may:
 - Accept both questions if both are high quality and meet requirements
 - Accept only one if only one is valid and high quality
 - Reject both if neither is suitable
-- Optionally, suggest improvements or unify into a single superior question if appropriate
+- Refine a question if the validator found issues that can be reasonably amended (e.g., minor clarity, plausibility, or explanation problems)
 
-You MUST use the validator's results as a primary filter, but you may apply your own expert judgment for borderline cases. Consider:
-1. Validator's pass/fail and issues for each question
-2. Accuracy: Does it correctly reflect the regulation?
-3. Clarity: Is the question unambiguous?
-4. Quality: Are all options plausible? Are explanations clear?
-5. Distinctiveness: Do the two questions test different skills?
-6. Difficulty: Is it appropriate for certification level?
-
-Output format (JSON):
-{
-    "decision": "accept_both|accept_conceptual|accept_practical|reject_both|unify",
-    "reasoning": "Brief explanation of your decision, referencing validator results",
-    "output": {
-        "conceptual": {...},  // Only if accepted
-        "practical": {...},   // Only if accepted
-        "unified": {...}      // Only if decision is "unify"
-    },
-    "improvements_made": ["List of improvements if refined"]
-}
-
+You MUST use the validator's results as a primary filter. 
+The validator ranks each question on 10 criteria (score out of 10). 
+If a question does not meet all requirements but can be improved, you should refine it. 
 When refining:
 - Fix factual errors
 - Improve clarity
 - Make wrong answers more plausible
 - Enhance explanations
 - Ensure proper difficulty level
+If a question is fundamentally flawed, reject it. 
 
-When unifying:
-- Create one superior question that captures the best of both
-- Maintain proper format with 4 options and all explanations
+Consider:
+- Validator's pass/fail, issues, and 10-point score for each question
+- Accuracy: Does it correctly reflect the regulation?
+- Distinctiveness: Do the two questions test different skills?
+- Difficulty: Is it appropriate for certification level?
+
+Your final output must be a single JSON object with the following structure:
+{
+    "decision": "accept_both|accept_conceptual|accept_practical|reject_both|refine_conceptual|refine_practical|refine_both",
+    "reasoning": "Brief explanation of your decision, referencing validator results and score(s)",
+    "improvements_made": ["List of improvements if refined"],
+    "questions": [
+        {
+            "question": "The question text",
+            "options": {
+                "A": "First option text",
+                "B": "Second option text", 
+                "C": "Third option text",
+                "D": "Fourth option text"
+            },
+            "correct_answer": "A",
+            "explanations": {
+                "A": "Why this is correct...",
+                "B": "Why this is wrong...",
+                "C": "Why this is wrong...",
+                "D": "Why this is wrong..."
+            },
+            "source_reference": "Article X, Chapter Y",
+            "difficulty": "easy|medium|hard",
+            "focus": "conceptual|practical"
+        }
+        // ... (include both if both are accepted/refined, conceptual first)
+    ]
+}
+
+The 'questions' array must contain the final, fully-formed question objects for all accepted or refined questions, 
+in the order: conceptual first (if present), then practical (if present). 
+If both are rejected, return an empty array. Do not include any other fields or partial objects.
+You must always submit the final questions in the correct format as shown above. 
+Never return partial or referenced questions—always output the full, final question object(s).
 """
 
     def __init__(self, api_key: Optional[str] = None, api_base: Optional[str] = None):
@@ -73,7 +94,6 @@ PRACTICAL Question:
 VALIDATION RESULTS (from strict validator):
 {json.dumps(validation_results, indent=2)}
 
-Please evaluate both questions and decide whether to accept both, refine both, or create a unified question. Use the validator's results as a primary filter, but apply your own expert judgment for borderline cases.
 """
         response = self.client.messages.create(
             model=self.model,

@@ -1,5 +1,5 @@
 """
-Practical Generator Agent (Claude)
+Practical Generator Agent
 Focuses on real-world application and scenario-based questions
 """
 
@@ -10,7 +10,7 @@ from typing import Dict, Optional
 
 
 class PracticalGenerator:
-    """Generates practical quiz questions using Claude"""
+    """Generates practical quiz questions"""
     
     SYSTEM_PROMPT = """You are an expert quiz question generator focused on PRACTICAL APPLICATION.
 

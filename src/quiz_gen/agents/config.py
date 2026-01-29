@@ -54,7 +54,7 @@ class AgentConfig:
     # ============================================================================
     # Validation Settings
     # ============================================================================
-    min_validation_score: int = 6  # Minimum score out of 8 to pass
+    min_validation_score: int = 6  # Minimum score out of 10 to pass
     strict_validation: bool = True
     
     # ============================================================================
@@ -127,8 +127,8 @@ class AgentConfig:
             errors.append(f"max_tokens must be at least 100, got {self.max_tokens}")
         
         # Validate validation score
-        if not 0 <= self.min_validation_score <= 8:
-            errors.append(f"min_validation_score must be between 0 and 8, got {self.min_validation_score}")
+        if not 0 <= self.min_validation_score <= 10:
+            errors.append(f"min_validation_score must be between 0 and 10, got {self.min_validation_score}")
         
         if errors:
             raise ValueError("Configuration validation failed:\n" + "\n".join(f"  - {e}" for e in errors))

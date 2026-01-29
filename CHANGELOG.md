@@ -1,5 +1,12 @@
 ## Changelog
 
+### Version 0.2.6 (2026-01-29)
+
+Quiz workflow and output improvements:
+- Validation scoring updated to be out of 10 (was previously out of 8)
+- All output reporting now shows validation results before judge decision and reasoning, matching workflow logic
+- All output questions now include generator/model metadata for traceability
+- Updated all example scripts to print validation results before judge decision
 
 ### Version 0.2.5 (2026-01-29)
 
@@ -10,8 +17,6 @@ Quiz generation workflow refactor:
 - Fixed bug: judge now accepts validation_results as input and includes them in the model prompt
 - Removed duplicate and dead code in workflow; ensured correct node order and argument passing
 - Fixed syntax error in judge.py (unmatched parenthesis)
-
-
 
 ### Version 0.2.4 (2026-01-29)
 
