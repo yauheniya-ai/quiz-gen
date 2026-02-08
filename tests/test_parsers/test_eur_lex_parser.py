@@ -28,8 +28,8 @@ def test_title_chunk():
 	title_chunks = [c for c in chunks if c.section_type == SectionType.TITLE]
 	assert len(title_chunks) == 1
 	chunk = title_chunks[0]
-	assert 'REGULATION (EU) 2018/1139' in chunk.title
-	assert chunk.content.startswith('REGULATION (EU) 2018/1139')
+	assert 'REGULATION (EU) 2024/1689' in chunk.title
+	assert chunk.content.startswith('REGULATION (EU) 2024/1689')
 
 def test_preamble_chunk():
 	parser = get_parser()
