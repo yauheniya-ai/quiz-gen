@@ -73,8 +73,8 @@ Guidelines:
         """Initialize model client"""
         self.provider = provider or "anthropic"
         self.model = model or "claude-sonnet-4-20250514"
-        self.temperature = 1.0 if temperature is None else temperature
-        self.max_tokens = 2000 if max_tokens is None else max_tokens
+        self.temperature = temperature
+        self.max_tokens = max_tokens
         if self.provider == "anthropic":
             self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
         elif self.provider in {"google", "gemini"}:
@@ -104,13 +104,16 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
         user_prompt += "\n\nGenerate ONE practical quiz question in JSON format."
 
         if self.provider == "anthropic":
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=self.max_tokens,
-                messages=[{"role": "user", "content": user_prompt}],
-                system=self.SYSTEM_PROMPT,
-                temperature=self.temperature,
-            )
+            params = {
+                "model": self.model,
+                "messages": [{"role": "user", "content": user_prompt}],
+                "system": self.SYSTEM_PROMPT,
+            }
+            if self.max_tokens is not None:
+                params["max_tokens"] = self.max_tokens
+            if self.temperature is not None:
+                params["temperature"] = self.temperature
+            response = self.client.messages.create(**params)
 
             # Extract JSON from response
             content = response.content[0].text
@@ -122,14 +125,15 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
 
             result = json.loads(content)
         elif self.provider in {"google", "gemini"}:
+            config_kwargs = {"system_instruction": self.SYSTEM_PROMPT}
+            if self.temperature is not None:
+                config_kwargs["temperature"] = self.temperature
+            if self.max_tokens is not None:
+                config_kwargs["max_output_tokens"] = self.max_tokens
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=user_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=self.SYSTEM_PROMPT,
-                    temperature=self.temperature,
-                    max_output_tokens=self.max_tokens,
-                ),
+                config=types.GenerateContentConfig(**config_kwargs),
             )
             content = response.text or ""
             if "```json" in content:
@@ -138,15 +142,18 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
                 content = content.split("```")[1].split("```")[0].strip()
             result = json.loads(content)
         elif self.provider == "mistral":
-            response = self.client.chat.complete(
-                model=self.model,
-                messages=[
+            params = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-            )
+            }
+            if self.temperature is not None:
+                params["temperature"] = self.temperature
+            if self.max_tokens is not None:
+                params["max_tokens"] = self.max_tokens
+            response = self.client.chat.complete(**params)
             content = response.choices[0].message.content
             if "```json" in content:
                 content = content.split("```json")[1].split("```", 1)[0].strip()
@@ -154,16 +161,19 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
                 content = content.split("```")[1].split("```")[0].strip()
             result = json.loads(content)
         else:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
+            params = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                response_format={"type": "json_object"},
-            )
+                "response_format": {"type": "json_object"},
+            }
+            if self.temperature is not None:
+                params["temperature"] = self.temperature
+            if self.max_tokens is not None:
+                params["max_tokens"] = self.max_tokens
+            response = self.client.chat.completions.create(**params)
             result = json.loads(response.choices[0].message.content)
         result["generator"] = "practical"
         result["model"] = self.model

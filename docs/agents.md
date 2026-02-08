@@ -257,7 +257,7 @@ config = AgentConfig(
   # API Keys (or load from environment)
   openai_api_key="sk-...",
   anthropic_api_key="sk-ant-...",
-  google_api_key="...",  # or GEMINI_API_KEY via .env
+  gemini_api_key="...",  # or GOOGLE_API_KEY/GEMINI_API_KEY via .env
   mistral_api_key="...",
 
   # Provider + Model Selection per agent
@@ -289,6 +289,9 @@ config = AgentConfig(
   min_validation_score=6,
   strict_validation=True,
 )
+
+# Note: temperature/max_tokens are only sent to providers when set per-agent.
+# Global temperature/max_tokens fields are kept for compatibility, but do not apply by default.
 ```
 
 ### Environment Variables

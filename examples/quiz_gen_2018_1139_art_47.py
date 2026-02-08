@@ -61,7 +61,7 @@ def main():
 
     # Initialize configuration
     print("Initializing configuration...")
-    config = AgentConfig(temperature=0.7, auto_accept_valid=False, verbose=True)
+    config = AgentConfig(auto_accept_valid=False, verbose=True)
 
     try:
         config.validate()

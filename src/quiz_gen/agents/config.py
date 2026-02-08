@@ -49,8 +49,8 @@ class AgentConfig:
     # ============================================================================
     # Generation Settings
     # ============================================================================
-    temperature: float = 1.0
-    max_tokens: int = 2000
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
     conceptual_temperature: Optional[float] = None
     practical_temperature: Optional[float] = None
     judge_temperature: Optional[float] = None
@@ -122,24 +122,7 @@ class AgentConfig:
         if self.output_directory:
             Path(self.output_directory).mkdir(parents=True, exist_ok=True)
 
-        # Apply global defaults when per-agent settings are not provided
-        if self.conceptual_temperature is None:
-            self.conceptual_temperature = self.temperature
-        if self.practical_temperature is None:
-            self.practical_temperature = self.temperature
-        if self.judge_temperature is None:
-            self.judge_temperature = self.temperature
-        if self.validator_temperature is None:
-            self.validator_temperature = self.temperature
-
-        if self.conceptual_max_tokens is None:
-            self.conceptual_max_tokens = self.max_tokens
-        if self.practical_max_tokens is None:
-            self.practical_max_tokens = self.max_tokens
-        if self.judge_max_tokens is None:
-            self.judge_max_tokens = self.max_tokens
-        if self.validator_max_tokens is None:
-            self.validator_max_tokens = self.max_tokens
+        # Per-agent temperatures and max_tokens are optional by default.
 
     def validate(self) -> None:
         """
@@ -201,7 +184,7 @@ class AgentConfig:
             "judge_temperature": self.judge_temperature,
             "validator_temperature": self.validator_temperature,
         }.items():
-            if value is None or not 0 <= value <= 2:
+            if value is not None and not 0 <= value <= 2:
                 errors.append(f"{label} must be between 0 and 2, got {value}")
 
         # Validate per-agent max_tokens
@@ -211,7 +194,7 @@ class AgentConfig:
             "judge_max_tokens": self.judge_max_tokens,
             "validator_max_tokens": self.validator_max_tokens,
         }.items():
-            if value is None or value < 100:
+            if value is not None and value < 100:
                 errors.append(f"{label} must be at least 100, got {value}")
 
         # Validate validation score
@@ -392,7 +375,7 @@ if __name__ == "__main__":
     custom_config = AgentConfig(
         openai_api_key="sk-test-key",
         anthropic_api_key="sk-ant-test-key",
-        temperature=0.5,
+        conceptual_temperature=0.5,
         min_validation_score=7,
         auto_accept_valid=True,
         verbose=True,
