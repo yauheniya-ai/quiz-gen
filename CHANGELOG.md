@@ -1,12 +1,19 @@
 ## Changelog
 
+### Version 0.3.2 (2026-02-08)
+
+Code quality and example cleanup:
+- Fixed lint issues across examples, CLI, agents, and parser (unused imports, f-string cleanup, ambiguous variable name).
+- Adjusted example scripts to defer package imports until runtime and updated the multi-provider example.
+- Normalized formatting with Black.
+
+
 ### Version 0.3.1 (2026-02-08)
 
 Multi-provider and multi-model support:
 - Added per-agent provider/model configuration (OpenAI, Anthropic, Google, Mistral) with provider-specific API key validation.
 - Implemented provider-specific client paths in all agents and workflow wiring for flexible model selection.
 - Added a multi-provider example script and updated dependencies for Google GenAI and Mistral SDKs.
-
 
 ### Version 0.3.0 (2026-02-08)
 
