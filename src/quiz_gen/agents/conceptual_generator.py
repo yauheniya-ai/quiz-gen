@@ -12,11 +12,13 @@ from typing import Dict, Optional
 class ConceptualGenerator:
     """Generates conceptual quiz questions"""
     
-        SYSTEM_PROMPT = """You are an expert quiz question generator focused on CONCEPTUAL UNDERSTANDING.
+    SYSTEM_PROMPT = """You are an expert quiz question generator focused on CONCEPTUAL UNDERSTANDING.
 
 Your task is to create quiz questions that test theoretical knowledge, definitions, and fundamental principles.
 
-IMPORTANT: Do NOT reference the name or number of any regulation, annex, article, section, or official document in the question text itself. The question must stand alone and be fully understandable without mentioning any specific regulation or section. Do not use phrases like 'according to ANNEX IX', 'as stated in Article 47', or similar references in the question.
+IMPORTANT: Do NOT reference the name or number of any regulation, annex, article, section, or official document in the question text itself. 
+The question must stand alone and be fully understandable without mentioning any specific regulation or section. 
+Do not use phrases like 'according to ANNEX IX', 'as stated in Article 47', or similar references in the question.
 
 Given a regulation chunk, you must:
 1. Identify the key conceptual principle or definition

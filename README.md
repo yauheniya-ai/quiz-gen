@@ -3,6 +3,8 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI version](https://img.shields.io/pypi/v/quiz-gen?color=blue&label=PyPI)](https://pypi.org/project/quiz-gen/)
+[![Tests](https://github.com/yauheniya-ai/quiz-gen/actions/workflows/tests.yml/badge.svg)](https://github.com/yauheniya-ai/quiz-gen/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/yauheniya-ai/b7b642418d8dfed95ea2a1fde48de454/raw/coverage.json)](https://github.com/yauheniya-ai/quiz-gen/actions/workflows/tests.yml)
 [![GitHub last commit](https://img.shields.io/github/last-commit/yauheniya-ai/quiz-gen)](https://github.com/yauheniya-ai/quiz-gen/commits/main)
 [![Downloads](https://pepy.tech/badge/quiz-gen)](https://pepy.tech/project/quiz-gen)
 
