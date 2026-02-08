@@ -58,26 +58,48 @@ class QuizGenerationWorkflow:
         self.config.validate()
         
         # Initialize agents
+        conceptual_key, conceptual_base = self._get_provider_config(self.config.conceptual_provider)
+        practical_key, practical_base = self._get_provider_config(self.config.practical_provider)
+        judge_key, judge_base = self._get_provider_config(self.config.judge_provider)
+        validator_key, validator_base = self._get_provider_config(self.config.validator_provider)
+
         self.conceptual_gen = ConceptualGenerator(
-            api_key=self.config.openai_api_key,
-            api_base=self.config.openai_api_base
+            api_key=conceptual_key,
+            api_base=conceptual_base,
+            provider=self.config.conceptual_provider,
+            model=self.config.conceptual_model
         )
         self.practical_gen = PracticalGenerator(
-            api_key=self.config.anthropic_api_key,
-            api_base=self.config.anthropic_api_base
+            api_key=practical_key,
+            api_base=practical_base,
+            provider=self.config.practical_provider,
+            model=self.config.practical_model
         )
         self.judge = Judge(
-            api_key=self.config.anthropic_api_key,
-            api_base=self.config.anthropic_api_base
+            api_key=judge_key,
+            api_base=judge_base,
+            provider=self.config.judge_provider,
+            model=self.config.judge_model
         )
         self.validator = Validator(
-            api_key=self.config.openai_api_key,
-            api_base=self.config.openai_api_base
+            api_key=validator_key,
+            api_base=validator_base,
+            provider=self.config.validator_provider,
+            model=self.config.validator_model
         )
         
         # Build graph
         self.graph = self._build_graph()
         self.app = self.graph.compile(checkpointer=MemorySaver())
+
+    def _get_provider_config(self, provider: str):
+        if provider == "anthropic":
+            return self.config.anthropic_api_key, self.config.anthropic_api_base
+        if provider == "mistral":
+            return self.config.mistral_api_key, self.config.mistral_api_base
+        if provider in {"gemini", "google"}:
+            return self.config.gemini_api_key, self.config.gemini_api_base
+        return self.config.openai_api_key, self.config.openai_api_base
     
     def _build_graph(self) -> StateGraph:
         workflow = StateGraph(QuizGenerationState)

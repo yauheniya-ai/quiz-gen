@@ -37,6 +37,10 @@ class AgentConfig:
     # ============================================================================
     # Model Configurations
     # ============================================================================
+    conceptual_provider: str = "openai"
+    practical_provider: str = "anthropic"
+    validator_provider: str = "openai"
+    judge_provider: str = "anthropic"
     conceptual_model: str = "gpt-4o"
     practical_model: str = "claude-sonnet-4-20250514"
     validator_model: str = "gpt-4o"
@@ -119,20 +123,45 @@ class AgentConfig:
         """
         errors = []
         
-        # Check required API keys
-        if not self.openai_api_key:
-            errors.append("OPENAI_API_KEY is required (set via parameter or environment variable)")
-        
-        if not self.anthropic_api_key:
-            errors.append("ANTHROPIC_API_KEY is required (set via parameter or environment variable)")
+        # Check required API keys for selected providers
+        provider_key_map = {
+            "openai": (self.openai_api_key, "OPENAI_API_KEY"),
+            "anthropic": (self.anthropic_api_key, "ANTHROPIC_API_KEY"),
+            "mistral": (self.mistral_api_key, "MISTRAL_API_KEY"),
+            "gemini": (self.gemini_api_key, "GEMINI_API_KEY"),
+            "google": (self.gemini_api_key, "GOOGLE_API_KEY"),
+        }
+
+        for provider in {
+            self.conceptual_provider,
+            self.practical_provider,
+            self.judge_provider,
+            self.validator_provider,
+        }:
+            key_value, env_name = provider_key_map.get(provider, (None, None))
+            if env_name and not key_value:
+                errors.append(f"{env_name} is required for provider '{provider}' (set via parameter or environment variable)")
         
         # Validate model names
-        valid_openai_models = ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
-        if self.conceptual_model not in valid_openai_models:
-            errors.append(f"Invalid conceptual_model: {self.conceptual_model}")
-        
-        if self.validator_model not in valid_openai_models:
-            errors.append(f"Invalid validator_model: {self.validator_model}")
+        if not self.conceptual_provider:
+            errors.append("conceptual_provider must be set")
+        if not self.practical_provider:
+            errors.append("practical_provider must be set")
+        if not self.judge_provider:
+            errors.append("judge_provider must be set")
+        if not self.validator_provider:
+            errors.append("validator_provider must be set")
+
+        if not self.conceptual_model:
+            errors.append("conceptual_model must be set")
+        if not self.practical_model:
+            errors.append("practical_model must be set")
+        if not self.judge_model:
+            errors.append("judge_model must be set")
+        if not self.validator_model:
+            errors.append("validator_model must be set")
+
+        # Model identifiers are provider-specific and change over time; avoid hardcoded lists.
 
         # Base URLs are optional and only used for custom endpoints or proxies
         
@@ -162,6 +191,10 @@ class AgentConfig:
             "anthropic_api_base": self.anthropic_api_base,
             "mistral_api_base": self.mistral_api_base,
             "gemini_api_base": self.gemini_api_base,
+            "conceptual_provider": self.conceptual_provider,
+            "practical_provider": self.practical_provider,
+            "judge_provider": self.judge_provider,
+            "validator_provider": self.validator_provider,
             "conceptual_model": self.conceptual_model,
             "practical_model": self.practical_model,
             "judge_model": self.judge_model,
@@ -245,10 +278,10 @@ class AgentConfig:
         print(f"Mistral API Key: {'✓ Set' if self.mistral_api_key else '✗ Missing'}")
         print(f"Gemini API Key: {'✓ Set' if self.gemini_api_key else '✗ Missing'}")
         print(f"\nModels:")
-        print(f"  Conceptual Generator: {self.conceptual_model}")
-        print(f"  Practical Generator: {self.practical_model}")
-        print(f"  Judge: {self.judge_model}")
-        print(f"  Validator: {self.validator_model}")
+        print(f"  Conceptual Generator: {self.conceptual_provider} / {self.conceptual_model}")
+        print(f"  Practical Generator: {self.practical_provider} / {self.practical_model}")
+        print(f"  Judge: {self.judge_provider} / {self.judge_model}")
+        print(f"  Validator: {self.validator_provider} / {self.validator_model}")
         print(f"\nGeneration Settings:")
         print(f"  Temperature: {self.temperature}")
         print(f"  Max Tokens: {self.max_tokens}")

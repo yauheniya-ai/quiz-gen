@@ -3,6 +3,10 @@ Validator Agent
 Checks formal requirements and structure compliance
 """
 
+from anthropic import Anthropic
+from google import genai
+from google.genai import types
+from mistralai import Mistral
 from openai import OpenAI
 import os
 import json
@@ -53,13 +57,33 @@ Output format (JSON):
 Be strict but fair. Mark as invalid only if critical requirements are missing. Your output will be used by the judge agent to make the final decision on which questions to accept for the end user.
 """
 
-    def __init__(self, api_key: Optional[str] = None, api_base: Optional[str] = None):
-        """Initialize OpenAI client"""
-        self.client = OpenAI(
-            api_key=api_key or os.getenv("OPENAI_API_KEY"),
-            base_url=api_base
-        )
-        self.model = "gpt-4o"
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        api_base: Optional[str] = None,
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+    ):
+        """Initialize model client"""
+        self.provider = provider or "openai"
+        self.model = model or "gpt-4o"
+        if self.provider == "anthropic":
+            self.client = Anthropic(
+                api_key=api_key or os.getenv("ANTHROPIC_API_KEY")
+            )
+        elif self.provider in {"google", "gemini"}:
+            self.client = genai.Client(
+                api_key=api_key or os.getenv("GEMINI_API_KEY")
+            )
+        elif self.provider == "mistral":
+            self.client = Mistral(
+                api_key=api_key or os.getenv("MISTRAL_API_KEY")
+            )
+        else:
+            self.client = OpenAI(
+                api_key=api_key or os.getenv("OPENAI_API_KEY"),
+                base_url=api_base
+            )
     
     def validate(self, qa: Dict, chunk: Dict) -> Dict:
         """Validate a single Q&A against requirements"""
@@ -73,17 +97,66 @@ Quiz Question to Validate:
 Validate this question against all requirements.
 """
         
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": self.SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.3,
-            response_format={"type": "json_object"}
-        )
-        
-        result = json.loads(response.choices[0].message.content)
+        if self.provider == "anthropic":
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=2000,
+                messages=[
+                    {"role": "user", "content": user_prompt}
+                ],
+                system=self.SYSTEM_PROMPT,
+                temperature=0.3
+            )
+            content = response.content[0].text
+            if "```json" in content:
+                content = content.split("```json")[1].split("```", 1)[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+            result = json.loads(content)
+        elif self.provider in {"google", "gemini"}:
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=self.SYSTEM_PROMPT,
+                    temperature=0.3,
+                    max_output_tokens=2000,
+                ),
+            )
+            content = response.text or ""
+            if "```json" in content:
+                content = content.split("```json")[1].split("```", 1)[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+            result = json.loads(content)
+        elif self.provider == "mistral":
+            response = self.client.chat.complete(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.3,
+                max_tokens=2000,
+            )
+            content = response.choices[0].message.content
+            if "```json" in content:
+                content = content.split("```json")[1].split("```", 1)[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+            result = json.loads(content)
+        else:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.3,
+                response_format={"type": "json_object"}
+            )
+
+            result = json.loads(response.choices[0].message.content)
         result["validator_model"] = self.model
         
         return result

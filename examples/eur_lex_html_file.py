@@ -11,9 +11,8 @@ from quiz_gen import EURLexParser
 def main():
     """Parse and chunk the EU-Lex HTML document"""
     
-    #url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32019R0945"
-    html_file = "data/documents/html/2018_1139_Common_Rules_Civil_Aviation.html"
-    doc_id = "2018_1139"
+    html_file = "data/raw/2024_1689_Artificial Intelligence_Act.html"
+    doc_id = "2024_1689"
 
     print(f"Parsing: {html_file}\n")
     

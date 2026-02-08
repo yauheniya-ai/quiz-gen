@@ -9,7 +9,7 @@ from quiz_gen import EURLexParser
 
 
 def main():
-    """Parse and chunk the AI Act regulation document"""
+    """Parse and chunk the AI Act regulation document from URL"""
     
     url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L_202401689"
     doc_id = "2024_1689"

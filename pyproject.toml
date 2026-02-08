@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quiz-gen"
-version = "0.3.0"
+version = "0.3.1"
 description = "AI-powered quiz generator for regulatory, certification, and educational documentation"
 readme = "README.md"
 authors = [{name = "Yauheniya Varabyova"}]
@@ -30,6 +30,8 @@ dependencies = [
     "langgraph",
     "openai",
     "anthropic",
+    "google-genai",
+    "mistralai",
     "python-dotenv"
 ]
 

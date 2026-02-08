@@ -4,6 +4,10 @@ Focuses on real-world application and scenario-based questions
 """
 
 from anthropic import Anthropic
+from google import genai
+from google.genai import types
+from mistralai import Mistral
+from openai import OpenAI
 import os
 import json
 from typing import Dict, Optional
@@ -57,12 +61,33 @@ Guidelines:
 - Do NOT mention any regulation, annex, article, section, or document name/number in the question text itself.
 """
 
-    def __init__(self, api_key: Optional[str] = None, api_base: Optional[str] = None):
-        """Initialize Anthropic client"""
-        self.client = Anthropic(
-            api_key=api_key or os.getenv("ANTHROPIC_API_KEY")
-        )
-        self.model = "claude-sonnet-4-20250514"
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        api_base: Optional[str] = None,
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+    ):
+        """Initialize model client"""
+        self.provider = provider or "anthropic"
+        self.model = model or "claude-sonnet-4-20250514"
+        if self.provider == "anthropic":
+            self.client = Anthropic(
+                api_key=api_key or os.getenv("ANTHROPIC_API_KEY")
+            )
+        elif self.provider in {"google", "gemini"}:
+            self.client = genai.Client(
+                api_key=api_key or os.getenv("GEMINI_API_KEY")
+            )
+        elif self.provider == "mistral":
+            self.client = Mistral(
+                api_key=api_key or os.getenv("MISTRAL_API_KEY")
+            )
+        else:
+            self.client = OpenAI(
+                api_key=api_key or os.getenv("OPENAI_API_KEY"),
+                base_url=api_base
+            )
     
     def generate(self, chunk: Dict, improvement_feedback: Optional[str] = None) -> Dict:
         """Generate a practical question from a regulation chunk"""
@@ -81,25 +106,69 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
         
         user_prompt += "\n\nGenerate ONE practical quiz question in JSON format."
         
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=2000,
-            messages=[
-                {"role": "user", "content": user_prompt}
-            ],
-            system=self.SYSTEM_PROMPT,
-            temperature=0.7
-        )
-        
-        # Extract JSON from response
-        content = response.content[0].text
-        # Remove markdown code blocks if present
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0].strip()
-        elif "```" in content:
-            content = content.split("```")[1].split("```")[0].strip()
-        
-        result = json.loads(content)
+        if self.provider == "anthropic":
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=2000,
+                messages=[
+                    {"role": "user", "content": user_prompt}
+                ],
+                system=self.SYSTEM_PROMPT,
+                temperature=0.7
+            )
+
+            # Extract JSON from response
+            content = response.content[0].text
+            # Remove markdown code blocks if present
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+
+            result = json.loads(content)
+        elif self.provider in {"google", "gemini"}:
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=self.SYSTEM_PROMPT,
+                    temperature=0.7,
+                    max_output_tokens=2000,
+                ),
+            )
+            content = response.text or ""
+            if "```json" in content:
+                content = content.split("```json")[1].split("```", 1)[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+            result = json.loads(content)
+        elif self.provider == "mistral":
+            response = self.client.chat.complete(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=2000,
+            )
+            content = response.choices[0].message.content
+            if "```json" in content:
+                content = content.split("```json")[1].split("```", 1)[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+            result = json.loads(content)
+        else:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                response_format={"type": "json_object"}
+            )
+            result = json.loads(response.choices[0].message.content)
         result["generator"] = "practical"
         result["model"] = self.model
         

@@ -48,10 +48,8 @@ def test_validate_reports_multiple_errors(tmp_path, monkeypatch):
         config.validate()
 
     message = str(exc.value)
-    assert "OPENAI_API_KEY is required" in message
-    assert "ANTHROPIC_API_KEY is required" in message
-    assert "Invalid conceptual_model" in message
-    assert "Invalid validator_model" in message
+    assert "OPENAI_API_KEY is required for provider 'openai'" in message
+    assert "ANTHROPIC_API_KEY is required for provider 'anthropic'" in message
     assert "Temperature must be between 0 and 2" in message
     assert "max_tokens must be at least 100" in message
     assert "min_validation_score must be between 0 and 10" in message
