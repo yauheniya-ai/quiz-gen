@@ -10,27 +10,27 @@ from quiz_gen import EURLexParser
 
 def main():
     """Parse and chunk the EU-Lex HTML document"""
-    
+
     html_file = "data/raw/2024_1689_Artificial Intelligence_Act.html"
     doc_id = "2024_1689"
 
     print(f"Parsing: {html_file}\n")
-    
+
     # Read the HTML content from file
-    with open(html_file, 'r', encoding='utf-8') as f:
+    with open(html_file, "r", encoding="utf-8") as f:
         html_content = f.read()
-    
+
     # Parse document - returns (chunks, toc)
     parser = EURLexParser(html_content=html_content)
     chunks, toc = parser.parse()
-    
+
     # Display TOC
     parser.print_toc()
-    
+
     # Print summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CHUNKS SUMMARY")
-    print("="*70)
+    print("=" * 70)
     print(f"Total chunks: {len(chunks)}")
     by_type = {}
     for chunk in chunks:
@@ -38,15 +38,15 @@ def main():
         by_type[t] = by_type.get(t, 0) + 1
     for t, count in sorted(by_type.items()):
         print(f"  {t}: {count}")
-    
+
     # Save chunks and TOC
     output_file = f"data/processed/{doc_id}_chunks.json"
     toc_file = f"data/processed/{doc_id}_toc.json"
     Path(output_file).parent.mkdir(parents=True, exist_ok=True)
     parser.save_chunks(output_file)
     parser.save_toc(toc_file)
-    
-    print(f"\nOutput files:")
+
+    print("\nOutput files:")
     print(f"  Chunks: {output_file}")
     print(f"  TOC: {toc_file}")
 

@@ -4,17 +4,15 @@ Test multi-agent workflow with Article 77 of Regulation (EU) 2018/1139
 Simple test using chunked content directly
 """
 
+import json
 import sys
 from pathlib import Path
-import json
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from quiz_gen.agents.workflow import QuizGenerationWorkflow
-from quiz_gen.agents.config import AgentConfig
+# Add parent directory to path for imports in main.
 
 
 ARTICLE_77_CHUNK = {
@@ -41,9 +39,13 @@ ARTICLE_77_CHUNK = {
 
 
 def main():
-    print("="*70)
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from quiz_gen.agents.workflow import QuizGenerationWorkflow
+    from quiz_gen.agents.config import AgentConfig
+
+    print("=" * 70)
     print("Testing Multi-Agent Workflow with Article 77")
-    print("="*70)
+    print("=" * 70)
     print()
 
     print(f"Article: {ARTICLE_77_CHUNK['title']}")
@@ -55,7 +57,9 @@ def main():
         config.validate()
         print("✓ Configuration valid\n")
     except ValueError as e:
-        print(f"✗ Configuration error: {e}\nPlease set environment variables:\n  export OPENAI_API_KEY='your-key'\n  export ANTHROPIC_API_KEY='your-key'")
+        print(
+            f"✗ Configuration error: {e}\nPlease set environment variables:\n  export OPENAI_API_KEY='your-key'\n  export ANTHROPIC_API_KEY='your-key'"
+        )
         return
 
     print("Initializing workflow...")
@@ -63,43 +67,43 @@ def main():
     print("✓ Workflow initialized\n")
 
     print("Running multi-agent workflow...")
-    print("-"*70)
+    print("-" * 70)
     result = workflow.run(ARTICLE_77_CHUNK)
-    print("-"*70)
+    print("-" * 70)
     print()
 
-    print("="*70)
+    print("=" * 70)
     print("RESULTS")
-    print("="*70)
+    print("=" * 70)
     print()
     print(f"All Valid: {result.get('all_valid', False)}\n")
-    if result.get('validation_results'):
-        for i, val_result in enumerate(result['validation_results'], 1):
+    if result.get("validation_results"):
+        for i, val_result in enumerate(result["validation_results"], 1):
             print(f"Validation {i}:")
             print(f"  Valid: {val_result.get('valid', False)}")
             print(f"  Score: {val_result.get('score', 0)}/10")
-            if val_result.get('issues'):
+            if val_result.get("issues"):
                 print(f"  Issues: {', '.join(val_result['issues'])}")
         print()
     print(f"Judge Decision: {result.get('judge_decision', 'N/A')}")
     print(f"Judge Reasoning: {result.get('judge_reasoning', 'N/A')}")
 
-    if result.get('final_questions'):
-        print("="*70)
+    if result.get("final_questions"):
+        print("=" * 70)
         print("GENERATED QUESTIONS")
-        print("="*70)
-        for i, question in enumerate(result['final_questions'], 1):
+        print("=" * 70)
+        for i, question in enumerate(result["final_questions"], 1):
             print(f"\n{'─'*70}")
             print(f"Question {i} ({question.get('focus', 'unknown').upper()})")
             print(f"{'─'*70}")
             print(f"\n{question.get('question', 'N/A')}")
             print("\nOptions:")
-            correct = question.get('correct_answer', '')
-            for option, text in question.get('options', {}).items():
+            correct = question.get("correct_answer", "")
+            for option, text in question.get("options", {}).items():
                 marker = "✓" if option == correct else " "
                 print(f"  [{marker}] {option}. {text}")
             print("\nExplanations:")
-            for option, explanation in question.get('explanations', {}).items():
+            for option, explanation in question.get("explanations", {}).items():
                 marker = "✓" if option == correct else "✗"
                 print(f"  {marker} {option}. {explanation}")
             print("\nMetadata:")
@@ -109,11 +113,11 @@ def main():
     else:
         print("No valid questions generated")
 
-    if result.get('errors'):
-        print("="*70)
+    if result.get("errors"):
+        print("=" * 70)
         print("ERRORS")
-        print("="*70)
-        for error in result['errors']:
+        print("=" * 70)
+        for error in result["errors"]:
             print(f"  • {error}")
         print()
 
@@ -121,16 +125,21 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     output_file = output_dir / "article_77_quiz.json"
 
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump({
-            "chunk": result["chunk"],
-            "questions": result.get("final_questions", []),
-            "judge_decision": result.get("judge_decision"),
-            "judge_reasoning": result.get("judge_reasoning"),
-            "validation_results": result.get("validation_results"),
-            "all_valid": result.get("all_valid"),
-            "errors": result.get("errors", [])
-        }, f, indent=2, ensure_ascii=False)
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "chunk": result["chunk"],
+                "questions": result.get("final_questions", []),
+                "judge_decision": result.get("judge_decision"),
+                "judge_reasoning": result.get("judge_reasoning"),
+                "validation_results": result.get("validation_results"),
+                "all_valid": result.get("all_valid"),
+                "errors": result.get("errors", []),
+            },
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
 
     print(f"Result saved to: {output_file}\n")
 

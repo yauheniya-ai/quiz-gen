@@ -15,7 +15,7 @@ from typing import Dict, Optional
 
 class ConceptualGenerator:
     """Generates conceptual quiz questions"""
-    
+
     SYSTEM_PROMPT = """You are an expert quiz question generator focused on CONCEPTUAL UNDERSTANDING.
 
 Your task is to create quiz questions that test theoretical knowledge, definitions, and fundamental principles.
@@ -71,26 +71,19 @@ Guidelines:
         self.provider = provider or "openai"
         self.model = model or "gpt-4o"
         if self.provider == "anthropic":
-            self.client = Anthropic(
-                api_key=api_key or os.getenv("ANTHROPIC_API_KEY")
-            )
+            self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
         elif self.provider in {"google", "gemini"}:
-            self.client = genai.Client(
-                api_key=api_key or os.getenv("GEMINI_API_KEY")
-            )
+            self.client = genai.Client(api_key=api_key or os.getenv("GEMINI_API_KEY"))
         elif self.provider == "mistral":
-            self.client = Mistral(
-                api_key=api_key or os.getenv("MISTRAL_API_KEY")
-            )
+            self.client = Mistral(api_key=api_key or os.getenv("MISTRAL_API_KEY"))
         else:
             self.client = OpenAI(
-                api_key=api_key or os.getenv("OPENAI_API_KEY"),
-                base_url=api_base
+                api_key=api_key or os.getenv("OPENAI_API_KEY"), base_url=api_base
             )
-    
+
     def generate(self, chunk: Dict, improvement_feedback: Optional[str] = None) -> Dict:
         """Generate a conceptual question from a regulation chunk"""
-        
+
         user_prompt = f"""Regulation Content:
 Section: {chunk.get('title', 'Unknown')}
 Number: {chunk.get('number', 'N/A')}
@@ -99,21 +92,19 @@ Content: {chunk.get('content', '')}
 
 Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
 """
-        
+
         if improvement_feedback:
             user_prompt += f"\n\nIMPROVEMENT FEEDBACK FROM HUMAN:\n{improvement_feedback}\n\nPlease incorporate this feedback."
-        
+
         user_prompt += "\n\nGenerate ONE conceptual quiz question in JSON format."
-        
+
         if self.provider == "anthropic":
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=2000,
-                messages=[
-                    {"role": "user", "content": user_prompt}
-                ],
+                messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
-                temperature=0.7
+                temperature=0.7,
             )
             content = response.content[0].text
             if "```json" in content:
@@ -142,7 +133,7 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.7,
                 max_tokens=2000,
@@ -158,13 +149,13 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.7,
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
             result = json.loads(response.choices[0].message.content)
         result["generator"] = "conceptual"
         result["model"] = self.model
-        
+
         return result

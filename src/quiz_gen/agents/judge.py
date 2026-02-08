@@ -1,5 +1,5 @@
 """
-Judge Agent 
+Judge Agent
 Reviews both generated Q&As and either accepts, refines, or unifies them
 """
 
@@ -15,7 +15,7 @@ from typing import Dict, Optional
 
 class Judge:
     """Judges and refines quiz questions"""
-    
+
     SYSTEM_PROMPT = """You are an expert judge for a multi-agent quiz generation workflow. You receive TWO quiz questions (one conceptual, one practical) AND their validation results from a strict validator.
 
 Your job is to make the FINAL decision on which questions should be accepted and shown to the end user. For each question, you may:
@@ -88,24 +88,23 @@ Never return partial or referenced questions—always output the full, final que
         self.provider = provider or "anthropic"
         self.model = model or "claude-sonnet-4-20250514"
         if self.provider == "anthropic":
-            self.client = Anthropic(
-                api_key=api_key or os.getenv("ANTHROPIC_API_KEY")
-            )
+            self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
         elif self.provider in {"google", "gemini"}:
-            self.client = genai.Client(
-                api_key=api_key or os.getenv("GEMINI_API_KEY")
-            )
+            self.client = genai.Client(api_key=api_key or os.getenv("GEMINI_API_KEY"))
         elif self.provider == "mistral":
-            self.client = Mistral(
-                api_key=api_key or os.getenv("MISTRAL_API_KEY")
-            )
+            self.client = Mistral(api_key=api_key or os.getenv("MISTRAL_API_KEY"))
         else:
             self.client = OpenAI(
-                api_key=api_key or os.getenv("OPENAI_API_KEY"),
-                base_url=api_base
+                api_key=api_key or os.getenv("OPENAI_API_KEY"), base_url=api_base
             )
-    
-    def judge(self, conceptual_qa: Dict, practical_qa: Dict, validation_results: list, chunk: Dict) -> Dict:
+
+    def judge(
+        self,
+        conceptual_qa: Dict,
+        practical_qa: Dict,
+        validation_results: list,
+        chunk: Dict,
+    ) -> Dict:
         """Judge and potentially refine both Q&As, using validator output"""
         user_prompt = f"""Original Regulation Content:
 {json.dumps(chunk, indent=2)}
@@ -124,11 +123,9 @@ VALIDATION RESULTS (from strict validator):
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=3000,
-                messages=[
-                    {"role": "user", "content": user_prompt}
-                ],
+                messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
-                temperature=0.5
+                temperature=0.5,
             )
             # Extract JSON from response
             content = response.content[0].text
@@ -136,7 +133,7 @@ VALIDATION RESULTS (from strict validator):
                 content = content.split("```json")[1].split("```", 1)[0].strip()
             elif "```" in content:
                 content = content.split("```")[1].split("```")[0].strip()
-        
+
             result = json.loads(content)
         elif self.provider in {"google", "gemini"}:
             response = self.client.models.generate_content(
@@ -160,7 +157,7 @@ VALIDATION RESULTS (from strict validator):
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.5,
                 max_tokens=3000,
@@ -177,12 +174,12 @@ VALIDATION RESULTS (from strict validator):
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.5,
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
             result = json.loads(response.choices[0].message.content)
         result["judge_model"] = self.model
-        
+
         return result

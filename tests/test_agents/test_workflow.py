@@ -27,12 +27,22 @@ def build_workflow(tmp_path, monkeypatch):
     judge = MagicMock()
     validator = MagicMock()
 
-    monkeypatch.setattr(workflow_module, "ConceptualGenerator", MagicMock(return_value=conceptual))
-    monkeypatch.setattr(workflow_module, "PracticalGenerator", MagicMock(return_value=practical))
+    monkeypatch.setattr(
+        workflow_module, "ConceptualGenerator", MagicMock(return_value=conceptual)
+    )
+    monkeypatch.setattr(
+        workflow_module, "PracticalGenerator", MagicMock(return_value=practical)
+    )
     monkeypatch.setattr(workflow_module, "Judge", MagicMock(return_value=judge))
     monkeypatch.setattr(workflow_module, "Validator", MagicMock(return_value=validator))
 
-    return workflow_module.QuizGenerationWorkflow(config=config), conceptual, practical, judge, validator
+    return (
+        workflow_module.QuizGenerationWorkflow(config=config),
+        conceptual,
+        practical,
+        judge,
+        validator,
+    )
 
 
 @pytest.fixture
@@ -76,7 +86,12 @@ def test_judge_questions_sets_metadata(tmp_path, monkeypatch, sample_chunk):
         "reasoning": "ok",
         "questions": [
             {"question": "Q1", "focus": "conceptual"},
-            {"question": "Q2", "focus": "practical", "generator": "practical", "model": practical.model},
+            {
+                "question": "Q2",
+                "focus": "practical",
+                "generator": "practical",
+                "model": practical.model,
+            },
         ],
     }
 
@@ -111,7 +126,9 @@ def test_route_after_human_feedback(tmp_path, monkeypatch):
     workflow, _, _, _, _ = build_workflow(tmp_path, monkeypatch)
 
     assert workflow._route_after_human_feedback({"human_action": "accept"}) == "accept"
-    assert workflow._route_after_human_feedback({"human_action": "improve"}) == "improve"
+    assert (
+        workflow._route_after_human_feedback({"human_action": "improve"}) == "improve"
+    )
     assert workflow._route_after_human_feedback({"human_action": "reject"}) == "reject"
     assert workflow._route_after_human_feedback({}) == "reject"
 
@@ -132,7 +149,7 @@ def test_save_result_writes_file(tmp_path, monkeypatch, sample_chunk):
     saved_path = tmp_path / "quiz_2.json"
     assert saved_path.exists()
     content = saved_path.read_text(encoding="utf-8")
-    assert "\"questions\"" in content
+    assert '"questions"' in content
     assert "Q1" in content
 
 
@@ -149,7 +166,9 @@ def test_run_invokes_app_with_thread_id(tmp_path, monkeypatch, sample_chunk):
     assert args[1]["configurable"]["thread_id"] == sample_chunk["number"]
 
 
-def test_run_batch_saves_only_when_questions_present(tmp_path, monkeypatch, sample_chunk):
+def test_run_batch_saves_only_when_questions_present(
+    tmp_path, monkeypatch, sample_chunk
+):
     workflow, _, _, _, _ = build_workflow(tmp_path, monkeypatch)
 
     chunks = [
@@ -157,10 +176,12 @@ def test_run_batch_saves_only_when_questions_present(tmp_path, monkeypatch, samp
         {**sample_chunk, "number": "3", "title": "Aircraft Safety"},
     ]
 
-    workflow.run = MagicMock(side_effect=[
-        {"chunk": chunks[0], "final_questions": [{"question": "Q1"}]},
-        {"chunk": chunks[1], "final_questions": []},
-    ])
+    workflow.run = MagicMock(
+        side_effect=[
+            {"chunk": chunks[0], "final_questions": [{"question": "Q1"}]},
+            {"chunk": chunks[1], "final_questions": []},
+        ]
+    )
     workflow._save_result = MagicMock()
 
     results = workflow.run_batch(chunks, save_output=True, output_dir=str(tmp_path))

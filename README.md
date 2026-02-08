@@ -242,15 +242,6 @@ quiz-gen/
 └── .env
 ```
 
-### Contributing
-
-Contributions are welcome! Please ensure:
-
-1. Code follows PEP 8 style guidelines
-2. All tests pass
-3. New features include appropriate tests
-4. Documentation is updated
-
 ## API Reference
 
 ### EURLexParser
@@ -294,12 +285,9 @@ Enumeration of document section types.
 
 Future enhancements planned:
 
-- AI-powered quiz generation from extracted content
 - Support for additional document formats (PDF, DOCX, PPTX)
 - Multi-language support
-- Question validation and quality metrics
 - Integration with learning management systems
-- Version comparison and diff analysis
 
 ## License
 
@@ -310,7 +298,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 If you use this software in academic work, please cite:
 
 ```
-Varabyova, Y. (2026). Quiz Gen AI: AI-powered quiz generator for regulatory documentation.
+Varabyova, Y. (2026). Quiz Gen AI: AI-powered quiz generator for professional certification.
 GitHub repository: https://github.com/yauheniya-ai/quiz-gen
 ```
 
@@ -319,9 +307,11 @@ GitHub repository: https://github.com/yauheniya-ai/quiz-gen
 - Documentation: https://quiz-gen.readthedocs.io
 - Issue Tracker: https://github.com/yauheniya-ai/quiz-gen/issues
 
-## Acknowledgments
+### Contributing
 
-Built with:
-- BeautifulSoup4 for HTML parsing
-- lxml for XML processing
-- EUR-Lex for providing structured legal documents
+Contributions are welcome! Please ensure:
+
+1. Code follows PEP 8 style guidelines
+2. All tests pass
+3. New features include appropriate tests
+4. Documentation is updated

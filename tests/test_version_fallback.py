@@ -1,8 +1,8 @@
-import importlib
 import sys
-import types
-import pytest
 from unittest import mock
+
+import importlib
+
 
 def test_version_fallback(monkeypatch):
     # Patch importlib.metadata.version to raise an exception
@@ -11,6 +11,5 @@ def test_version_fallback(monkeypatch):
     if module_name in sys.modules:
         del sys.modules[module_name]
     with mock.patch("importlib.metadata.version", side_effect=Exception("fail")):
-        import importlib
         version_mod = importlib.import_module(module_name)
         assert version_mod.__version__ == "0.2.8"

@@ -1,5 +1,5 @@
 """
-Validator Agent 
+Validator Agent
 Checks formal requirements and structure compliance
 """
 
@@ -15,7 +15,7 @@ from typing import Dict, List, Optional
 
 class Validator:
     """Validates quiz question format and structure"""
-    
+
     SYSTEM_PROMPT = """You are a strict validator for a multi-agent quiz generation workflow. Your job is to pre-screen each quiz question for structural and content compliance BEFORE it is shown to the judge or end user.
 
 For EACH question, check ALL these requirements:
@@ -68,26 +68,19 @@ Be strict but fair. Mark as invalid only if critical requirements are missing. Y
         self.provider = provider or "openai"
         self.model = model or "gpt-4o"
         if self.provider == "anthropic":
-            self.client = Anthropic(
-                api_key=api_key or os.getenv("ANTHROPIC_API_KEY")
-            )
+            self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
         elif self.provider in {"google", "gemini"}:
-            self.client = genai.Client(
-                api_key=api_key or os.getenv("GEMINI_API_KEY")
-            )
+            self.client = genai.Client(api_key=api_key or os.getenv("GEMINI_API_KEY"))
         elif self.provider == "mistral":
-            self.client = Mistral(
-                api_key=api_key or os.getenv("MISTRAL_API_KEY")
-            )
+            self.client = Mistral(api_key=api_key or os.getenv("MISTRAL_API_KEY"))
         else:
             self.client = OpenAI(
-                api_key=api_key or os.getenv("OPENAI_API_KEY"),
-                base_url=api_base
+                api_key=api_key or os.getenv("OPENAI_API_KEY"), base_url=api_base
             )
-    
+
     def validate(self, qa: Dict, chunk: Dict) -> Dict:
         """Validate a single Q&A against requirements"""
-        
+
         user_prompt = f"""Original Regulation Content:
 {json.dumps(chunk, indent=2)}
 
@@ -96,16 +89,14 @@ Quiz Question to Validate:
 
 Validate this question against all requirements.
 """
-        
+
         if self.provider == "anthropic":
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=2000,
-                messages=[
-                    {"role": "user", "content": user_prompt}
-                ],
+                messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
-                temperature=0.3
+                temperature=0.3,
             )
             content = response.content[0].text
             if "```json" in content:
@@ -134,7 +125,7 @@ Validate this question against all requirements.
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.3,
                 max_tokens=2000,
@@ -150,17 +141,17 @@ Validate this question against all requirements.
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.3,
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
 
             result = json.loads(response.choices[0].message.content)
         result["validator_model"] = self.model
-        
+
         return result
-    
+
     def validate_batch(self, qas: List[Dict], chunk: Dict) -> List[Dict]:
         """Validate multiple Q&As"""
         return [self.validate(qa, chunk) for qa in qas]
