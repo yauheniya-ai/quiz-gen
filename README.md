@@ -17,7 +17,6 @@ AI-powered quiz generator for regulatory, certification, and educational documen
 - **Hierarchical Document Analysis**: Automatically identify document structure including chapters, sections, articles, and recitals
 - **Intelligent Chunking**: Extract meaningful content chunks at appropriate granularity levels (articles and recitals)
 - **Table of Contents Generation**: Build complete document navigation structure with 3-level hierarchy
-- **Regulatory Document Support**: Specialized parsing for aviation regulations, directives, and other technical documentation
 
 ## Installation
 
@@ -99,39 +98,6 @@ parser.print_toc()
 #     Article 2 - Scope
 ```
 
-## Use Cases
-
-### Compliance and Legal
-
-- Analyze regulatory requirements systematically
-- Track changes across document versions
-- Build searchable knowledge bases from legal texts
-
-### Documentation Processing
-
-- Convert unstructured documents into structured data
-- Build citation networks and cross-references
-- Support automated document analysis workflows
-
-### Education and Training
-
-- Generate study materials from regulatory documents
-- Create structured learning paths for certification programs
-- Extract key concepts for examination preparation
-
-## Supported Document Types
-
-Currently supports:
-
-- **EUR-Lex HTML Documents**: European Union regulations, directives, decisions
-- **Legislative Acts**: Structured legal documents with formal hierarchies
-
-### Document Format Requirements
-
-- Documents must use EUR-Lex HTML format
-- Must contain `eli-subdivision` elements for proper structure identification
-- Supports multi-level hierarchies with chapters, sections, and articles
-
 ## Advanced Usage
 
 ### Custom Parsing Workflows
@@ -181,29 +147,6 @@ for chunk in chunks:
     
     # Identify parent sections
     print(chunk.parent_section)
-```
-
-## Project Structure
-
-```
-quiz-gen/
-├── src/
-│   └── quiz_gen/
-│       ├── parsers/
-│       │   └── html/
-│       │       └── eu_lex_parser.py
-│       ├── models/
-│       │   ├── chunk.py
-│       │   ├── document.py
-│       │   └── quiz.py
-│       └── utils/
-├── examples/
-│   └── eu_lex_toc_chunks.py
-├── tests/
-├── data/
-│   ├── processed/
-│   └── raw/
-└── docs/
 ```
 
 ## Development
@@ -280,6 +223,39 @@ Enumeration of document section types.
 - `SECTION`: Section within chapter
 - `ARTICLE`: Article (main content unit)
 - `ANNEX`: Annex section
+
+## Use Cases
+
+### Compliance and Legal
+
+- Analyze regulatory requirements systematically
+- Track changes across document versions
+- Build searchable knowledge bases from legal texts
+
+### Documentation Processing
+
+- Convert unstructured documents into structured data
+- Build citation networks and cross-references
+- Support automated document analysis workflows
+
+### Education and Training
+
+- Generate study materials from regulatory documents
+- Create structured learning paths for certification programs
+- Extract key concepts for examination preparation
+
+## Supported Document Types
+
+Currently supports:
+
+- **EUR-Lex HTML Documents**: European Union regulations, directives, decisions
+- **Legislative Acts**: Structured legal documents with formal hierarchies
+
+### Document Format Requirements
+
+- Documents must use EUR-Lex HTML format
+- Must contain `eli-subdivision` elements for proper structure identification
+- Supports multi-level hierarchies with chapters, sections, and articles
 
 ## Roadmap
 

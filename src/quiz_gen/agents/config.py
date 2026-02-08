@@ -46,19 +46,9 @@ class AgentConfig:
     validator_model: str = "gpt-4o"
     judge_model: str = "claude-sonnet-4-20250514"
 
-    # ============================================================================
+    # ==========================================================================
     # Generation Settings
-    # ============================================================================
-    temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
-    conceptual_temperature: Optional[float] = None
-    practical_temperature: Optional[float] = None
-    judge_temperature: Optional[float] = None
-    validator_temperature: Optional[float] = None
-    conceptual_max_tokens: Optional[int] = None
-    practical_max_tokens: Optional[int] = None
-    judge_max_tokens: Optional[int] = None
-    validator_max_tokens: Optional[int] = None
+    # ==========================================================================
 
     # ============================================================================
     # Workflow Settings
@@ -122,7 +112,6 @@ class AgentConfig:
         if self.output_directory:
             Path(self.output_directory).mkdir(parents=True, exist_ok=True)
 
-        # Per-agent temperatures and max_tokens are optional by default.
 
     def validate(self) -> None:
         """
@@ -177,26 +166,6 @@ class AgentConfig:
 
         # Base URLs are optional and only used for custom endpoints or proxies
 
-        # Validate per-agent temperature
-        for label, value in {
-            "conceptual_temperature": self.conceptual_temperature,
-            "practical_temperature": self.practical_temperature,
-            "judge_temperature": self.judge_temperature,
-            "validator_temperature": self.validator_temperature,
-        }.items():
-            if value is not None and not 0 <= value <= 2:
-                errors.append(f"{label} must be between 0 and 2, got {value}")
-
-        # Validate per-agent max_tokens
-        for label, value in {
-            "conceptual_max_tokens": self.conceptual_max_tokens,
-            "practical_max_tokens": self.practical_max_tokens,
-            "judge_max_tokens": self.judge_max_tokens,
-            "validator_max_tokens": self.validator_max_tokens,
-        }.items():
-            if value is not None and value < 100:
-                errors.append(f"{label} must be at least 100, got {value}")
-
         # Validate validation score
         if not 0 <= self.min_validation_score <= 10:
             errors.append(
@@ -228,16 +197,6 @@ class AgentConfig:
             "practical_model": self.practical_model,
             "judge_model": self.judge_model,
             "validator_model": self.validator_model,
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-            "conceptual_temperature": self.conceptual_temperature,
-            "practical_temperature": self.practical_temperature,
-            "judge_temperature": self.judge_temperature,
-            "validator_temperature": self.validator_temperature,
-            "conceptual_max_tokens": self.conceptual_max_tokens,
-            "practical_max_tokens": self.practical_max_tokens,
-            "judge_max_tokens": self.judge_max_tokens,
-            "validator_max_tokens": self.validator_max_tokens,
             "auto_accept_valid": self.auto_accept_valid,
             "save_intermediate_results": self.save_intermediate_results,
             "output_directory": self.output_directory,
@@ -326,23 +285,6 @@ class AgentConfig:
         )
         print(f"  Judge: {self.judge_provider} / {self.judge_model}")
         print(f"  Validator: {self.validator_provider} / {self.validator_model}")
-        print("\nGeneration Settings:")
-        print(
-            "  Conceptual: "
-            f"temp={self.conceptual_temperature}, max_tokens={self.conceptual_max_tokens}"
-        )
-        print(
-            "  Practical: "
-            f"temp={self.practical_temperature}, max_tokens={self.practical_max_tokens}"
-        )
-        print(
-            "  Judge: "
-            f"temp={self.judge_temperature}, max_tokens={self.judge_max_tokens}"
-        )
-        print(
-            "  Validator: "
-            f"temp={self.validator_temperature}, max_tokens={self.validator_max_tokens}"
-        )
         print("\nValidation Settings:")
         print(f"  Min Validation Score: {self.min_validation_score}/10")
         print(f"  Strict Validation: {self.strict_validation}")
@@ -375,7 +317,6 @@ if __name__ == "__main__":
     custom_config = AgentConfig(
         openai_api_key="sk-test-key",
         anthropic_api_key="sk-ant-test-key",
-        conceptual_temperature=0.5,
         min_validation_score=7,
         auto_accept_valid=True,
         verbose=True,

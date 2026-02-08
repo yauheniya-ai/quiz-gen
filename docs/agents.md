@@ -254,11 +254,6 @@ All agents are configured through the `AgentConfig` class:
 from quiz_gen.agents.config import AgentConfig
 
 config = AgentConfig(
-  # API Keys (or load from environment)
-  openai_api_key="sk-...",
-  anthropic_api_key="sk-ant-...",
-  gemini_api_key="...",  # or GOOGLE_API_KEY/GEMINI_API_KEY via .env
-  mistral_api_key="...",
 
   # Provider + Model Selection per agent
   conceptual_provider="openai",
@@ -270,16 +265,6 @@ config = AgentConfig(
   validator_model="gemini-2.5-flash",
   judge_model="mistral-large-latest",
 
-  # Per-agent Generation Settings
-  conceptual_temperature=1.0,
-  practical_temperature=1.0,
-  judge_temperature=1.0,
-  validator_temperature=1.0,
-  conceptual_max_tokens=2000,
-  practical_max_tokens=2000,
-  judge_max_tokens=3000,
-  validator_max_tokens=2000,
-
   # Workflow Settings
   auto_accept_valid=False,
   save_intermediate_results=True,
@@ -290,8 +275,7 @@ config = AgentConfig(
   strict_validation=True,
 )
 
-# Note: temperature/max_tokens are only sent to providers when set per-agent.
-# Global temperature/max_tokens fields are kept for compatibility, but do not apply by default.
+# Note: This package does not set temperature/max_tokens. Provider defaults are used.
 ```
 
 ### Environment Variables
@@ -471,30 +455,6 @@ The system is designed to be extensible:
 5. **Version control prompts**: Track prompt changes and their impact on quality
 6. **Monitor API costs**: Set budgets and rate limits appropriately
 7. **Test with sample data**: Validate workflow before processing large batches
-
-## Troubleshooting
-
-### Common Issues
-
-**Questions are too similar**:
-- Review generator prompts for overlap
-- Adjust temperature settings
-- Provide more specific focus instructions
-
-**Low validation scores**:
-- Check explanation quality
-- Ensure options are distinct
-- Verify questions are based on source content
-
-**Judge always unifies**:
-- Questions may be too similar
-- Consider adding more diversity to generator prompts
-- Review sample outputs from both generators
-
-**High API costs**:
-- Enable caching where possible
-- Process in smaller batches
-- Use lower-cost models for validation if appropriate
 
 ## See Also
 

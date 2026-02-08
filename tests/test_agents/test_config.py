@@ -37,8 +37,6 @@ def test_validate_reports_multiple_errors(tmp_path, monkeypatch):
         anthropic_api_base=None,
         conceptual_model="not-a-model",
         validator_model="also-bad",
-        conceptual_temperature=3.0,
-        conceptual_max_tokens=10,
         min_validation_score=11,
         output_directory=str(tmp_path),
         verbose=False,
@@ -50,8 +48,6 @@ def test_validate_reports_multiple_errors(tmp_path, monkeypatch):
     message = str(exc.value)
     assert "OPENAI_API_KEY is required for provider 'openai'" in message
     assert "ANTHROPIC_API_KEY is required for provider 'anthropic'" in message
-    assert "conceptual_temperature must be between 0 and 2" in message
-    assert "conceptual_max_tokens must be at least 100" in message
     assert "min_validation_score must be between 0 and 10" in message
 
 

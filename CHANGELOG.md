@@ -1,12 +1,25 @@
 ## Changelog
 
+### Version 0.3.5 (2026-02-09)
+
+Provider-default generation parameters:
+- Removed temperature/max_tokens configuration from agents and config to rely on provider defaults.
+- Updated agents to omit temperature/max_tokens parameters and refreshed docs/examples accordingly.
+
+
+### Version 0.3.4 (2026-02-09)
+
+Temperature/max_tokens behavior refinement:
+- Removed global temperature/max_tokens defaults; per-agent values are optional and only sent when explicitly set.
+- Updated generators/judge/validator to omit temperature/max_tokens unless provided.
+- Refreshed agent documentation and examples to reflect per-agent settings.
+
 ### Version 0.3.3 (2026-02-08)
 
 Per-agent temperature and token controls:
 - Added per-agent temperature and max token settings with global defaults.
 - Wired per-agent values into all generators, judge, and validator.
 - Default temperature set to 1.0 for broader model compatibility.
-
 
 ### Version 0.3.2 (2026-02-08)
 
