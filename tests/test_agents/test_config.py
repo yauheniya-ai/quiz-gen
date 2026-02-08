@@ -33,6 +33,8 @@ def test_validate_reports_multiple_errors(tmp_path, monkeypatch):
     config = AgentConfig(
         openai_api_key=None,
         anthropic_api_key=None,
+        openai_api_base=None,
+        anthropic_api_base=None,
         conceptual_model="not-a-model",
         validator_model="also-bad",
         temperature=3.0,

@@ -7,9 +7,15 @@ from src.quiz_gen.agents.config import AgentConfig
 
 
 def build_workflow(tmp_path, monkeypatch):
+    monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("MISTRAL_API_BASE", raising=False)
+    monkeypatch.delenv("GEMINI_API_BASE", raising=False)
     config = AgentConfig(
         openai_api_key="sk-openai-test",
         anthropic_api_key="sk-anthropic-test",
+        openai_api_base="https://openai.test",
+        anthropic_api_base="https://anthropic.test",
         output_directory=str(tmp_path),
         verbose=False,
     )

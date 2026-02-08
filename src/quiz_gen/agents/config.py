@@ -23,20 +23,24 @@ class AgentConfig:
     # ============================================================================
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
+    mistral_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
     
     # ============================================================================
     # Optional API Base URLs (for custom endpoints or proxies)
     # ============================================================================
     openai_api_base: Optional[str] = None
     anthropic_api_base: Optional[str] = None
+    mistral_api_base: Optional[str] = None
+    gemini_api_base: Optional[str] = None
     
     # ============================================================================
     # Model Configurations
     # ============================================================================
     conceptual_model: str = "gpt-4o"
     practical_model: str = "claude-sonnet-4-20250514"
-    judge_model: str = "claude-sonnet-4-20250514"
     validator_model: str = "gpt-4o"
+    judge_model: str = "claude-sonnet-4-20250514"
     
     # ============================================================================
     # Generation Settings
@@ -82,6 +86,12 @@ class AgentConfig:
         
         if not self.anthropic_api_key:
             self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+
+        if not self.mistral_api_key:
+            self.mistral_api_key = os.getenv("MISTRAL_API_KEY")
+
+        if not self.gemini_api_key:
+            self.gemini_api_key = os.getenv("GEMINI_API_KEY")
         
         # Load optional base URLs from environment
         if not self.openai_api_base:
@@ -89,6 +99,12 @@ class AgentConfig:
         
         if not self.anthropic_api_base:
             self.anthropic_api_base = os.getenv("ANTHROPIC_API_BASE")
+
+        if not self.mistral_api_base:
+            self.mistral_api_base = os.getenv("MISTRAL_API_BASE")
+
+        if not self.gemini_api_base:
+            self.gemini_api_base = os.getenv("GEMINI_API_BASE")
         
         # Create output directory if it doesn't exist
         if self.output_directory:
@@ -117,6 +133,8 @@ class AgentConfig:
         
         if self.validator_model not in valid_openai_models:
             errors.append(f"Invalid validator_model: {self.validator_model}")
+
+        # Base URLs are optional and only used for custom endpoints or proxies
         
         # Validate temperature
         if not 0 <= self.temperature <= 2:
@@ -138,8 +156,12 @@ class AgentConfig:
         return {
             "openai_api_key": "***" if self.openai_api_key else None,
             "anthropic_api_key": "***" if self.anthropic_api_key else None,
+            "mistral_api_key": "***" if self.mistral_api_key else None,
+            "gemini_api_key": "***" if self.gemini_api_key else None,
             "openai_api_base": self.openai_api_base,
             "anthropic_api_base": self.anthropic_api_base,
+            "mistral_api_base": self.mistral_api_base,
+            "gemini_api_base": self.gemini_api_base,
             "conceptual_model": self.conceptual_model,
             "practical_model": self.practical_model,
             "judge_model": self.judge_model,
@@ -220,6 +242,8 @@ class AgentConfig:
         print("="*70)
         print(f"OpenAI API Key: {'✓ Set' if self.openai_api_key else '✗ Missing'}")
         print(f"Anthropic API Key: {'✓ Set' if self.anthropic_api_key else '✗ Missing'}")
+        print(f"Mistral API Key: {'✓ Set' if self.mistral_api_key else '✗ Missing'}")
+        print(f"Gemini API Key: {'✓ Set' if self.gemini_api_key else '✗ Missing'}")
         print(f"\nModels:")
         print(f"  Conceptual Generator: {self.conceptual_model}")
         print(f"  Practical Generator: {self.practical_model}")
