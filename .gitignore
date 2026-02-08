@@ -1,12 +1,14 @@
 notes/
 data/raw/*
 data/processed/*
+data/quizzes/*
 !data/raw/.gitkeep
 !data/raw/2024_1689_Artificial Intelligence_Act.html
 !data/processed/.gitkeep
+!data/quizzes/.gitkeep
 
 data/documents/
-data/quizzes/
+
 
 __pycache__/
 *.py[cod]
