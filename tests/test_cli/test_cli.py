@@ -5,7 +5,7 @@ import subprocess
 import pytest
 from pathlib import Path
 
-test_html_path = (Path(__file__).parent.parent.parent / 'data/documents/html/2018_1139_Common_Rules_Civil_Aviation.html').resolve()
+test_html_path = (Path(__file__).parent.parent.parent / 'data/raw/2024_1689_Artificial Intelligence_Act.html').resolve()
 
 def run_cli_with_args(args):
     """Run the CLI as a module in a subprocess, return (exit_code, stdout+stderr)."""
