@@ -1,12 +1,19 @@
 ## Changelog
 
+### Version 0.3.3 (2026-02-08)
+
+Per-agent temperature and token controls:
+- Added per-agent temperature and max token settings with global defaults.
+- Wired per-agent values into all generators, judge, and validator.
+- Default temperature set to 1.0 for broader model compatibility.
+
+
 ### Version 0.3.2 (2026-02-08)
 
 Code quality and example cleanup:
 - Fixed lint issues across examples, CLI, agents, and parser (unused imports, f-string cleanup, ambiguous variable name).
 - Adjusted example scripts to defer package imports until runtime and updated the multi-provider example.
 - Normalized formatting with Black.
-
 
 ### Version 0.3.1 (2026-02-08)
 
