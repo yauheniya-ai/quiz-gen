@@ -6,7 +6,7 @@ from src.quiz_gen.parsers.html.eur_lex_parser import EURLexParser, SectionType
 
 TEST_HTML_PATH = os.path.join(
 	os.path.dirname(__file__),
-	'../../data/documents/html/2018_1139_Common_Rules_Civil_Aviation.html'
+	'../../data/raw/2024_1689_Artificial Intelligence_Act.html'
 )
 
 def get_parser():
