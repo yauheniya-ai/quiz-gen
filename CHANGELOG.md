@@ -1,5 +1,17 @@
 ## Changelog
 
+
+
+### Version 0.3.0 (2026-02-08)
+
+Test coverage and reliability improvements:
+- Added comprehensive unit and integration tests for the EUR-Lex HTML parser, covering TOC extraction, chunking, and edge cases for EU regulations.
+- Implemented robust CLI tests using subprocess to verify all command-line options, file outputs, error handling, and version reporting.
+- Created agent tests for conceptual and practical question generators, including full mocking of OpenAI and Anthropic API calls, and validation of prompt logic and JSON extraction.
+- Added validator agent tests to check strict structural/content requirements, batch validation, and error reporting.
+- Added judge agent tests to cover all decision branches (accept, refine, reject) and ensure correct handling of validation results and model output.
+- Ensured all tests pass in CI and locally, and set up automated coverage badge updates via GitHub Actions and Gist.
+
 ### Version 0.2.8 (2026-01-29)
 
 Quiz generator prompt fix:
