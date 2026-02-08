@@ -67,10 +67,14 @@ Guidelines:
         api_base: Optional[str] = None,
         provider: Optional[str] = None,
         model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
     ):
         """Initialize model client"""
         self.provider = provider or "anthropic"
         self.model = model or "claude-sonnet-4-20250514"
+        self.temperature = 1.0 if temperature is None else temperature
+        self.max_tokens = 2000 if max_tokens is None else max_tokens
         if self.provider == "anthropic":
             self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
         elif self.provider in {"google", "gemini"}:
@@ -102,10 +106,10 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
         if self.provider == "anthropic":
             response = self.client.messages.create(
                 model=self.model,
-                max_tokens=2000,
+                max_tokens=self.max_tokens,
                 messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
-                temperature=0.7,
+                temperature=self.temperature,
             )
 
             # Extract JSON from response
@@ -123,8 +127,8 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
                 contents=user_prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=self.SYSTEM_PROMPT,
-                    temperature=0.7,
-                    max_output_tokens=2000,
+                    temperature=self.temperature,
+                    max_output_tokens=self.max_tokens,
                 ),
             )
             content = response.text or ""
@@ -140,8 +144,8 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=0.7,
-                max_tokens=2000,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
             )
             content = response.choices[0].message.content
             if "```json" in content:
@@ -156,7 +160,8 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=0.7,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
                 response_format={"type": "json_object"},
             )
             result = json.loads(response.choices[0].message.content)

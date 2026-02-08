@@ -63,10 +63,14 @@ Be strict but fair. Mark as invalid only if critical requirements are missing. Y
         api_base: Optional[str] = None,
         provider: Optional[str] = None,
         model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
     ):
         """Initialize model client"""
         self.provider = provider or "openai"
         self.model = model or "gpt-4o"
+        self.temperature = 1.0 if temperature is None else temperature
+        self.max_tokens = 2000 if max_tokens is None else max_tokens
         if self.provider == "anthropic":
             self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
         elif self.provider in {"google", "gemini"}:
@@ -93,10 +97,10 @@ Validate this question against all requirements.
         if self.provider == "anthropic":
             response = self.client.messages.create(
                 model=self.model,
-                max_tokens=2000,
+                max_tokens=self.max_tokens,
                 messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
-                temperature=0.3,
+                temperature=self.temperature,
             )
             content = response.content[0].text
             if "```json" in content:
@@ -110,8 +114,8 @@ Validate this question against all requirements.
                 contents=user_prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=self.SYSTEM_PROMPT,
-                    temperature=0.3,
-                    max_output_tokens=2000,
+                    temperature=self.temperature,
+                    max_output_tokens=self.max_tokens,
                 ),
             )
             content = response.text or ""
@@ -127,8 +131,8 @@ Validate this question against all requirements.
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=0.3,
-                max_tokens=2000,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
             )
             content = response.choices[0].message.content
             if "```json" in content:
@@ -143,7 +147,8 @@ Validate this question against all requirements.
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=0.3,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
                 response_format={"type": "json_object"},
             )
 

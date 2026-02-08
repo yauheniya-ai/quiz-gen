@@ -75,24 +75,32 @@ class QuizGenerationWorkflow:
             api_base=conceptual_base,
             provider=self.config.conceptual_provider,
             model=self.config.conceptual_model,
+            temperature=self.config.conceptual_temperature,
+            max_tokens=self.config.conceptual_max_tokens,
         )
         self.practical_gen = PracticalGenerator(
             api_key=practical_key,
             api_base=practical_base,
             provider=self.config.practical_provider,
             model=self.config.practical_model,
+            temperature=self.config.practical_temperature,
+            max_tokens=self.config.practical_max_tokens,
         )
         self.judge = Judge(
             api_key=judge_key,
             api_base=judge_base,
             provider=self.config.judge_provider,
             model=self.config.judge_model,
+            temperature=self.config.judge_temperature,
+            max_tokens=self.config.judge_max_tokens,
         )
         self.validator = Validator(
             api_key=validator_key,
             api_base=validator_base,
             provider=self.config.validator_provider,
             model=self.config.validator_model,
+            temperature=self.config.validator_temperature,
+            max_tokens=self.config.validator_max_tokens,
         )
 
         # Build graph
