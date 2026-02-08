@@ -2,7 +2,7 @@
 
 ## Overview
 
-The quiz generation system uses a multi-agent architecture powered by LangGraph to create high-quality quiz questions from regulatory documents. The system employs four specialized AI agents that work together to generate, judge, and validate questions.
+The quiz generation system uses a multi-agent architecture powered by LangGraph to create high-quality quiz questions from regulatory documents. The system employs four specialized AI agents that work together to generate, judge, and validate questions, with configurable providers and models per agent.
 
 ## Architecture
 
@@ -10,10 +10,12 @@ The quiz generation system uses a multi-agent architecture powered by LangGraph 
 
 The system consists of four agents, each with a specific responsibility:
 
-1. **Conceptual Generator (OpenAI GPT-4)**: Generates questions focused on theoretical understanding, definitions, and fundamental principles
-2. **Practical Generator (Claude Sonnet 4)**: Creates scenario-based questions testing real-world application of regulations
-3. **Validator (OpenAI GPT-4)**: Performs strict validation to ensure questions meet structural and content requirements
-4. **Judge (Claude Sonnet 4)**: Receives both Q&As and their validation results, and makes the final decision on which questions (0, 1, or 2) to accept, refine, or unify for the end user
+1. **Conceptual Generator**: Generates questions focused on theoretical understanding, definitions, and fundamental principles
+2. **Practical Generator**: Creates scenario-based questions testing real-world application of regulations
+3. **Validator**: Performs strict validation to ensure questions meet structural and content requirements
+4. **Judge**: Receives both Q&As and their validation results, and makes the final decision on which questions (0, 1, or 2) to accept or refine for the end user
+
+Supported providers (alphabetical): **Anthropic**, **Google**, **Mistral**, **OpenAI**. Any text-generation model from these providers can be used by passing the model name directly.
 
 ### Workflow Pipeline
 
@@ -28,18 +30,18 @@ The system consists of four agents, each with a specific responsibility:
 │  Parallel Generation             │
 ├──────────────────────────────────┤
 │  ┌────────────────┐              │
-│  │ Conceptual Gen │ (OpenAI)     │
+│  │ Conceptual Gen │              │
 │  └────────┬───────┘              │
 │           │                      │
 │           v                      │
 │  ┌────────────────┐              │
-│  │ Practical Gen  │ (Claude)     │
+│  │ Practical Gen  │              │
 │  └────────┬───────┘              │
 └───────────┼──────────────────────┘
             │
             v
 ┌───────────────────────┐
-│  Validator            │ (OpenAI)
+│  Validator            │
 │  - Format Check       │
 │  - Content Check      │
 │  - Quality Score      │
@@ -47,7 +49,7 @@ The system consists of four agents, each with a specific responsibility:
            │
            v
 ┌───────────────────────┐
-│  Judge                │ (Claude)
+│  Judge                │
 │  - Accept Both        │
 │  - Accept One         │
 │  - Unify              │
@@ -69,7 +71,7 @@ The system consists of four agents, each with a specific responsibility:
 
 **Purpose**: Generate questions that test theoretical knowledge and understanding of regulatory concepts.
 
-**Model**: OpenAI GPT-4
+**Model**: Configurable provider/model
 
 **Focus Areas**:
 - Definitions and terminology
@@ -104,7 +106,7 @@ The system consists of four agents, each with a specific responsibility:
 
 **Purpose**: Create scenario-based questions that test application of regulations in real-world situations.
 
-**Model**: Claude Sonnet 4
+**Model**: Configurable provider/model
 
 **Focus Areas**:
 - Real-world scenarios
@@ -118,15 +120,17 @@ The system consists of four agents, each with a specific responsibility:
 
 **Purpose**: Evaluate both generated questions and decide on the best output strategy.
 
-**Model**: Claude Sonnet 4
+**Model**: Configurable provider/model
 
 **Decision Types**:
 
 1. **accept_both**: Both questions are high quality and test different aspects
 2. **accept_conceptual**: Only the conceptual question is valid and high quality
 3. **accept_practical**: Only the practical question is valid and high quality
-4. **unify**: Questions are too similar or can be combined into one superior question
-5. **reject_both**: Neither question is suitable
+4. **refine_conceptual**: Conceptual question needs refinements
+5. **refine_practical**: Practical question needs refinements
+6. **refine_both**: Both questions need refinements
+7. **reject_both**: Neither question is suitable
 
 **Evaluation Criteria**:
 - Validator's pass/fail and issues for each question (primary filter)
@@ -139,14 +143,20 @@ The system consists of four agents, each with a specific responsibility:
 **Output Format**:
 ```json
 {
-  "decision": "accept_both|accept_conceptual|accept_practical|reject_both|unify",
+  "decision": "accept_both|accept_conceptual|accept_practical|reject_both|refine_conceptual|refine_practical|refine_both",
   "reasoning": "Brief explanation of your decision, referencing validator results",
-  "output": {
-    "conceptual": {...},  // Only if accepted
-    "practical": {...},   // Only if accepted
-    "unified": {...}      // Only if decision is "unify"
-  },
-  "improvements_made": ["List of improvements if refined"]
+  "improvements_made": ["List of improvements if refined"],
+  "questions": [
+    {
+      "question": "The question text",
+      "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+      "correct_answer": "A",
+      "explanations": {"A": "...", "B": "...", "C": "...", "D": "..."},
+      "source_reference": "Article X, Chapter Y",
+      "difficulty": "easy|medium|hard",
+      "focus": "conceptual|practical"
+    }
+  ]
 }
 ```
 
@@ -155,7 +165,7 @@ The system consists of four agents, each with a specific responsibility:
 **Purpose**: Perform strict validation of question format and content requirements before judging.
 
 
-**Model**: OpenAI GPT-4
+**Model**: Configurable provider/model
 
 **Validation Checks (run before judging):**
 
@@ -179,17 +189,19 @@ The system consists of four agents, each with a specific responsibility:
   "valid": true,
   "issues": [],
   "warnings": [],
-  "checks_passed": {
-    "has_4_options": true,
-    "has_correct_answer": true,
-    "has_all_explanations": true,
-    "explanations_concise": true,
-    "question_clear": true,
-    "options_plausible": true,
-    "unambiguous": true,
-    "regulation_based": true
-  },
-  "score": 8
+    "checks_passed": {
+      "has_4_options": true,
+      "has_correct_answer": true,
+      "has_all_explanations": true,
+      "explanations_concise": true,
+      "question_clear": true,
+      "correct_explanation": true,
+      "wrong_explanations_are_hints": true,
+      "options_plausible": true,
+      "question_unambiguous": true,
+      "regulation_based": true
+    },
+  "score": 10
 }
 ```
 
@@ -242,28 +254,40 @@ All agents are configured through the `AgentConfig` class:
 from quiz_gen.agents.config import AgentConfig
 
 config = AgentConfig(
-    # API Keys (or load from environment)
-    openai_api_key="sk-...",
-    anthropic_api_key="sk-ant-...",
-    
-    # Model Selection
-    conceptual_model="gpt-4o",
-    practical_model="claude-sonnet-4-20250514",
-    judge_model="claude-sonnet-4-20250514",
-    validator_model="gpt-4o",
-    
-    # Generation Settings
-    temperature=0.7,
-    max_tokens=2000,
-    
-    # Workflow Settings
-    auto_accept_valid=False,
-    save_intermediate_results=True,
-    output_directory="data/quizzes",
-    
-    # Validation Settings
-    min_validation_score=6,
-    strict_validation=True
+  # API Keys (or load from environment)
+  openai_api_key="sk-...",
+  anthropic_api_key="sk-ant-...",
+  google_api_key="...",  # or GEMINI_API_KEY via .env
+  mistral_api_key="...",
+
+  # Provider + Model Selection per agent
+  conceptual_provider="openai",
+  practical_provider="anthropic",
+  validator_provider="google",
+  judge_provider="mistral",
+  conceptual_model="gpt-4o",
+  practical_model="claude-sonnet-4-20250514",
+  validator_model="gemini-2.5-flash",
+  judge_model="mistral-large-latest",
+
+  # Per-agent Generation Settings
+  conceptual_temperature=1.0,
+  practical_temperature=1.0,
+  judge_temperature=1.0,
+  validator_temperature=1.0,
+  conceptual_max_tokens=2000,
+  practical_max_tokens=2000,
+  judge_max_tokens=3000,
+  validator_max_tokens=2000,
+
+  # Workflow Settings
+  auto_accept_valid=False,
+  save_intermediate_results=True,
+  output_directory="data/quizzes",
+
+  # Validation Settings
+  min_validation_score=6,
+  strict_validation=True,
 )
 ```
 
@@ -274,6 +298,9 @@ The system automatically loads configuration from a `.env` file:
 ```bash
 OPENAI_API_KEY=your_openai_key
 ANTHROPIC_API_KEY=your_anthropic_key
+MISTRAL_API_KEY=your_mistral_key
+GOOGLE_API_KEY=your_google_key
+# GEMINI_API_KEY is also supported as an alias for Google
 ```
 
 ## Usage
