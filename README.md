@@ -13,10 +13,10 @@ AI-powered quiz generator for regulatory, certification, and educational documen
 
 ## Features
 
-- **EUR-Lex Document Parser**: Parse and structure European Union legal documents with full table of contents extraction
-- **Hierarchical Document Analysis**: Automatically identify document structure including chapters, sections, articles, and recitals
-- **Intelligent Chunking**: Extract meaningful content chunks at appropriate granularity levels (articles and recitals)
-- **Table of Contents Generation**: Build complete document navigation structure with 3-level hierarchy
+- **Multi-Agent Quiz Generation**: Generate, validate, and judge questions using configurable providers/models
+- **EUR-Lex Document Parser**: Parse and structure EU legal documents with full table of contents extraction
+- **Hierarchical Document Analysis**: Identify structure including chapters, sections, articles, recitals, annexes, and appendices
+- **Intelligent Chunking**: Extract meaningful content chunks for articles, recitals, annexes, and appendices
 
 ## Installation
 
@@ -45,28 +45,7 @@ parser.save_chunks('output_chunks.json')
 parser.save_toc('output_toc.json')
 ```
 
-### Document Structure
-
-The parser extracts documents into a multi-level hierarchy:
-
-**Level 1**: Major Sections
-- Preamble
-- Enacting Terms
-
-**Level 2/3**: Structural Divisions
-- Chapters
-- Sections
-
-**Level 1/2/3/4**: Content Elements
-- Title
-- Citation
-- Recitals
-- Articles
-- Concluding formulas
-- Annex
-- Appendix
-
-### Working with Chunks
+#### Working with Chunks
 
 ```python
 # Iterate through extracted chunks
@@ -79,7 +58,7 @@ for chunk in chunks:
     print()
 ```
 
-### Displaying Table of Contents
+#### Displaying Table of Contents
 
 ```python
 # Print formatted TOC
@@ -96,6 +75,29 @@ parser.print_toc()
 #   CHAPTER I - PRINCIPLES
 #     Article 1 - Subject matter and objectives
 #     Article 2 - Scope
+```
+
+### Multi-Agent Quiz Generation
+
+Quiz generation uses four specialized agents (conceptual, practical, validator, judge). Providers are configurable per agent, with supported providers (alphabetical): **Anthropic**, **Google**, **Mistral**, **OpenAI**. Any text-generation model name from these providers can be passed directly. The package relies on provider defaults for generation parameters.
+
+```python
+from quiz_gen.agents.workflow import QuizGenerationWorkflow
+from quiz_gen.agents.config import AgentConfig
+
+config = AgentConfig(
+    conceptual_provider="openai",
+    practical_provider="anthropic",
+    validator_provider="google",
+    judge_provider="mistral",
+    conceptual_model="gpt-4o",
+    practical_model="claude-sonnet-4-20250514",
+    validator_model="gemini-2.5-flash",
+    judge_model="mistral-large-latest",
+)
+
+workflow = QuizGenerationWorkflow(config)
+result = workflow.run(chunk)
 ```
 
 ## Advanced Usage
@@ -172,15 +174,18 @@ black .
 ### Project Structure
 ```
 quiz-gen/
+├── data/             
+│   ├── raw/
+│   ├── processed/
+│   └── quizzes/
 ├── src/
 │   └── quiz_gen/          # Module code here
 │       ├── agents/
 │       ├── parsers/
 │       └── ...
 ├── examples/              # Example scripts
-│   ├── easa_example.py
-│   ├── test_article_47.py
-│   └── run_workflow.py
+│   ├── eur_lex_html_url.py
+│   └── quiz_gen_multi_model.py
 ├── pyproject.toml
 └── .env
 ```
