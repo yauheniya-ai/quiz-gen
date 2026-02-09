@@ -81,6 +81,11 @@ parser.print_toc()
 
 Quiz generation uses four specialized agents (conceptual, practical, validator, judge). Providers are configurable per agent, with supported providers (alphabetical): **Anthropic**, **Google**, **Mistral**, **OpenAI**. Any text-generation model name from these providers can be passed directly. The package relies on provider defaults for generation parameters.
 
+<div align="center" style="width: 100%;">
+    <img src="docs/images/Screenshot_AgentConfig.png" alt="Multi-Agent Architecture and Configuration" style="width: 100%; height: auto;" />
+    <p><em>Multi-Agent Architecture and Configuration</em></p>
+</div>
+
 ```python
 from quiz_gen.agents.workflow import QuizGenerationWorkflow
 from quiz_gen.agents.config import AgentConfig
