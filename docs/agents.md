@@ -194,19 +194,8 @@ Supported providers: **Anthropic**, **Google**, **Mistral**, and **OpenAI**. Any
 **Output Format**:
 ```json
 {
-  "decision": "accept_both|accept_conceptual|accept_practical|reject_both|refine_conceptual|refine_practical|refine_both",
-  "reasoning": "Brief explanation of your decision, referencing validator results",
-  "improvements_made": ["List of improvements if refined"],
-  "questions": [
-    {
-      "question": "The question text",
-      "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
-      "correct_answer": "A",
-      "explanations": {"A": "...", "B": "...", "C": "...", "D": "..."},
-      "difficulty": "easy|medium|hard",
-      "focus": "conceptual|practical"
-    }
-  ]
+  "decision": "accept_both|accept_conceptual|accept_practical|reject_both",
+  "reasoning": "Brief explanation of your decision, referencing validator results"
 }
 ```
 

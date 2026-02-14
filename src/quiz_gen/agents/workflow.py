@@ -263,10 +263,27 @@ class QuizGenerationWorkflow:
                 validation_results=state.get("validation_results"),
                 chunk=state["chunk"],
             )
-            # Use judge questions array for final_questions
-            final_questions = judge_result.get("questions", [])
-            # Ensure generator and model metadata are present
+            
+            # Store judge decision
+            state["judge_decision"] = judge_result["decision"]
+            state["judge_reasoning"] = judge_result["reasoning"]
+            state["current_step"] = "judge_questions"
+            
+            # Construct final_questions based on judge's decision
+            final_questions = []
+            decision = judge_result["decision"]
+            
+            if decision == "accept_both":
+                final_questions = [conceptual_qa, practical_qa]
+            elif decision == "accept_conceptual":
+                final_questions = [conceptual_qa]
+            elif decision == "accept_practical":
+                final_questions = [practical_qa]
+            # reject_both: final_questions remains empty []
+            
+            # Add metadata to accepted questions
             for q in final_questions:
+                # Ensure generator and model metadata are present
                 if "generator" not in q or not q["generator"]:
                     if q.get("focus") == "conceptual":
                         q["generator"] = "conceptual"
@@ -279,11 +296,9 @@ class QuizGenerationWorkflow:
                 # Automatically populate source_reference from chunk hierarchy_path
                 hierarchy = state["chunk"].get("hierarchy_path", [])
                 q["source_reference"] = " > ".join(hierarchy) if hierarchy else "Unknown"
+            
             state["final_questions"] = final_questions
-            state["judge_decision"] = judge_result["decision"]
-            state["judge_reasoning"] = judge_result["reasoning"]
             state["judged_qas"] = final_questions
-            state["current_step"] = "judge_questions"
             return state
         except Exception as e:
             errors = state.get("errors", [])

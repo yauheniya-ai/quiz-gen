@@ -1,14 +1,23 @@
 ## Changelog
 
+### Version 0.3.8 (2026-02-14)
+
+Refiner behavior and Judge architecture improvements:
+- Fixed Judge agent to only return decision and reasoning (removed questions array from output)
+- Updated workflow to construct final_questions based on Judge's decision, using refined questions from Refiner
+- Refiner is now definitively the last agent to modify questions; Judge only makes accept/reject decisions
+- Fixed all docstrings and comments in judge.py that incorrectly referenced refinement
+- Updated agents.md documentation to clarify Judge output format (decision + reasoning only)
+
 ### Version 0.3.7 (2026-02-14)
 
 Refiner agent separation:
-- Added new Refiner agent to handle question refinement based on validation issues
+- Refiner addresses validator warnings (suggestions) in addition to issues (critical problems) for better quality
+- Refiner only skips refinement when: valid=true AND no warnings AND no issues AND score=10/10
 - Updated workflow to follow: Generators -> Validator -> Refiner -> Judge -> Human
 - Simplified Judge agent to only accept/reject (no longer does refinement)
-- Refiner fixes issues identified by validator while preserving original question intent
 - Added refiner_provider and refiner_model to AgentConfig
-- Questions now come from: generators (if perfect) or refiner (if issues fixed) or rejected by judge
+- Questions now come from: generators (if perfect) or refiner (if refined)
 
 ### Version 0.3.6 (2026-02-14)
 

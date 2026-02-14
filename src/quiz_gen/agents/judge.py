@@ -1,6 +1,6 @@
 """
 Judge Agent
-Reviews both generated Q&As and either accepts, refines, or unifies them
+Reviews refined Q&As and makes final accept/reject decisions
 """
 
 from anthropic import Anthropic
@@ -14,13 +14,14 @@ from typing import Dict, Optional
 
 
 class Judge:
-    """Judges and refines quiz questions"""
+    """Makes final accept/reject decisions on refined quiz questions"""
 
     SYSTEM_PROMPT = """You are an expert judge for a multi-agent quiz generation workflow. You receive TWO quiz questions (one conceptual, one practical) AND their validation results from a strict validator.
 
 Your job is to make the FINAL decision on which questions should be accepted and shown to the end user. 
 
-IMPORTANT: Questions have ALREADY been refined by a separate refiner agent to fix validation issues. Your job is NOT to refine - only to ACCEPT or REJECT.
+IMPORTANT: Questions have ALREADY been refined by a separate refiner agent to fix validation issues. 
+Your job is NOT to refine - only to ACCEPT or REJECT.
 
 For each question pair, you may:
 - Accept both questions if both are high quality and meet requirements
@@ -38,34 +39,10 @@ Consider:
 Your final output must be a single JSON object with the following structure:
 {
     "decision": "accept_both|accept_conceptual|accept_practical|reject_both",
-    "reasoning": "Brief explanation of your decision, referencing validator results and score(s)",
-    "questions": [
-        {
-            "question": "The question text",
-            "options": {
-                "A": "First option text",
-                "B": "Second option text", 
-                "C": "Third option text",
-                "D": "Fourth option text"
-            },
-            "correct_answer": "A",
-            "explanations": {
-                "A": "Why this is correct...",
-                "B": "Why this is wrong...",
-                "C": "Why this is wrong...",
-                "D": "Why this is wrong..."
-            },
-            "difficulty": "easy|medium|hard",
-            "focus": "conceptual|practical"
-        }
-        // ... (include both if both are accepted, conceptual first)
-    ]
+    "reasoning": "Brief explanation of your decision, referencing validator results and score(s)"
 }
 
-The 'questions' array must contain the questions for all accepted questions (pass-through, no modifications),
-in the order: conceptual first (if accepted), then practical (if accepted). 
-If both are rejected, return an empty array.
-You must always pass through the question objects exactly as received - do not modify them.
+Do NOT include the questions in your output - only your decision and reasoning.
 """
 
     def __init__(
@@ -98,7 +75,7 @@ You must always pass through the question objects exactly as received - do not m
         validation_results: list,
         chunk: Dict,
     ) -> Dict:
-        """Judge and potentially refine both Q&As, using validator output"""
+        """Make final accept/reject decision on refined Q&As, using validator results"""
         user_prompt = f"""Original Regulation Content:
 {json.dumps(chunk, indent=2)}
 
