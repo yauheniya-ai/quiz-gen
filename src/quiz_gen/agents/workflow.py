@@ -117,6 +117,8 @@ class QuizGenerationWorkflow:
     def _get_provider_config(self, provider: str):
         if provider == "anthropic":
             return self.config.anthropic_api_key, self.config.anthropic_api_base
+        if provider == "cohere":
+            return self.config.cohere_api_key, None
         if provider == "mistral":
             return self.config.mistral_api_key, self.config.mistral_api_base
         if provider in {"gemini", "google"}:
@@ -167,6 +169,8 @@ class QuizGenerationWorkflow:
         return workflow
 
     def _generate_conceptual(self, state: QuizGenerationState):
+        if self.config.verbose:
+            print("  → Generating conceptual question...")
         try:
             conceptual_qa = self.conceptual_gen.generate(
                 chunk=state["chunk"],
@@ -177,6 +181,8 @@ class QuizGenerationWorkflow:
             return {"errors": [f"Conceptual generation error: {str(e)}"]}
 
     def _generate_practical(self, state: QuizGenerationState):
+        if self.config.verbose:
+            print("  → Generating practical question...")
         try:
             practical_qa = self.practical_gen.generate(
                 chunk=state["chunk"],
@@ -188,26 +194,43 @@ class QuizGenerationWorkflow:
 
     def _validate_questions(self, state: QuizGenerationState) -> QuizGenerationState:
         """Validate both Q&As before judging"""
+        if self.config.verbose:
+            print("  → Validating questions...")
         try:
             state["current_step"] = "validate_questions"
-            # Collect Q&As to validate
+            # Collect Q&As to validate (only non-None questions)
             questions_to_validate = []
+            question_types = []
             if state.get("conceptual_qa"):
                 questions_to_validate.append(state["conceptual_qa"])
+                question_types.append("conceptual")
             if state.get("practical_qa"):
                 questions_to_validate.append(state["practical_qa"])
-            # Validate each question
-            validation_results = self.validator.validate_batch(
-                qas=questions_to_validate, chunk=state["chunk"]
-            )
-            state["validation_results"] = validation_results
-            state["all_valid"] = all(v["valid"] for v in validation_results)
-            # Store all individually valid questions (for legacy output)
-            state["final_questions"] = [
-                q
-                for q, v in zip(questions_to_validate, validation_results)
-                if v["valid"]
-            ]
+                question_types.append("practical")
+            
+            # Only validate if we have questions
+            if questions_to_validate:
+                # Validate each question
+                validation_results = self.validator.validate_batch(
+                    qas=questions_to_validate, chunk=state["chunk"]
+                )
+                # Add question_type metadata to each validation result
+                for i, val_result in enumerate(validation_results):
+                    val_result["question_type"] = question_types[i]
+                
+                state["validation_results"] = validation_results
+                state["all_valid"] = all(v["valid"] for v in validation_results)
+                # Store all individually valid questions (for legacy output)
+                state["final_questions"] = [
+                    q
+                    for q, v in zip(questions_to_validate, validation_results)
+                    if v["valid"]
+                ]
+            else:
+                # No questions to validate
+                state["validation_results"] = []
+                state["all_valid"] = False
+                state["final_questions"] = []
         except Exception as e:
             errors = state.get("errors", [])
             errors.append(f"Validation error: {str(e)}")
@@ -216,6 +239,8 @@ class QuizGenerationWorkflow:
 
     def _refine_questions(self, state: QuizGenerationState) -> QuizGenerationState:
         """Refine questions based on validation results"""
+        if self.config.verbose:
+            print("  → Refining questions...")
         try:
             state["current_step"] = "refine_questions"
             
@@ -252,6 +277,8 @@ class QuizGenerationWorkflow:
         return state
 
     def _judge_questions(self, state: QuizGenerationState):
+        if self.config.verbose:
+            print("  → Judging questions...")
         try:
             # Use refined questions if available, otherwise use originals
             conceptual_qa = state.get("refined_conceptual_qa") or state.get("conceptual_qa")

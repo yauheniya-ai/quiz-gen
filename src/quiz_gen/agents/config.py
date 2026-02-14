@@ -25,6 +25,7 @@ class AgentConfig:
     anthropic_api_key: Optional[str] = None
     mistral_api_key: Optional[str] = None
     gemini_api_key: Optional[str] = None
+    cohere_api_key: Optional[str] = None
 
     # ============================================================================
     # Optional API Base URLs (for custom endpoints or proxies)
@@ -102,12 +103,15 @@ class AgentConfig:
         if not self.gemini_api_key:
             self.gemini_api_key = os.getenv("GEMINI_API_KEY")
 
+        if not self.cohere_api_key:
+            self.cohere_api_key = os.getenv("COHERE_API_KEY")
+
         # Load optional base URLs from environment
         if not self.openai_api_base:
             self.openai_api_base = os.getenv("OPENAI_API_BASE")
 
         if not self.anthropic_api_base:
-            self.anthropic_api_base = os.getenv("ANTHROPIC_API_BASE")
+            self.anthropic_api_base = os.getenv("ANTHROPIC_BASE_URL")
 
         if not self.mistral_api_base:
             self.mistral_api_base = os.getenv("MISTRAL_API_BASE")
@@ -133,6 +137,7 @@ class AgentConfig:
         provider_key_map = {
             "openai": (self.openai_api_key, "OPENAI_API_KEY"),
             "anthropic": (self.anthropic_api_key, "ANTHROPIC_API_KEY"),
+            "cohere": (self.cohere_api_key, "COHERE_API_KEY"),
             "mistral": (self.mistral_api_key, "MISTRAL_API_KEY"),
             "gemini": (self.gemini_api_key, "GEMINI_API_KEY"),
             "google": (self.gemini_api_key, "GOOGLE_API_KEY"),
@@ -197,6 +202,7 @@ class AgentConfig:
             "anthropic_api_key": "***" if self.anthropic_api_key else None,
             "mistral_api_key": "***" if self.mistral_api_key else None,
             "gemini_api_key": "***" if self.gemini_api_key else None,
+            "cohere_api_key": "***" if self.cohere_api_key else None,
             "openai_api_base": self.openai_api_base,
             "anthropic_api_base": self.anthropic_api_base,
             "mistral_api_base": self.mistral_api_base,
@@ -286,11 +292,12 @@ class AgentConfig:
         print("Agent Configuration Summary")
         print("=" * 70)
         print(f"OpenAI API Key: {'✓ Set' if self.openai_api_key else '✗ Missing'}")
-        print(
-            f"Anthropic API Key: {'✓ Set' if self.anthropic_api_key else '✗ Missing'}"
-        )
+        print(f"Anthropic API Key: {'✓ Set' if self.anthropic_api_key else '✗ Missing'}")
+        if self.anthropic_api_base:
+            print(f"  └─ Custom Base URL: {self.anthropic_api_base}")
         print(f"Mistral API Key: {'✓ Set' if self.mistral_api_key else '✗ Missing'}")
         print(f"Gemini API Key: {'✓ Set' if self.gemini_api_key else '✗ Missing'}")
+        print(f"Cohere API Key: {'✓ Set' if self.cohere_api_key else '✗ Missing'}")
         print("\nModels:")
         print(
             f"  Conceptual Generator: {self.conceptual_provider} / {self.conceptual_model}"

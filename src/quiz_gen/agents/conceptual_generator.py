@@ -4,6 +4,7 @@ Focuses on theoretical understanding and foundational concepts
 """
 
 from anthropic import Anthropic
+import cohere
 from google import genai
 from google.genai import types
 from mistralai import Mistral
@@ -72,7 +73,15 @@ Guidelines:
         self.model = model or "gpt-4o"
         self.max_tokens = max_tokens
         if self.provider == "anthropic":
-            self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
+            anthropic_kwargs = {"api_key": api_key or os.getenv("ANTHROPIC_API_KEY")}
+            if api_base:
+                anthropic_kwargs["base_url"] = api_base
+            self.client = Anthropic(**anthropic_kwargs)
+        elif self.provider == "cohere":
+            # Cohere uses its own SDK
+            self.client = cohere.ClientV2(
+                api_key=api_key or os.getenv("COHERE_API_KEY")
+            )
         elif self.provider in {"google", "gemini"}:
             self.client = genai.Client(api_key=api_key or os.getenv("GEMINI_API_KEY"))
         elif self.provider == "mistral":
@@ -102,11 +111,20 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
         if self.provider == "anthropic":
             response = self.client.messages.create(
                 model=self.model,
-                max_tokens=getattr(self, "max_tokens", 4096),
+                max_tokens=self.max_tokens or 4096,
                 messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
             )
             content = response.content[0].text
+        elif self.provider == "cohere":
+            response = self.client.chat(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ],
+            )
+            content = response.message.content[0].text
             if "```json" in content:
                 content = content.split("```json")[1].split("```", 1)[0].strip()
             elif "```" in content:

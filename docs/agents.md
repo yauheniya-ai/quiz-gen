@@ -16,7 +16,7 @@ The system consists of five agents, each with a specific responsibility:
 4. **Refiner**: Fixes issues identified by the validator while preserving the original question's intent
 5. **Judge**: Makes the final decision on which questions to accept or reject for the end user
 
-Supported providers: **Anthropic**, **Google**, **Mistral**, and **OpenAI**. Any text-generation model from these providers can be used by passing the model name directly.
+Supported providers: **Anthropic**, **Google**, **Mistral**, **OpenAI**, and **Cohere**.
 
 ### Workflow Pipeline
 
@@ -278,7 +278,22 @@ config = AgentConfig(
 )
 
 # Note: Temperature is not configured and provider defaults are used.
-# Max tokens is only set for Anthropic (required by their API).
+```
+
+#### Using Cohere
+
+Cohere uses its own SDK:
+
+```python
+config = AgentConfig(
+  # Use Cohere for some agents (uses COHERE_API_KEY)
+  conceptual_provider="cohere",
+  conceptual_model="command-r-plus-08-2024",  # Cohere model name
+  
+  # Can still use other providers
+  validator_provider="openai",
+  judge_provider="anthropic",  # Regular Anthropic/Claude
+)
 ```
 
 ### Environment Variables
@@ -286,10 +301,13 @@ config = AgentConfig(
 The system automatically loads configuration from a `.env` file:
 
 ```bash
-OPENAI_API_KEY=your_openai_key
+# Anthropic - Used for Claude models
 ANTHROPIC_API_KEY=your_anthropic_key
+
+OPENAI_API_KEY=your_openai_key
 MISTRAL_API_KEY=your_mistral_key
 GOOGLE_API_KEY=your_google_key
+COHERE_API_KEY=your_cohere_key
 # GEMINI_API_KEY is also supported as an alias for Google
 ```
 

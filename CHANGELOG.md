@@ -1,5 +1,23 @@
 ## Changelog
 
+### Version 0.4.0 (2026-02-14)
+
+Cohere Provider Support:
+- Added Cohere as a provider (replaces MiniMax)
+- Uses Cohere's own SDK (`cohere.ClientV2`) with `COHERE_API_KEY` environment variable
+- Cohere provider available for all agents (conceptual, practical, validator, refiner, judge)
+- Updated examples to use Cohere instead of MiniMax
+- Added `cohere_api_key` field to AgentConfig
+- Updated documentation to reflect Cohere integration
+
+Bug Fixes:
+- Fixed Judge to accept individual valid questions instead of rejecting both when one fails
+- Updated Judge prompt to handle 0, 1, or 2 questions (not assume pair)
+- Fixed validation to skip None questions (previously validated conceptual even when None)
+- Fixed max_tokens handling in all agents: now uses `self.max_tokens or 4096`
+- Workflow now passes max_tokens only for Anthropic provider
+
+
 ### Version 0.3.8 (2026-02-14)
 
 Refiner behavior and Judge architecture improvements:

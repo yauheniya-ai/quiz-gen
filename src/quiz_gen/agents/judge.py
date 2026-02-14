@@ -4,6 +4,7 @@ Reviews refined Q&As and makes final accept/reject decisions
 """
 
 from anthropic import Anthropic
+import cohere
 from google import genai
 from google.genai import types
 from mistralai import Mistral
@@ -16,23 +17,30 @@ from typing import Dict, Optional
 class Judge:
     """Makes final accept/reject decisions on refined quiz questions"""
 
-    SYSTEM_PROMPT = """You are an expert judge for a multi-agent quiz generation workflow. You receive TWO quiz questions (one conceptual, one practical) AND their validation results from a strict validator.
+    SYSTEM_PROMPT = """You are an expert judge for a multi-agent quiz generation workflow. You receive quiz questions (0-2 questions: conceptual and/or practical) AND their validation results from a strict validator.
 
 Your job is to make the FINAL decision on which questions should be accepted and shown to the end user. 
 
 IMPORTANT: Questions have ALREADY been refined by a separate refiner agent to fix validation issues. 
 Your job is NOT to refine - only to ACCEPT or REJECT.
 
-For each question pair, you may:
+You may receive:
+- Both conceptual and practical questions
+- Only a conceptual question (if practical generation failed)
+- Only a practical question (if conceptual generation failed)
+- No questions (if both generations failed)
+
+For the questions you receive, you may:
 - Accept both questions if both are high quality and meet requirements
 - Accept only the conceptual question if only it is acceptable
-- Accept only the practical question if only it is acceptable
+- Accept only the practical question if only it is acceptable  
 - Reject both if neither is suitable
+- If only one question was generated and it's valid, ACCEPT IT (don't reject just because the other is missing)
 
 Consider:
 - Validator's pass/fail, issues, and 10-point score for each question
 - Accuracy: Does it correctly reflect the regulation?
-- Distinctiveness: Do the two questions test different skills?
+- Distinctiveness: If both exist, do they test different skills?
 - Difficulty: Is it appropriate for certification level?
 - Whether refinement successfully addressed the issues
 
@@ -58,7 +66,15 @@ Do NOT include the questions in your output - only your decision and reasoning.
         self.model = model or "claude-sonnet-4-20250514"
         self.max_tokens = max_tokens
         if self.provider == "anthropic":
-            self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
+            anthropic_kwargs = {"api_key": api_key or os.getenv("ANTHROPIC_API_KEY")}
+            if api_base:
+                anthropic_kwargs["base_url"] = api_base
+            self.client = Anthropic(**anthropic_kwargs)
+        elif self.provider == "cohere":
+            # Cohere uses its own SDK
+            self.client = cohere.ClientV2(
+                api_key=api_key or os.getenv("COHERE_API_KEY")
+            )
         elif self.provider in {"google", "gemini"}:
             self.client = genai.Client(api_key=api_key or os.getenv("GEMINI_API_KEY"))
         elif self.provider == "mistral":
@@ -76,28 +92,56 @@ Do NOT include the questions in your output - only your decision and reasoning.
         chunk: Dict,
     ) -> Dict:
         """Make final accept/reject decision on refined Q&As, using validator results"""
+        
+        # Build prompt based on which questions exist
         user_prompt = f"""Original Regulation Content:
 {json.dumps(chunk, indent=2)}
 
-CONCEPTUAL Question:
+"""
+        
+        if conceptual_qa:
+            user_prompt += f"""CONCEPTUAL Question:
 {json.dumps(conceptual_qa, indent=2)}
 
-PRACTICAL Question:
+"""
+        else:
+            user_prompt += """CONCEPTUAL Question: None (generation failed)
+
+"""
+            
+        if practical_qa:
+            user_prompt += f"""PRACTICAL Question:
 {json.dumps(practical_qa, indent=2)}
 
-VALIDATION RESULTS (from strict validator):
+"""
+        else:
+            user_prompt += """PRACTICAL Question: None (generation failed)
+
+"""
+        
+        user_prompt += f"""VALIDATION RESULTS (from strict validator):
 {json.dumps(validation_results, indent=2)}
 
 """
         if self.provider == "anthropic":
             response = self.client.messages.create(
                 model=self.model,
-                max_tokens=getattr(self, "max_tokens", 4096),
+                max_tokens=self.max_tokens or 4096,
                 messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
             )
             # Extract JSON from response
             content = response.content[0].text
+        elif self.provider == "cohere":
+            response = self.client.chat(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ],
+            )
+            # Extract JSON from Cohere response
+            content = response.message.content[0].text
             if "```json" in content:
                 content = content.split("```json")[1].split("```", 1)[0].strip()
             elif "```" in content:
