@@ -45,10 +45,12 @@ class AgentConfig:
     conceptual_provider: str = "openai"
     practical_provider: str = "anthropic"
     validator_provider: str = "openai"
+    refiner_provider: str = "openai"
     judge_provider: str = "anthropic"
     conceptual_model: str = "gpt-4o"
     practical_model: str = "claude-sonnet-4-20250514"
     validator_model: str = "gpt-4o"
+    refiner_model: str = "gpt-4o"
     judge_model: str = "claude-sonnet-4-20250514"
 
     # ==========================================================================
@@ -141,6 +143,7 @@ class AgentConfig:
             self.practical_provider,
             self.judge_provider,
             self.validator_provider,
+            self.refiner_provider,
         }:
             key_value, env_name = provider_key_map.get(provider, (None, None))
             if env_name and not key_value:
@@ -157,6 +160,8 @@ class AgentConfig:
             errors.append("judge_provider must be set")
         if not self.validator_provider:
             errors.append("validator_provider must be set")
+        if not self.refiner_provider:
+            errors.append("refiner_provider must be set")
 
         if not self.conceptual_model:
             errors.append("conceptual_model must be set")
@@ -166,6 +171,8 @@ class AgentConfig:
             errors.append("judge_model must be set")
         if not self.validator_model:
             errors.append("validator_model must be set")
+        if not self.refiner_model:
+            errors.append("refiner_model must be set")
 
         # Model identifiers are provider-specific and change over time; avoid hardcoded lists.
 
@@ -199,10 +206,12 @@ class AgentConfig:
             "practical_provider": self.practical_provider,
             "judge_provider": self.judge_provider,
             "validator_provider": self.validator_provider,
+            "refiner_provider": self.refiner_provider,
             "conceptual_model": self.conceptual_model,
             "practical_model": self.practical_model,
             "judge_model": self.judge_model,
             "validator_model": self.validator_model,
+            "refiner_model": self.refiner_model,
             "auto_accept_valid": self.auto_accept_valid,
             "save_intermediate_results": self.save_intermediate_results,
             "output_directory": self.output_directory,
@@ -289,8 +298,9 @@ class AgentConfig:
         print(
             f"  Practical Generator: {self.practical_provider} / {self.practical_model}"
         )
-        print(f"  Judge: {self.judge_provider} / {self.judge_model}")
         print(f"  Validator: {self.validator_provider} / {self.validator_model}")
+        print(f"  Refiner: {self.refiner_provider} / {self.refiner_model}")
+        print(f"  Judge: {self.judge_provider} / {self.judge_model}")
         print("\nValidation Settings:")
         print(f"  Min Validation Score: {self.min_validation_score}/10")
         print(f"  Strict Validation: {self.strict_validation}")

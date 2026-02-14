@@ -8,12 +8,13 @@ The quiz generation system uses a multi-agent architecture powered by LangGraph 
 
 ### Agent Roles
 
-The system consists of four agents, each with a specific responsibility:
+The system consists of five agents, each with a specific responsibility:
 
 1. **Conceptual Generator**: Generates questions focused on theoretical understanding, definitions, and fundamental principles
 2. **Practical Generator**: Creates scenario-based questions testing real-world application of regulations
 3. **Validator**: Performs strict validation to ensure questions meet structural and content requirements
-4. **Judge**: Receives both Q&As and their validation results, and makes the final decision on which questions (0, 1, or 2) to accept or refine for the end user
+4. **Refiner**: Fixes issues identified by the validator while preserving the original question's intent
+5. **Judge**: Makes the final decision on which questions to accept or reject for the end user
 
 Supported providers: **Anthropic**, **Google**, **Mistral**, and **OpenAI**. Any text-generation model from these providers can be used by passing the model name directly.
 
@@ -47,10 +48,16 @@ Supported providers: **Anthropic**, **Google**, **Mistral**, and **OpenAI**. Any
            │
            v
 ┌───────────────────────┐
+│  Refiner              │
+│  - Issues + Warnings  │
+│  - Preserve Intent    │
+└──────────┬────────────┘
+           │
+           v
+┌───────────────────────┐
 │  Judge                │
 │  - Accept Both        │
 │  - Accept One         │
-│  - Refine             │
 │  - Reject Both        │
 └──────────┬────────────┘
            │
@@ -65,65 +72,61 @@ Supported providers: **Anthropic**, **Google**, **Mistral**, and **OpenAI**. Any
 
 ## Agent Details
 
-### Conceptual Generator
+### Question Generators (Conceptual & Practical)
 
-**Purpose**: Generate questions that test theoretical knowledge and understanding of regulatory concepts.
+**Models**: Configurable provider/model per generator
 
-**Model**: Configurable provider/model
-
-**Focus Areas**:
+**Conceptual Generator** focuses on theoretical knowledge:
 - Definitions and terminology
 - Fundamental principles
-- Theoretical frameworks
 - "What is" and "how is it defined" questions
 
-**Important Constraint**:
-Questions must NOT reference the name or number of any regulation, annex, article, section, or official document in the question text itself. Questions must be fully standalone and understandable without mentioning specific regulation identifiers. This prevents confusion in multi-regulation quiz scenarios.
+**Practical Generator** focuses on real-world application:
+- Scenario-based questions
+- Application of rules
+- "What should you do" and "how would you apply" questions
+
+**Important Constraint**: Questions must NOT reference regulation names, numbers, articles, or sections. Questions must be fully standalone to prevent confusion in multi-regulation scenarios.
 
 **Output Format**:
 ```json
 {
   "question": "Question text",
-  "options": {
-    "A": "First option",
-    "B": "Second option",
-    "C": "Third option",
-    "D": "Fourth option"
-  },
+  "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
   "correct_answer": "A",
-  "explanations": {
-    "A": "Why this is correct",
-    "B": "Why this is wrong",
-    "C": "Why this is wrong",
-    "D": "Why this is wrong"
-  },
+  "explanations": {"A": "Why correct", "B": "Why wrong", "C": "Why wrong", "D": "Why wrong"},
   "difficulty": "easy|medium|hard",
   "focus": "conceptual|practical"
 }
-
-Note: The `source_reference` field is automatically populated by the workflow from the chunk's `hierarchy_path` and is not part of the model's output.
 ```
 
-### Practical Generator
+### Refiner
 
-**Purpose**: Create scenario-based questions that test application of regulations in real-world situations.
+**Purpose**: Fix issues identified by the validator while preserving the original question's intent and focus.
 
 **Model**: Configurable provider/model
 
-**Focus Areas**:
-- Real-world scenarios
-- Application of rules
-- Decision-making situations
-- "What should you do" and "how would you apply" questions
+**Refinement Actions**:
+- Fix options that are not plausible enough
+- Improve explanations that don't properly hint at why wrong answers are incorrect
+- Clarify unclear or ambiguous question wording
+- Complete missing or incomplete explanations
+- Adjust options that are too obviously wrong
 
-**Important Constraint**:
-Questions must NOT reference the name or number of any regulation, annex, article, section, or official document in the question text itself. Questions must be fully standalone and understandable without mentioning specific regulation identifiers. This prevents confusion in multi-regulation quiz scenarios.
+**Important**: The refiner only runs on questions that failed validation. Questions that pass validation are returned unchanged.
 
-**Output Format**: Same JSON structure as Conceptual Generator, with `"focus": "practical"`
+**Output Format**: Same JSON structure as generators, with additional field:
+```json
+{
+  ...
+  "refinement_notes": "Brief description of what was fixed",
+  "refiner_model": "gpt-4o"
+}
+```
 
 ### Validator
 
-**Purpose**: Perform strict validation of question format and content requirements before judging.
+**Purpose**: Perform strict validation of question format and content requirements before refinement.
 
 
 **Model**: Configurable provider/model
@@ -168,25 +171,23 @@ Questions must NOT reference the name or number of any regulation, annex, articl
 
 ### Judge
 
-**Purpose**: Evaluate both generated questions and decide on the best output strategy.
+**Purpose**: Make the final accept/reject decision on refined questions.
 
 **Model**: Configurable provider/model
 
 **Decision Types**:
 
 1. **accept_both**: Both questions are high quality and test different aspects
-2. **accept_conceptual**: Only the conceptual question is valid and high quality
-3. **accept_practical**: Only the practical question is valid and high quality
-4. **refine_conceptual**: Conceptual question needs refinements
-5. **refine_practical**: Practical question needs refinements
-6. **refine_both**: Both questions need refinements
-7. **reject_both**: Neither question is suitable
+2. **accept_conceptual**: Only the conceptual question is acceptable
+3. **accept_practical**: Only the practical question is acceptable
+4. **reject_both**: Neither question meets the required standards
+
+**Important**: The judge does NOT refine questions. Questions are already refined by the Refiner agent before reaching the judge. The judge only decides which refined questions to accept.
 
 **Evaluation Criteria**:
 - Validator's pass/fail and issues for each question (primary filter)
+- Whether refinement successfully addressed the issues
 - Accuracy: Does it correctly reflect the regulation?
-- Clarity: Is the question unambiguous?
-- Quality: Are all options plausible? Are explanations clear?
 - Distinctiveness: Do the two questions test different skills?
 - Difficulty: Is it appropriate for certification level?
 
@@ -207,8 +208,6 @@ Questions must NOT reference the name or number of any regulation, annex, articl
     }
   ]
 }
-
-Note: The judge does not generate `source_reference` in its output. This field is automatically added by the workflow from the chunk's `hierarchy_path`.
 ```
 
 ## State Management
@@ -227,13 +226,16 @@ The workflow uses LangGraph's state management to track progress through the pip
   "conceptual_qa": Dict,           # Output from conceptual generator
   "practical_qa": Dict,            # Output from practical generator
   
-
-  # Validation results (before judging)
+  # Validation results (before refinement)
   "validation_results": List[Dict], # Results for each question
   "all_valid": bool,               # Whether all passed validation
 
+  # Refined Q&As (after refinement)
+  "refined_conceptual_qa": Dict,   # Refined conceptual question
+  "refined_practical_qa": Dict,    # Refined practical question
+
   # Judge output
-  "judge_decision": str,           # accept_both|accept_conceptual|accept_practical|reject_both|refine_conceptual|refine_practical|refine_both
+  "judge_decision": str,           # accept_both|accept_conceptual|accept_practical|reject_both
   "judge_reasoning": str,          # Explanation (references validator results)
   "judged_qas": Dict,              # Final Q&As after judging
   
@@ -265,10 +267,12 @@ config = AgentConfig(
   conceptual_provider="openai",
   practical_provider="anthropic",
   validator_provider="google",
+  refiner_provider="openai",
   judge_provider="mistral",
   conceptual_model="gpt-4o",
   practical_model="claude-sonnet-4-20250514",
   validator_model="gemini-2.5-flash",
+  refiner_model="gpt-4o",
   judge_model="mistral-large-latest",
 
   # Provider-Specific Settings
@@ -392,9 +396,9 @@ Each validated question includes:
   "generator": "conceptual",
   "model": "gpt-4o"
 }
-
-Note: The `source_reference` field is automatically populated from the chunk's `hierarchy_path` by the workflow (format: elements joined with " > "). It is not generated by the AI models.
 ```
+
+**Note**: The `source_reference` field is added by the workflow (not by agents) from the chunk's `hierarchy_path`, formatted as elements joined with " > ".
 
 ### Saved Results
 
@@ -431,9 +435,10 @@ Note: Retry logic for API errors is configured in AgentConfig but not currently 
 For each regulation chunk:
 - 2 parallel generation calls (conceptual + practical)
 - 2 validation calls (one for each generated question)
+- 2 refinement calls (one for each question, skipped if validation passes)
 - 1 judge call
 
-**Total: 5 API calls per chunk**
+**Total: Up to 7 API calls per chunk** (5 if both questions pass validation)
 
 ### Cost Optimization
 

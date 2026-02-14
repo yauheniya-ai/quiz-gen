@@ -1,5 +1,15 @@
 ## Changelog
 
+### Version 0.3.7 (2026-02-14)
+
+Refiner agent separation:
+- Added new Refiner agent to handle question refinement based on validation issues
+- Updated workflow to follow: Generators -> Validator -> Refiner -> Judge -> Human
+- Simplified Judge agent to only accept/reject (no longer does refinement)
+- Refiner fixes issues identified by validator while preserving original question intent
+- Added refiner_provider and refiner_model to AgentConfig
+- Questions now come from: generators (if perfect) or refiner (if issues fixed) or rejected by judge
+
 ### Version 0.3.6 (2026-02-14)
 
 Source reference automation and max_tokens fix:
