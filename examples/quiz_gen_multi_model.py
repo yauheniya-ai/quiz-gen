@@ -49,12 +49,12 @@ def main():
     config = AgentConfig(
         conceptual_provider="openai",
         practical_provider="anthropic",
-        validator_provider="google",
+        validator_provider="mistral",
         judge_provider="mistral",
-        conceptual_model="gpt-4o",
-        practical_model="claude-sonnet-4-20250514",
-        validator_model="gemini-2.5-flash",
-        judge_model="mistral-large-latest",
+        conceptual_model="gpt-5-nano-2025-08-07",
+        practical_model="claude-haiku-4-5-20251001",
+        validator_model="mistral-small-latest",
+        judge_model="mistral-small-latest",
         auto_accept_valid=False,
         verbose=True,
     )

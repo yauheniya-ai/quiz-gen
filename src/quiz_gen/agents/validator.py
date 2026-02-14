@@ -63,10 +63,12 @@ Be strict but fair. Mark as invalid only if critical requirements are missing. Y
         api_base: Optional[str] = None,
         provider: Optional[str] = None,
         model: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ):
         """Initialize model client"""
         self.provider = provider or "openai"
         self.model = model or "gpt-4o"
+        self.max_tokens = max_tokens
         if self.provider == "anthropic":
             self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
         elif self.provider in {"google", "gemini"}:
@@ -93,6 +95,7 @@ Validate this question against all requirements.
         if self.provider == "anthropic":
             response = self.client.messages.create(
                 model=self.model,
+                max_tokens=getattr(self, "max_tokens", 4096),
                 messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
             )

@@ -35,6 +35,11 @@ class AgentConfig:
     gemini_api_base: Optional[str] = None
 
     # ============================================================================
+    # Provider-Specific Settings
+    # ============================================================================
+    anthropic_max_tokens: int = 4096  # Required by Anthropic API
+
+    # ============================================================================
     # Model Configurations
     # ============================================================================
     conceptual_provider: str = "openai"
@@ -189,6 +194,7 @@ class AgentConfig:
             "anthropic_api_base": self.anthropic_api_base,
             "mistral_api_base": self.mistral_api_base,
             "gemini_api_base": self.gemini_api_base,
+            "anthropic_max_tokens": self.anthropic_max_tokens,
             "conceptual_provider": self.conceptual_provider,
             "practical_provider": self.practical_provider,
             "judge_provider": self.judge_provider,

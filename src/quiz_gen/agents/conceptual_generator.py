@@ -46,7 +46,6 @@ Output format (JSON):
         "C": "Why this is wrong...",
         "D": "Why this is wrong..."
     },
-    "source_reference": "Article X, Chapter Y",
     "difficulty": "easy|medium|hard",
     "focus": "conceptual"
 }
@@ -66,10 +65,12 @@ Guidelines:
         api_base: Optional[str] = None,
         provider: Optional[str] = None,
         model: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ):
         """Initialize model client"""
         self.provider = provider or "openai"
         self.model = model or "gpt-4o"
+        self.max_tokens = max_tokens
         if self.provider == "anthropic":
             self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
         elif self.provider in {"google", "gemini"}:
@@ -101,6 +102,7 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
         if self.provider == "anthropic":
             response = self.client.messages.create(
                 model=self.model,
+                max_tokens=getattr(self, "max_tokens", 4096),
                 messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
             )

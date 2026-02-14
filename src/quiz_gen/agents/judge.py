@@ -62,7 +62,6 @@ Your final output must be a single JSON object with the following structure:
                 "C": "Why this is wrong...",
                 "D": "Why this is wrong..."
             },
-            "source_reference": "Article X, Chapter Y",
             "difficulty": "easy|medium|hard",
             "focus": "conceptual|practical"
         }
@@ -83,10 +82,12 @@ Never return partial or referenced questions—always output the full, final que
         api_base: Optional[str] = None,
         provider: Optional[str] = None,
         model: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ):
         """Initialize model client"""
         self.provider = provider or "anthropic"
         self.model = model or "claude-sonnet-4-20250514"
+        self.max_tokens = max_tokens
         if self.provider == "anthropic":
             self.client = Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
         elif self.provider in {"google", "gemini"}:
@@ -122,6 +123,7 @@ VALIDATION RESULTS (from strict validator):
         if self.provider == "anthropic":
             response = self.client.messages.create(
                 model=self.model,
+                max_tokens=getattr(self, "max_tokens", 4096),
                 messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
             )

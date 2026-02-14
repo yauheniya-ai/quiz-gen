@@ -1,5 +1,13 @@
 ## Changelog
 
+### Version 0.3.6 (2026-02-14)
+
+Source reference automation and max_tokens fix:
+- Removed `source_reference` field from all agent prompts (conceptual generator, practical generator, and judge) to prevent model hallucination
+- Added automatic population of `source_reference` from chunk `hierarchy_path` in workflow for consistency and accuracy
+- All questions now have reliable, traceable source references derived directly from document structure
+- Add max_tokens required parameter for the Anthropic models
+
 ### Version 0.3.5 (2026-02-09)
 
 Provider-default generation parameters:

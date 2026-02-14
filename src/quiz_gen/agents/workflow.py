@@ -75,24 +75,28 @@ class QuizGenerationWorkflow:
             api_base=conceptual_base,
             provider=self.config.conceptual_provider,
             model=self.config.conceptual_model,
+            max_tokens=self.config.anthropic_max_tokens if self.config.conceptual_provider == "anthropic" else None,
         )
         self.practical_gen = PracticalGenerator(
             api_key=practical_key,
             api_base=practical_base,
             provider=self.config.practical_provider,
             model=self.config.practical_model,
+            max_tokens=self.config.anthropic_max_tokens if self.config.practical_provider == "anthropic" else None,
         )
         self.judge = Judge(
             api_key=judge_key,
             api_base=judge_base,
             provider=self.config.judge_provider,
             model=self.config.judge_model,
+            max_tokens=self.config.anthropic_max_tokens if self.config.judge_provider == "anthropic" else None,
         )
         self.validator = Validator(
             api_key=validator_key,
             api_base=validator_base,
             provider=self.config.validator_provider,
             model=self.config.validator_model,
+            max_tokens=self.config.anthropic_max_tokens if self.config.validator_provider == "anthropic" else None,
         )
 
         # Build graph
@@ -279,6 +283,9 @@ class QuizGenerationWorkflow:
                         q["model"] = getattr(
                             self.practical_gen, "model", "claude-sonnet-4-20250514"
                         )
+                # Automatically populate source_reference from chunk hierarchy_path
+                hierarchy = state["chunk"].get("hierarchy_path", [])
+                q["source_reference"] = " > ".join(hierarchy) if hierarchy else "Unknown"
             state["final_questions"] = final_questions
             state["judge_decision"] = judge_result["decision"]
             state["judge_reasoning"] = judge_result["reasoning"]

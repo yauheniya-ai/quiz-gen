@@ -15,7 +15,7 @@ The system consists of four agents, each with a specific responsibility:
 3. **Validator**: Performs strict validation to ensure questions meet structural and content requirements
 4. **Judge**: Receives both Q&As and their validation results, and makes the final decision on which questions (0, 1, or 2) to accept or refine for the end user
 
-Supported providers (alphabetical): **Anthropic**, **Google**, **Mistral**, **OpenAI**. Any text-generation model from these providers can be used by passing the model name directly.
+Supported providers: **Anthropic**, **Google**, **Mistral**, and **OpenAI**. Any text-generation model from these providers can be used by passing the model name directly.
 
 ### Workflow Pipeline
 
@@ -26,25 +26,23 @@ Supported providers (alphabetical): **Anthropic**, **Google**, **Mistral**, **Op
 └──────────┬──────────┘
            │
            v
-┌──────────────────────────────────┐
-│  Parallel Generation             │
-├──────────────────────────────────┤
-│  ┌────────────────┐              │
-│  │ Conceptual Gen │              │
-│  └────────┬───────┘              │
-│           │                      │
-│           v                      │
-│  ┌────────────────┐              │
-│  │ Practical Gen  │              │
-│  └────────┬───────┘              │
-└───────────┼──────────────────────┘
-            │
-            v
+    ┌──────┴──────┐
+    │             │
+    v             v
+┌────────────┐ ┌────────────┐
+│Conceptual  │ │Practical   │  (Parallel)
+│Generator   │ │Generator   │
+└─────┬──────┘ └──────┬─────┘
+      │               │
+      └───────┬───────┘
+              │
+              v
 ┌───────────────────────┐
 │  Validator            │
 │  - Format Check       │
 │  - Content Check      │
 │  - Quality Score      │
+│  (Both Q&As)          │
 └──────────┬────────────┘
            │
            v
@@ -52,7 +50,7 @@ Supported providers (alphabetical): **Anthropic**, **Google**, **Mistral**, **Op
 │  Judge                │
 │  - Accept Both        │
 │  - Accept One         │
-│  - Unify              │
+│  - Refine             │
 │  - Reject Both        │
 └──────────┬────────────┘
            │
@@ -79,6 +77,9 @@ Supported providers (alphabetical): **Anthropic**, **Google**, **Mistral**, **Op
 - Theoretical frameworks
 - "What is" and "how is it defined" questions
 
+**Important Constraint**:
+Questions must NOT reference the name or number of any regulation, annex, article, section, or official document in the question text itself. Questions must be fully standalone and understandable without mentioning specific regulation identifiers. This prevents confusion in multi-regulation quiz scenarios.
+
 **Output Format**:
 ```json
 {
@@ -96,10 +97,11 @@ Supported providers (alphabetical): **Anthropic**, **Google**, **Mistral**, **Op
     "C": "Why this is wrong",
     "D": "Why this is wrong"
   },
-  "source_reference": "Article X, Chapter Y",
   "difficulty": "easy|medium|hard",
-  "focus": "conceptual"
+  "focus": "conceptual|practical"
 }
+
+Note: The `source_reference` field is automatically populated by the workflow from the chunk's `hierarchy_path` and is not part of the model's output.
 ```
 
 ### Practical Generator
@@ -114,51 +116,10 @@ Supported providers (alphabetical): **Anthropic**, **Google**, **Mistral**, **Op
 - Decision-making situations
 - "What should you do" and "how would you apply" questions
 
+**Important Constraint**:
+Questions must NOT reference the name or number of any regulation, annex, article, section, or official document in the question text itself. Questions must be fully standalone and understandable without mentioning specific regulation identifiers. This prevents confusion in multi-regulation quiz scenarios.
+
 **Output Format**: Same JSON structure as Conceptual Generator, with `"focus": "practical"`
-
-### Judge
-
-**Purpose**: Evaluate both generated questions and decide on the best output strategy.
-
-**Model**: Configurable provider/model
-
-**Decision Types**:
-
-1. **accept_both**: Both questions are high quality and test different aspects
-2. **accept_conceptual**: Only the conceptual question is valid and high quality
-3. **accept_practical**: Only the practical question is valid and high quality
-4. **refine_conceptual**: Conceptual question needs refinements
-5. **refine_practical**: Practical question needs refinements
-6. **refine_both**: Both questions need refinements
-7. **reject_both**: Neither question is suitable
-
-**Evaluation Criteria**:
-- Validator's pass/fail and issues for each question (primary filter)
-- Accuracy: Does it correctly reflect the regulation?
-- Clarity: Is the question unambiguous?
-- Quality: Are all options plausible? Are explanations clear?
-- Distinctiveness: Do the two questions test different skills?
-- Difficulty: Is it appropriate for certification level?
-
-**Output Format**:
-```json
-{
-  "decision": "accept_both|accept_conceptual|accept_practical|reject_both|refine_conceptual|refine_practical|refine_both",
-  "reasoning": "Brief explanation of your decision, referencing validator results",
-  "improvements_made": ["List of improvements if refined"],
-  "questions": [
-    {
-      "question": "The question text",
-      "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
-      "correct_answer": "A",
-      "explanations": {"A": "...", "B": "...", "C": "...", "D": "..."},
-      "source_reference": "Article X, Chapter Y",
-      "difficulty": "easy|medium|hard",
-      "focus": "conceptual|practical"
-    }
-  ]
-}
-```
 
 ### Validator
 
@@ -205,6 +166,51 @@ Supported providers (alphabetical): **Anthropic**, **Google**, **Mistral**, **Op
 }
 ```
 
+### Judge
+
+**Purpose**: Evaluate both generated questions and decide on the best output strategy.
+
+**Model**: Configurable provider/model
+
+**Decision Types**:
+
+1. **accept_both**: Both questions are high quality and test different aspects
+2. **accept_conceptual**: Only the conceptual question is valid and high quality
+3. **accept_practical**: Only the practical question is valid and high quality
+4. **refine_conceptual**: Conceptual question needs refinements
+5. **refine_practical**: Practical question needs refinements
+6. **refine_both**: Both questions need refinements
+7. **reject_both**: Neither question is suitable
+
+**Evaluation Criteria**:
+- Validator's pass/fail and issues for each question (primary filter)
+- Accuracy: Does it correctly reflect the regulation?
+- Clarity: Is the question unambiguous?
+- Quality: Are all options plausible? Are explanations clear?
+- Distinctiveness: Do the two questions test different skills?
+- Difficulty: Is it appropriate for certification level?
+
+**Output Format**:
+```json
+{
+  "decision": "accept_both|accept_conceptual|accept_practical|reject_both|refine_conceptual|refine_practical|refine_both",
+  "reasoning": "Brief explanation of your decision, referencing validator results",
+  "improvements_made": ["List of improvements if refined"],
+  "questions": [
+    {
+      "question": "The question text",
+      "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+      "correct_answer": "A",
+      "explanations": {"A": "...", "B": "...", "C": "...", "D": "..."},
+      "difficulty": "easy|medium|hard",
+      "focus": "conceptual|practical"
+    }
+  ]
+}
+
+Note: The judge does not generate `source_reference` in its output. This field is automatically added by the workflow from the chunk's `hierarchy_path`.
+```
+
 ## State Management
 
 The workflow uses LangGraph's state management to track progress through the pipeline.
@@ -227,7 +233,7 @@ The workflow uses LangGraph's state management to track progress through the pip
   "all_valid": bool,               # Whether all passed validation
 
   # Judge output
-  "judge_decision": str,           # accept_both|accept_conceptual|accept_practical|reject_both|unify
+  "judge_decision": str,           # accept_both|accept_conceptual|accept_practical|reject_both|refine_conceptual|refine_practical|refine_both
   "judge_reasoning": str,          # Explanation (references validator results)
   "judged_qas": Dict,              # Final Q&As after judging
   
@@ -265,6 +271,9 @@ config = AgentConfig(
   validator_model="gemini-2.5-flash",
   judge_model="mistral-large-latest",
 
+  # Provider-Specific Settings
+  anthropic_max_tokens=4096,  # Required by Anthropic API (default: 4096)
+
   # Workflow Settings
   auto_accept_valid=False,
   save_intermediate_results=True,
@@ -275,7 +284,8 @@ config = AgentConfig(
   strict_validation=True,
 )
 
-# Note: This package does not set temperature/max_tokens. Provider defaults are used.
+# Note: Temperature is not configured and provider defaults are used.
+# Max tokens is only set for Anthropic (required by their API).
 ```
 
 ### Environment Variables
@@ -376,12 +386,14 @@ Each validated question includes:
     "C": "Hint about why C is wrong",
     "D": "Hint about why D is wrong"
   },
-  "source_reference": "Article 47, Section 1(a)",
+  "source_reference": "Regulation X > Section Y > Article Z",
   "difficulty": "medium",
   "focus": "conceptual",
   "generator": "conceptual",
   "model": "gpt-4o"
 }
+
+Note: The `source_reference` field is automatically populated from the chunk's `hierarchy_path` by the workflow (format: elements joined with " > "). It is not generated by the AI models.
 ```
 
 ### Saved Results
@@ -404,29 +416,30 @@ Results are saved to JSON files in the configured output directory:
 
 The workflow includes comprehensive error handling:
 
-- **Generation failures**: Captured and logged, workflow continues
-- **API errors**: Retry logic with configurable attempts
-- **Validation failures**: Questions are not saved, errors are reported
+- **Generation failures**: Captured and logged in the errors list, workflow continues
+- **Validation failures**: Questions that fail validation are not accepted
 - **State errors**: Tracked in the errors list for debugging
 
 Errors are accumulated in the state and can be reviewed in the final output.
+
+Note: Retry logic for API errors is configured in AgentConfig but not currently implemented in the workflow.
 
 ## Performance Considerations
 
 ### API Calls per Chunk
 
 For each regulation chunk:
-- 2 parallel generation calls (OpenAI + Claude)
-- 1 judge call (Claude)
-- 1-2 validation calls (OpenAI, depends on judge decision)
+- 2 parallel generation calls (conceptual + practical)
+- 2 validation calls (one for each generated question)
+- 1 judge call
 
-**Total: 4-5 API calls per chunk**
+**Total: 5 API calls per chunk**
 
 ### Cost Optimization
 
 - Use parallel generation to minimize latency
-- Judge reduces redundant questions
 - Validator prevents low-quality questions from requiring regeneration
+- Judge reduces redundant questions
 - Batch processing amortizes initialization overhead
 
 ### Caching
@@ -448,9 +461,9 @@ The system is designed to be extensible:
 
 ## Best Practices
 
-1. **Review judge decisions**: Monitor acceptance rates to tune generator prompts
+1. **Analyze question diversity**: Ensure conceptual and practical questions are distinct
 2. **Track validation scores**: Identify common failure patterns
-3. **Analyze question diversity**: Ensure conceptual and practical questions are distinct
+3. **Review judge decisions**: Monitor acceptance rates to tune generator prompts
 4. **Collect human feedback**: Use feedback to improve generator prompts over time
 5. **Version control prompts**: Track prompt changes and their impact on quality
 6. **Monitor API costs**: Set budgets and rate limits appropriately
