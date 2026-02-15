@@ -169,7 +169,7 @@ cd quiz-gen
 pip install -e ".[dev]"
 
 # Run tests
-pytest
+pytest --cov=src --cov-report=term-missing
 
 # Run linting
 ruff check .

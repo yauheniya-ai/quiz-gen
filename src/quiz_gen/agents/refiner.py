@@ -142,6 +142,11 @@ Fix the identified issues AND address the warnings to improve the question quali
                 system=self.SYSTEM_PROMPT,
             )
             content = response.content[0].text
+            if "```json" in content:
+                content = content.split("```json")[1].split("```", 1)[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+            result = json.loads(content)
         elif self.provider == "cohere":
             response = self.client.chat(
                 model=self.model,

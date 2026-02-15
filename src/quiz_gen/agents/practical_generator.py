@@ -109,22 +109,34 @@ Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
 
         user_prompt += "\n\nGenerate ONE practical quiz question in JSON format."
 
-        if self.provider in {"anthropic", "minimax"}:
+        if self.provider == "anthropic":
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=self.max_tokens or 4096,
                 messages=[{"role": "user", "content": user_prompt}],
                 system=self.SYSTEM_PROMPT,
             )
-
-            # Extract JSON from response
             content = response.content[0].text
             # Remove markdown code blocks if present
             if "```json" in content:
                 content = content.split("```json")[1].split("```")[0].strip()
             elif "```" in content:
                 content = content.split("```")[1].split("```")[0].strip()
-
+            result = json.loads(content)
+        elif self.provider == "cohere":
+            response = self.client.chat(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ],
+            )
+            content = response.message.content[0].text
+            # Remove markdown code blocks if present
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
             result = json.loads(content)
         elif self.provider in {"google", "gemini"}:
             response = self.client.models.generate_content(

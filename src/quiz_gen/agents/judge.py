@@ -132,6 +132,11 @@ Do NOT include the questions in your output - only your decision and reasoning.
             )
             # Extract JSON from response
             content = response.content[0].text
+            if "```json" in content:
+                content = content.split("```json")[1].split("```", 1)[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+            result = json.loads(content)
         elif self.provider == "cohere":
             response = self.client.chat(
                 model=self.model,

@@ -111,7 +111,7 @@ class AgentConfig:
             self.openai_api_base = os.getenv("OPENAI_API_BASE")
 
         if not self.anthropic_api_base:
-            self.anthropic_api_base = os.getenv("ANTHROPIC_BASE_URL")
+            self.anthropic_api_base = os.getenv("ANTHROPIC_API_BASE") or os.getenv("ANTHROPIC_BASE_URL")
 
         if not self.mistral_api_base:
             self.mistral_api_base = os.getenv("MISTRAL_API_BASE")

@@ -1,5 +1,15 @@
 ## Changelog
 
+### Version 0.4.1 (2026-02-14)
+
+Critical Bug Fixes:
+- Fixed missing JSON parsing in all agents for Anthropic provider (was causing "local variable 'result' referenced before assignment" error)
+- Fixed missing Cohere handling in practical_generator.generate() method (was causing "'function' object has no attribute 'completions'" error)
+- Added JSON extraction logic for Anthropic responses in all 5 agents (conceptual_generator, practical_generator, validator, refiner, judge)
+- All agents now properly handle markdown code blocks and parse JSON for both Anthropic and Cohere providers
+- Fixed anthropic_api_base loading to support both ANTHROPIC_API_BASE and ANTHROPIC_BASE_URL environment variables
+- Fixed cohere_api_key loading in __post_init__ method (was missing from environment variable loading)
+
 ### Version 0.4.0 (2026-02-14)
 
 Cohere Provider Support:
