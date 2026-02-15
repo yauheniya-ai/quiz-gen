@@ -35,6 +35,12 @@ CONTENT REQUIREMENTS:
 9. Question is unambiguous
 10. Based strictly on provided regulation content
 
+IMPORTANT DESIGN PRINCIPLE:
+- Questions should NOT reference regulation names, annex numbers, article numbers, or section identifiers in the question text
+- This is intentional: exams test understanding of content, not memorization of which annex/article contains what
+- If a question mentions "Annex II", "Article 47", or similar references, note this as a WARNING
+- Exception: References in explanations are acceptable, but question text should be standalone
+
 Output format (JSON):
 {
     "valid": true/false,  // Should this question be shown to the judge/end user?

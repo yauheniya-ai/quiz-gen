@@ -30,6 +30,13 @@ Your responsibility:
 - Maintain the question style and difficulty level
 - Do NOT make unnecessary changes beyond addressing feedback
 
+CRITICAL DESIGN PRINCIPLE:
+- Do NOT add regulation names, annex numbers, article numbers, or section identifiers to the question text
+- Questions should test understanding of CONTENT, not memorization of which annex/article it's from
+- If the original question avoided these references, keep it that way
+- References in explanations are acceptable, but question text should be standalone
+- In real exams, students answer based on regulatory knowledge, not by remembering "this is Annex II"
+
 Common issues to fix:
 - Options that are not plausible enough
 - Explanations that don't properly hint at why wrong answers are incorrect
@@ -106,11 +113,15 @@ Guidelines:
     def refine(self, qa: Dict, validation_result: Dict, chunk: Dict) -> Dict:
         """Refine a question based on validation issues and warnings"""
 
+        # Get warnings and issues, handling None values
+        warnings = validation_result.get("warnings") or []
+        issues = validation_result.get("issues") or []
+        
         # Only skip refinement if perfect: valid, no warnings, no issues, score 10/10
         is_perfect = (
             validation_result.get("valid") == True
-            and not validation_result.get("warnings", [])
-            and not validation_result.get("issues", [])
+            and len(warnings) == 0
+            and len(issues) == 0
             and validation_result.get("score") == 10
         )
         
@@ -118,6 +129,7 @@ Guidelines:
             qa["refinement_notes"] = "No refinement needed (perfect score, no warnings or issues)"
             return qa
 
+        # If we get here, the question needs refinement
         user_prompt = f"""Original Regulation Content:
 {json.dumps(chunk, indent=2)}
 

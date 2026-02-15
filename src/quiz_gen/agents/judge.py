@@ -44,6 +44,12 @@ Consider:
 - Difficulty: Is it appropriate for certification level?
 - Whether refinement successfully addressed the issues
 
+IMPORTANT DESIGN PRINCIPLE:
+- Questions should NOT reference regulation names, annex numbers, article numbers, or section identifiers in the question text
+- This is intentional: exams test understanding of content, not memorization of document structure
+- Questions mentioning "Annex II", "Article 47", etc. in question text are LOWER QUALITY
+- References in explanations are fine, but question text should be standalone
+
 Your final output must be a single JSON object with the following structure:
 {
     "decision": "accept_both|accept_conceptual|accept_practical|reject_both",

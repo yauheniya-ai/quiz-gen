@@ -15,21 +15,20 @@ load_dotenv()
 # Add parent directory to path for imports in main.
 
 
-ARTICLE =   {
-    "section_type": "article",
-    "number": "61",
-    "title": "Article 61 - Informed consent to participate in testing in real world conditions outside AI regulatory sandboxes",
-    "content": "1. For the purpose of testing in real world conditions under Article 60, freely-given informed consent shall be obtained from the subjects of testing prior to their participation in such testing and after their having been duly informed with concise, clear, relevant, and understandable information regarding:\n\n(a) the nature and objectives of the testing in real world conditions and the possible inconvenience that may be linked to their participation;\n\n(b) the conditions under which the testing in real world conditions is to be conducted, including the expected duration of the subject or subjects’ participation;\n\n(c) their rights, and the guarantees regarding their participation, in particular their right to refuse to participate in, and the right to withdraw from, testing in real world conditions at any time without any resulting detriment and without having to provide any justification;\n\n(d) the arrangements for requesting the reversal or the disregarding of the predictions, recommendations or decisions of the AI system;\n\n(e) the Union-wide unique single identification number of the testing in real world conditions in accordance with Article 60(4) point (c), and the contact details of the provider or its legal representative from whom further information can be obtained.\n\n2. The informed consent shall be dated and documented and a copy shall be given to the subjects of testing or their legal representative.\n\n(a) the nature and objectives of the testing in real world conditions and the possible inconvenience that may be linked to their participation;\n\n(b) the conditions under which the testing in real world conditions is to be conducted, including the expected duration of the subject or subjects’ participation;\n\n(c) their rights, and the guarantees regarding their participation, in particular their right to refuse to participate in, and the right to withdraw from, testing in real world conditions at any time without any resulting detriment and without having to provide any justification;\n\n(d) the arrangements for requesting the reversal or the disregarding of the predictions, recommendations or decisions of the AI system;\n\n(e) the Union-wide unique single identification number of the testing in real world conditions in accordance with Article 60(4) point (c), and the contact details of the provider or its legal representative from whom further information can be obtained.",
+ARTICLE =     {
+    "section_type": "annex",
+    "number": "II",
+    "title": "ANNEX II - List of criminal offences referred to in Article 5(1), first subparagraph, point (h)(iii)",
+    "content": "Criminal offences referred to in Article 5(1), first subparagraph, point (h)(iii):\n— terrorism,\n— trafficking in human beings,\n— sexual exploitation of children, and child pornography,\n— illicit trafficking in narcotic drugs or psychotropic substances,\n— illicit trafficking in weapons, munitions or explosives,\n— murder, grievous bodily injury,\n— illicit trade in human organs or tissue,\n— illicit trafficking in nuclear or radioactive materials,\n— kidnapping, illegal restraint or hostage-taking,\n— crimes within the jurisdiction of the International Criminal Court,\n— unlawful seizure of aircraft or ships,\n— rape,\n— environmental crime,\n— organised or armed robbery,\n— sabotage,\n— participation in a criminal organisation involved in one or more of the offences listed above.",
     "hierarchy_path": [
       "REGULATION (EU) 2024/1689 OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL",
-      "CHAPTER VI - MEASURES IN SUPPORT OF INNOVATION",
-      "Article 61 - Informed consent to participate in testing in real world conditions outside AI regulatory sandboxes"
+      "ANNEX II - List of criminal offences referred to in Article 5(1), first subparagraph, point (h)(iii)"
     ],
     "metadata": {
-      "id": "art_61",
-      "subtitle": "Informed consent to participate in testing in real world conditions outside AI regulatory sandboxes"
+      "id": "anx_II",
+      "subtitle": "List of criminal offences referred to in Article 5(1), first subparagraph, point (h)(iii)"
     }
-  }
+}
 
 
 def main():
@@ -53,9 +52,9 @@ def main():
         conceptual_provider="cohere",
         conceptual_model="command-a-03-2025",
         practical_provider="cohere",
-        practical_model="command-a-03-2025",
+        practical_model="command-r-plus-08-2024",
         validator_provider="openai",
-        validator_model="gpt-5-nano-2025-08-07",
+        validator_model="gpt-5",#gpt-5-nano-2025-08-07
         refiner_provider="anthropic",
         refiner_model="claude-haiku-4-5-20251001",
         judge_provider="mistral",
@@ -120,18 +119,15 @@ def main():
         print()
 
     # ========================================================================
-    # STEP 2: VALIDATION RESULTS
+    # STEP 2: INITIAL VALIDATION
     # ========================================================================
     print("=" * 70)
-    print("STEP 2: VALIDATION RESULTS")
+    print("STEP 2: INITIAL VALIDATION (of original questions)")
     print("=" * 70)
     print()
-
-    print(f"All Valid: {result.get('all_valid', False)}")
-    print()
     
-    if result.get("validation_results"):
-        for val_result in result["validation_results"]:
+    if result.get("initial_validation_results"):
+        for val_result in result["initial_validation_results"]:
             question_type = val_result.get("question_type", "unknown").capitalize()
             print(f"{question_type} Question Validation:")
             print(f"  Valid: {val_result.get('valid', False)}")
@@ -139,12 +135,10 @@ def main():
             print(f"  Validator Model: {val_result.get('validator_model', 'N/A')}")
             print()
             
-            # Show ALL parameters - even if empty/None
             print(f"  Issues: {val_result.get('issues', []) or '[]'}")
             print(f"  Warnings: {val_result.get('warnings', []) or '[]'}")
             print()
             
-            # Show all checks passed - display complete dict
             checks = val_result.get("checks_passed", {})
             print(f"  Checks Passed:")
             if checks:
@@ -154,42 +148,85 @@ def main():
             else:
                 print(f"    {checks}")
             print()
+    else:
+        print("No initial validation results available")
+        print()
 
     # ========================================================================
-    # STEP 3: REFINED QUESTIONS
+    # STEP 3: REFINEMENT
     # ========================================================================
     print("=" * 70)
-    print("STEP 3: REFINED QUESTIONS (if needed)")
+    print("STEP 3: REFINEMENT")
     print("=" * 70)
     print()
 
-    if result.get("refined_conceptual_qa"):
+    refined_conceptual = result.get("refined_conceptual_qa")
+    refined_practical = result.get("refined_practical_qa")
+
+    if refined_conceptual:
         print("CONCEPTUAL QUESTION (refined):")
-        refined = result['refined_conceptual_qa']
-        print(f"  Refiner Model: {refined.get('refiner_model', 'N/A')}")
-        print(f"  Original Generator: {refined.get('generator', 'N/A')} / {refined.get('model', 'N/A')}")
-        print(f"  Refinement Notes: {refined.get('refinement_notes', 'N/A')}")
-        print(f"  Question: {refined.get('question', 'N/A')[:100]}...")
+        print(f"  Refiner Model: {refined_conceptual.get('refiner_model', 'N/A')}")
+        print(f"  Original Generator: {refined_conceptual.get('generator', 'N/A')} / {refined_conceptual.get('model', 'N/A')}")
+        print(f"  Refinement Notes: {refined_conceptual.get('refinement_notes', 'N/A')}")
+        print(f"  Question: {refined_conceptual.get('question', 'N/A')[:100]}...")
         print()
 
-    if result.get("refined_practical_qa"):
+    if refined_practical:
         print("PRACTICAL QUESTION (refined):")
-        refined = result['refined_practical_qa']
-        print(f"  Refiner Model: {refined.get('refiner_model', 'N/A')}")
-        print(f"  Original Generator: {refined.get('generator', 'N/A')} / {refined.get('model', 'N/A')}")
-        print(f"  Refinement Notes: {refined.get('refinement_notes', 'N/A')}")
-        print(f"  Question: {refined.get('question', 'N/A')[:100]}...")
+        print(f"  Refiner Model: {refined_practical.get('refiner_model', 'N/A')}")
+        print(f"  Original Generator: {refined_practical.get('generator', 'N/A')} / {refined_practical.get('model', 'N/A')}")
+        print(f"  Refinement Notes: {refined_practical.get('refinement_notes', 'N/A')}")
+        print(f"  Question: {refined_practical.get('question', 'N/A')[:100]}...")
         print()
 
-    if not result.get("refined_conceptual_qa") and not result.get("refined_practical_qa"):
-        print("No refinements needed - perfect scores (10/10) with no warnings or issues")
+    if not refined_conceptual and not refined_practical:
+        print("None (both questions had perfect scores: 10/10, no warnings or issues)")
         print()
-
+    
     # ========================================================================
-    # STEP 4: JUDGE DECISION
+    # STEP 4: RE-VALIDATION (after refinement)
     # ========================================================================
     print("=" * 70)
-    print("STEP 4: JUDGE DECISION")
+    print("STEP 4: RE-VALIDATION (after refinement)")
+    print("=" * 70)
+    print()
+    
+    # Only show re-validation if refinement actually happened
+    if refined_conceptual or refined_practical:
+        print(f"All Valid: {result.get('all_valid', False)}")
+        print()
+        
+        if result.get("validation_results"):
+            for val_result in result["validation_results"]:
+                question_type = val_result.get("question_type", "unknown").capitalize()
+                print(f"{question_type} Question Validation:")
+                print(f"  Valid: {val_result.get('valid', False)}")
+                print(f"  Score: {val_result.get('score', 0)}/10")
+                print(f"  Validator Model: {val_result.get('validator_model', 'N/A')}")
+                print()
+                
+                print(f"  Issues: {val_result.get('issues', []) or '[]'}")
+                print(f"  Warnings: {val_result.get('warnings', []) or '[]'}")
+                print()
+                
+                checks = val_result.get("checks_passed", {})
+                print(f"  Checks Passed:")
+                if checks:
+                    for check_name, passed in checks.items():
+                        status = "✓" if passed else "✗"
+                        print(f"    {status} {check_name}: {passed}")
+                else:
+                    print(f"    {checks}")
+                print()
+    else:
+        print("None (no refinement was needed)")
+        print()
+
+    # ========================================================================
+    # STEP 5: JUDGE DECISION
+    # ========================================================================
+    print("=" * 70)
+    print("STEP 5: JUDGE DECISION")
     print("=" * 70)
     print()
 
@@ -198,20 +235,16 @@ def main():
     print()
 
     # ========================================================================
-    # STEP 5: FINAL ACCEPTED QUESTIONS
+    # FINAL QUESTIONS (not a workflow step, just the output)
     # ========================================================================
     print("=" * 70)
-    print("STEP 5: FINAL ACCEPTED QUESTIONS")
+    print("FINAL QUESTIONS")
     print("=" * 70)
     print()
 
     if result.get("final_questions"):
-        print("=" * 70)
-        print("GENERATED QUESTIONS")
-        print("=" * 70)
-
         for i, question in enumerate(result["final_questions"], 1):
-            print(f"\n{'-' * 70}")
+            print(f"{'-' * 70}")
             print(f"Question {i} ({question.get('focus', 'unknown').upper()})")
             print(f"{'-' * 70}")
 
@@ -232,8 +265,10 @@ def main():
             print(f"  Difficulty: {question.get('difficulty', 'N/A')}")
             print(f"  Generator: {question.get('generator', 'N/A')}")
             print(f"  Model: {question.get('model', 'N/A')}")
+            print()
     else:
         print("No valid questions generated")
+        print()
 
     print()
 

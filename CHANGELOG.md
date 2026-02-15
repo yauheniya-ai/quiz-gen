@@ -1,6 +1,20 @@
 ## Changelog
 
-### Version 0.4.1 (2026-02-14)
+### Version 0.4.2 (2026-02-15)
+
+Critical Bug Fixes:
+- Fixed refiner not refining questions with warnings or issues
+- Refiner now properly handles None values for warnings/issues fields
+- Workflow now only stores refined questions if they were actually refined (checks for "refiner_model" field)
+- Fixed logic to use explicit length checks instead of truthiness evaluation for warnings/issues lists
+- Questions with warnings, issues, or score < 10 will now be properly refined
+
+Code Quality Improvements:
+- Added utility helpers module (parse_json_response, validate_qa_structure, build_chunk_context)
+- Added comprehensive unit tests for utility helpers (30+ test cases)
+- Improved test coverage for non-mocked utility functions
+
+### Version 0.4.1 (2026-02-15)
 
 Critical Bug Fixes:
 - Fixed missing JSON parsing in all agents for Anthropic provider (was causing "local variable 'result' referenced before assignment" error)
