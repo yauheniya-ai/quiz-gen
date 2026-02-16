@@ -314,22 +314,23 @@ def main():
                     "conceptual_qa": result.get("conceptual_qa"),
                     "practical_qa": result.get("practical_qa"),
                 },
-                "step_2_validation": {
-                    "all_valid": result.get("all_valid", False),
-                    "validation_results": result.get("validation_results", []),
+                "step_2_initial_validation": {
+                    "validation_results": result.get("initial_validation_results", []),
                 },
                 "step_3_refinement": {
                     "refined_conceptual_qa": result.get("refined_conceptual_qa"),
                     "refined_practical_qa": result.get("refined_practical_qa"),
                 },
-                "step_4_judge": {
+                "step_4_revalidation": {
+                    "validation_results": result.get("validation_results", []),
+                    "all_valid": result.get("all_valid", False),
+                },
+                "step_5_judge": {
                     "decision": result.get("judge_decision"),
                     "reasoning": result.get("judge_reasoning"),
+                    "final_questions": result.get("final_questions", []),
                 },
-                "step_5_final": {
-                    "questions": result.get("final_questions", []),
-                    "errors": result.get("errors", []),
-                },
+                "errors": result.get("errors", []),
                 "chunk": result["chunk"],
             },
             f,
@@ -342,11 +343,11 @@ def main():
     print("=" * 70)
     print(f"Output file: {output_file}")
     print("All intermediate results from 5 workflow steps included:")
-    print("  • Step 1: Generation (original questions)")
-    print("  • Step 2: Validation (full validator output)")
-    print("  • Step 3: Refinement (if needed)")
-    print("  • Step 4: Judge (decision & reasoning)")
-    print("  • Step 5: Final (accepted questions)")
+    print("  • Step 1: Generation (original questions from generators)")
+    print("  • Step 2: Initial Validation (of original questions)")
+    print("  • Step 3: Refinement (refined questions with notes)")
+    print("  • Step 4: Re-validation (validation after refinement)")
+    print("  • Step 5: Judge (decision, reasoning & final questions)")
     print()
 
 

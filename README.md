@@ -9,14 +9,13 @@
 [![Downloads](https://pepy.tech/badge/quiz-gen)](https://pepy.tech/project/quiz-gen)
 
 
-AI-powered quiz generator for regulatory, certification, and educational documentation. Extract structured content from complex legal and technical documents to create comprehensive learning materials.
+AI-powered quiz generator for regulatory documentation. Extract structured content from complex legal and technical documents to create comprehensive teaching and certification materials.
 
 ## Features
 
-- **Multi-Agent Quiz Generation**: Generate, validate, and judge questions using configurable providers/models
+- **Multi-Agent Quiz Generation**: Generate, validate, refine, and judge questions using configurable providers/models.
 - **EUR-Lex Document Parser**: Parse and structure EU legal documents with full table of contents extraction
-- **Hierarchical Document Analysis**: Identify structure including chapters, sections, articles, recitals, annexes, and appendices
-- **Intelligent Chunking**: Extract meaningful content chunks for articles, recitals, annexes, and appendices
+- **Human-in-the-Loop**: Integrate human input throughout the workflow.
 
 ## Installation
 
@@ -79,10 +78,10 @@ parser.print_toc()
 
 ### Multi-Agent Quiz Generation
 
-Quiz generation uses four specialized agents (conceptual, practical, validator, judge). Providers are configurable per agent, with supported providers: **Anthropic**, **Google**, **Mistral**, and **OpenAI**. Any text-generation model name from these providers can be passed directly. The package relies on provider defaults for generation parameters.
+Quiz generation uses four specialized agents (conceptual, practical, validator, refiner, and judge). Providers are configurable per agent, with supported providers: **Anthropic**, **Cohere**, **Google**, **Mistral**, and **OpenAI**. Any text-generation model name from these providers can be passed directly. The package relies on provider defaults for generation parameters.
 
 <div align="center" style="width: 100%;">
-    <img src="docs/images/Screenshot_AgentConfig.png" alt="Multi-Agent Architecture and Configuration" style="width: 100%; height: auto;" />
+    <img src="https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/docs/images/Screenshot_AgentConfig.png" alt="Multi-Agent Architecture and Configuration" style="width: 100%; height: auto;" />
     <p><em>Multi-Agent Architecture and Configuration</em></p>
 </div>
 
@@ -91,69 +90,20 @@ from quiz_gen.agents.workflow import QuizGenerationWorkflow
 from quiz_gen.agents.config import AgentConfig
 
 config = AgentConfig(
-    conceptual_provider="openai",
-    practical_provider="anthropic",
-    validator_provider="google",
+    conceptual_provider="cohere",
+    conceptual_model="command-a-03-2025",
+    practical_provider="google",
+    practical_model="gemini-3-pro-preview",
+    validator_provider="openai",
+    validator_model="gpt-5.2-2025-12-11",
+    refiner_provider="anthropic",
+    refiner_model="claude-sonnet-4-5-20250929",
     judge_provider="mistral",
-    conceptual_model="gpt-4o",
-    practical_model="claude-sonnet-4-20250514",
-    validator_model="gemini-2.5-flash",
     judge_model="mistral-large-latest",
 )
 
 workflow = QuizGenerationWorkflow(config)
 result = workflow.run(chunk)
-```
-
-## Advanced Usage
-
-### Custom Parsing Workflows
-
-```python
-from quiz_gen import EURLexParser
-
-parser = EURLexParser(url=document_url)
-
-# Parse specific sections
-parser._parse_preamble()  # Extract citations and recitals
-parser._parse_enacting_terms()  # Extract chapters and articles
-parser._parse_annexes()  # Extract annexes
-
-# Access intermediate results
-toc = parser.toc  # Full table of contents
-chunks = parser.chunks  # Content chunks only
-```
-
-### Filtering Chunks by Type
-
-```python
-from quiz_gen import SectionType
-
-# Get only recitals
-recitals = [c for c in chunks if c.section_type == SectionType.RECITAL]
-
-# Get only articles
-articles = [c for c in chunks if c.section_type == SectionType.ARTICLE]
-
-# Filter by chapter
-chapter_1_articles = [
-    c for c in articles 
-    if 'CHAPTER I' in ' > '.join(c.hierarchy_path)
-]
-```
-
-### Accessing Metadata
-
-```python
-for chunk in chunks:
-    # Access structured metadata
-    print(chunk.metadata)  # {'id': 'art_1', 'subtitle': '...'}
-    
-    # Navigate hierarchy
-    print(chunk.hierarchy_path)  # ['CHAPTER I - PRINCIPLES', 'Article 1']
-    
-    # Identify parent sections
-    print(chunk.parent_section)
 ```
 
 ## Development
@@ -192,6 +142,8 @@ quiz-gen/
 │   ├── eur_lex_html_url.py
 │   └── quiz_gen_multi_model.py
 ├── pyproject.toml
+├── README.md
+├── CHANGELOG.md
 └── .env
 ```
 
@@ -239,14 +191,8 @@ Enumeration of document section types.
 ### Compliance and Legal
 
 - Analyze regulatory requirements systematically
-- Track changes across document versions
-- Build searchable knowledge bases from legal texts
-
-### Documentation Processing
-
-- Convert unstructured documents into structured data
-- Build citation networks and cross-references
 - Support automated document analysis workflows
+- Build searchable knowledge bases from legal texts
 
 ### Education and Training
 
@@ -259,7 +205,6 @@ Enumeration of document section types.
 Currently supports:
 
 - **EUR-Lex HTML Documents**: European Union regulations, directives, decisions
-- **Legislative Acts**: Structured legal documents with formal hierarchies
 
 ### Document Format Requirements
 
