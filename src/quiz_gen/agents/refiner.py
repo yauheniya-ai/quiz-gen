@@ -19,36 +19,22 @@ class Refiner:
 
     SYSTEM_PROMPT = """You are an expert question refiner for a multi-agent quiz generation workflow. 
 
-Your job is to FIX issues and ADDRESS warnings identified by the validator in quiz questions. You receive:
-1. The original question
-2. Validation results indicating specific issues and warnings
+You receive:
+1. Original content
+2. Original conceptual and practical questions
+3. Validation results indicating failed checks, issues, and warnings
 
 Your responsibility:
-- Fix ALL issues (critical problems) identified by the validator
-- Address ALL warnings (suggestions for improvement) to enhance quality
-- Preserve the original intent and focus of the question
-- Maintain the question style and difficulty level
+- Address ALL failed checks, issues, and warnings identified by the validator
+- Preserve the original intent, focus, style, and difficulty level of the question
 - Do NOT make unnecessary changes beyond addressing feedback
 
-CRITICAL DESIGN PRINCIPLE:
+CRITICAL DESIGN PRINCIPLES:
 - Do NOT add regulation names, annex numbers, article numbers, or section identifiers to the question text
 - Questions should test understanding of CONTENT, not memorization of which annex/article it's from
-- If the original question avoided these references, keep it that way
+- All 4 answer options are plausible
+- Explanations are clear and concise (1-2 sentences each)
 - References in explanations are acceptable, but question text should be standalone
-- In real exams, students answer based on regulatory knowledge, not by remembering "this is Annex II"
-
-Common issues to fix:
-- Options that are not plausible enough
-- Explanations that don't properly hint at why wrong answers are incorrect
-- Unclear or ambiguous question wording
-- Missing or incomplete explanations
-- Options that are too obviously wrong
-
-Common warnings to address:
-- Minor wording improvements for clarity
-- Style consistency suggestions
-- Enhanced explanation quality
-- Better option distribution
 
 Output format (JSON):
 {
@@ -71,12 +57,6 @@ Output format (JSON):
     "refinement_notes": "Brief description of what was fixed"
 }
 
-Guidelines:
-- Make minimal changes necessary to address validator issues
-- Keep the question focused on the same regulatory concept
-- Ensure all 4 options remain plausible
-- Make explanations clear and concise (1-2 sentences each)
-- Preserve the generator's original style and approach
 """
 
     def __init__(
@@ -130,7 +110,7 @@ Guidelines:
             return qa
 
         # If we get here, the question needs refinement
-        user_prompt = f"""Original Regulation Content:
+        user_prompt = f"""Original Content:
 {json.dumps(chunk, indent=2)}
 
 Original Question:
@@ -138,10 +118,11 @@ Original Question:
 
 Validation Results:
 Valid: {validation_result.get('valid')}
+Checks Passed: {json.dumps([k for k, v in validation_result.get('checks_passed', {}).items() if v], indent=2)}
+Checks Failed: {json.dumps([k for k, v in validation_result.get('checks_passed', {}).items() if not v], indent=2)}
 Score: {validation_result.get('score')}/10
 Issues: {validation_result.get('issues', []) or 'None'}
 Warnings: {validation_result.get('warnings', []) or 'None'}
-Checks Failed: {json.dumps([k for k, v in validation_result.get('checks_passed', {}).items() if not v], indent=2)}
 
 Fix the identified issues AND address the warnings to improve the question quality. Preserve the original question's intent and style. Output the refined question in JSON format.
 """

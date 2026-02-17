@@ -44,8 +44,6 @@ IMPORTANT DESIGN PRINCIPLE:
 Output format (JSON):
 {
     "valid": true/false,  // Should this question be shown to the judge/end user?
-    "issues": ["List of any problems found"],
-    "warnings": ["List of minor issues or suggestions"],
     "checks_passed": {
         "has_4_options": true/false,
         "has_correct_answer": true/false,
@@ -59,6 +57,8 @@ Output format (JSON):
         "regulation_based": true/false,
     },
     "score": 10  // Number of checks passed out of 10
+    "issues": ["List of any problems found"],
+    "warnings": ["List of minor issues or suggestions"],
 }
 
 Be strict but fair. Mark as invalid only if critical requirements are missing. Your output will be used by the judge agent to make the final decision on which questions to accept for the end user.

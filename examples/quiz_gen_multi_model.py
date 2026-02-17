@@ -50,11 +50,11 @@ def main():
     print("Initializing configuration...")
     config = AgentConfig(
         conceptual_provider="cohere",
-        conceptual_model="command-a-03-2025",
+        conceptual_model="command-r-plus-08-2024",
         practical_provider="cohere",
         practical_model="command-r-plus-08-2024",
         validator_provider="openai",
-        validator_model="gpt-5",#gpt-5-nano-2025-08-07
+        validator_model="gpt-5-nano-2025-08-07",
         refiner_provider="anthropic",
         refiner_model="claude-haiku-4-5-20251001",
         judge_provider="mistral",
@@ -315,7 +315,7 @@ def main():
                     "practical_qa": result.get("practical_qa"),
                 },
                 "step_2_initial_validation": {
-                    "validation_results": result.get("initial_validation_results", []),
+                    "initial_validation_results": result.get("initial_validation_results", []),
                 },
                 "step_3_refinement": {
                     "refined_conceptual_qa": result.get("refined_conceptual_qa"),

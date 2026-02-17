@@ -38,16 +38,13 @@ For the questions you receive, you may:
 - If only one question was generated and it's valid, ACCEPT IT (don't reject just because the other is missing)
 
 Consider:
-- Validator's pass/fail, issues, and 10-point score for each question
+- Validator's pass/fail, issues, and 10-point score for each question (these are FINAL results after refinement and re-validation)
 - Accuracy: Does it correctly reflect the regulation?
 - Distinctiveness: If both exist, do they test different skills?
 - Difficulty: Is it appropriate for certification level?
-- Whether refinement successfully addressed the issues
 
 IMPORTANT DESIGN PRINCIPLE:
 - Questions should NOT reference regulation names, annex numbers, article numbers, or section identifiers in the question text
-- This is intentional: exams test understanding of content, not memorization of document structure
-- Questions mentioning "Annex II", "Article 47", etc. in question text are LOWER QUALITY
 - References in explanations are fine, but question text should be standalone
 
 Your final output must be a single JSON object with the following structure:
@@ -100,7 +97,7 @@ Do NOT include the questions in your output - only your decision and reasoning.
         """Make final accept/reject decision on refined Q&As, using validator results"""
         
         # Build prompt based on which questions exist
-        user_prompt = f"""Original Regulation Content:
+        user_prompt = f"""Original Content:
 {json.dumps(chunk, indent=2)}
 
 """

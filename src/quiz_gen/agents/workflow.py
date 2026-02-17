@@ -271,7 +271,7 @@ class QuizGenerationWorkflow:
             validation_results = state.get("validation_results", [])
             
             if self.config.verbose:
-                print(f"    → Found {len(validation_results)} validation results")
+                print(f"    → Received {len(validation_results)} validation results")
                 for i, vr in enumerate(validation_results):
                     qtype = vr.get("question_type", "unknown")
                     valid = vr.get("valid")
@@ -280,13 +280,27 @@ class QuizGenerationWorkflow:
                     issue_count = len(vr.get("issues", []) or [])
                     print(f"      [{qtype}] Valid={valid}, Score={score}/10, Warnings={warn_count}, Issues={issue_count}")
             
+            # Count how many questions actually need refinement
+            questions_needing_refinement = 0
+            for vr in validation_results:
+                warnings = vr.get("warnings") or []
+                issues = vr.get("issues") or []
+                score = vr.get("score", 10)
+                valid = vr.get("valid", True)
+                # Question needs refinement if not perfect
+                if not (valid and score == 10 and len(warnings) == 0 and len(issues) == 0):
+                    questions_needing_refinement += 1
+            
             if state.get("conceptual_qa"):
                 questions_to_refine.append(state["conceptual_qa"])
             if state.get("practical_qa"):
                 questions_to_refine.append(state["practical_qa"])
             
             if self.config.verbose:
-                print(f"    → Refining {len(questions_to_refine)} questions...")
+                if questions_needing_refinement > 0:
+                    print(f"    → Refining {questions_needing_refinement} question(s)...")
+                else:
+                    print(f"    → All questions perfect, no refinement needed")
             
             # Refine each question
             refined_questions = self.refiner.refine_batch(
@@ -294,13 +308,6 @@ class QuizGenerationWorkflow:
                 validation_results=validation_results,
                 chunk=state["chunk"]
             )
-            
-            if self.config.verbose:
-                print(f"    → Received {len(refined_questions)} refined questions")
-                for i, rq in enumerate(refined_questions):
-                    has_refiner = "refiner_model" in rq
-                    notes = rq.get("refinement_notes", "N/A")[:50]
-                    print(f"      [Question {i}] Has refiner_model={has_refiner}, Notes={notes}")
             
             # Store refined questions back in state ONLY if they were actually refined
             # (Refiner adds "refiner_model" field only when LLM refinement occurred)

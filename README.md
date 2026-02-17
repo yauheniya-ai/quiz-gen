@@ -81,7 +81,7 @@ parser.print_toc()
 Quiz generation uses four specialized agents (conceptual, practical, validator, refiner, and judge). Providers are configurable per agent, with supported providers: **Anthropic**, **Cohere**, **Google**, **Mistral**, and **OpenAI**. Any text-generation model name from these providers can be passed directly. The package relies on provider defaults for generation parameters.
 
 <div align="center" style="width: 100%;">
-    <img src="https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/docs/images/Screenshot_AgentConfig.png" alt="Multi-Agent Architecture and Configuration" style="width: 100%; height: auto;" />
+    <img src="https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/docs/images/AgentConfig.webp" alt="Multi-Agent Architecture and Configuration" style="width: 100%; height: auto;" />
     <p><em>Multi-Agent Architecture and Configuration</em></p>
 </div>
 
