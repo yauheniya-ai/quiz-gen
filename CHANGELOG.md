@@ -1,5 +1,15 @@
 ## Changelog
 
+### Version 0.5.1 (2026-03-26)
+
+CLI improvements:
+- Reorganized CLI arguments into named groups: **Document parsing** and **Web UI** for clearer `--help` output
+- Added `--no-browser` flag to suppress auto-opening a browser tab when launching the UI
+- Added `--log-level` option (debug/info/warning/error) for the UI server (default: warning)
+- `launch_ui()` now accepts `open_browser` and `log_level` parameters; opens browser via `webbrowser.open` by default
+- Improved module docstring with full usage examples
+- Expanded CLI test coverage from 7 to 23 tests, covering argument groups, `--no-browser`, `--log-level`, `get_default_filename`, and `launch_ui` directly
+
 ### Version 0.5.0 (2026-03-26)
 
 Interactive UI:

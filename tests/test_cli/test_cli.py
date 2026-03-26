@@ -172,10 +172,10 @@ def test_launch_ui_success(monkeypatch):
     """launch_ui should call uvicorn.run and return 0."""
     mock_uvicorn = MagicMock()
     monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
-    code = launch_ui(host="127.0.0.1", port=8000)
+    code = launch_ui(host="127.0.0.1", port=8000, open_browser=False)
     assert code == 0
     mock_uvicorn.run.assert_called_once_with(
-        "quiz_gen.ui.server:app", host="127.0.0.1", port=8000, reload=False
+        "quiz_gen.ui.server:app", host="127.0.0.1", port=8000, reload=False, log_level="warning"
     )
 
 
@@ -183,8 +183,65 @@ def test_launch_ui_reload(monkeypatch):
     """launch_ui with reload=True should pass reload=True to uvicorn."""
     mock_uvicorn = MagicMock()
     monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
-    code = launch_ui(host="0.0.0.0", port=8000, reload=True)
+    code = launch_ui(host="0.0.0.0", port=8000, reload=True, open_browser=False)
     assert code == 0
     mock_uvicorn.run.assert_called_once_with(
-        "quiz_gen.ui.server:app", host="0.0.0.0", port=8000, reload=True
+        "quiz_gen.ui.server:app", host="0.0.0.0", port=8000, reload=True, log_level="warning"
     )
+
+
+def test_launch_ui_no_browser(monkeypatch):
+    """open_browser=False should not call webbrowser.open."""
+    mock_uvicorn = MagicMock()
+    mock_browser = MagicMock()
+    monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
+    with patch("webbrowser.open", mock_browser):
+        launch_ui(open_browser=False)
+    mock_browser.assert_not_called()
+
+
+def test_launch_ui_open_browser(monkeypatch):
+    """open_browser=True should call webbrowser.open with the correct URL."""
+    mock_uvicorn = MagicMock()
+    mock_browser = MagicMock()
+    monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
+    with patch("webbrowser.open", mock_browser):
+        launch_ui(port=8000, open_browser=True)
+    mock_browser.assert_called_once_with("http://localhost:8000")
+
+
+def test_launch_ui_log_level(monkeypatch):
+    """log_level should be passed to uvicorn.run."""
+    mock_uvicorn = MagicMock()
+    monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
+    launch_ui(open_browser=False, log_level="debug")
+    _, kwargs = mock_uvicorn.run.call_args
+    assert kwargs["log_level"] == "debug"
+
+
+def test_cli_ui_no_browser_flag(monkeypatch, capsys):
+    """--ui --no-browser should not open a browser."""
+    mock_uvicorn = MagicMock()
+    mock_browser = MagicMock()
+    monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
+    monkeypatch.setattr(sys, "argv", ["quiz-gen", "--ui", "--no-browser"])
+    with patch("webbrowser.open", mock_browser):
+        try:
+            cli.main()
+        except SystemExit:
+            pass
+    mock_browser.assert_not_called()
+
+
+def test_cli_ui_log_level_flag(monkeypatch):
+    """--ui --log-level debug should pass log_level=debug to uvicorn."""
+    mock_uvicorn = MagicMock()
+    monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
+    monkeypatch.setattr(sys, "argv", ["quiz-gen", "--ui", "--log-level", "debug", "--no-browser"])
+    with patch("webbrowser.open"):
+        try:
+            cli.main()
+        except SystemExit:
+            pass
+    _, kwargs = mock_uvicorn.run.call_args
+    assert kwargs["log_level"] == "debug"

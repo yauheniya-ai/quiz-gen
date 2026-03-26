@@ -1,7 +1,32 @@
 #!/usr/bin/env python3
 """
-Command-line interface for quiz-gen package.
-Parse EUR-Lex documents and extract structured content.
+quiz-gen CLI
+~~~~~~~~~~~~~
+Command-line interface for the quiz-gen package.
+
+Entry point registered in pyproject.toml::
+
+    [project.scripts]
+    quiz-gen = "quiz_gen.cli:main"
+
+Usage examples
+--------------
+    quiz-gen --version
+
+    # Launch the interactive web UI
+    quiz-gen --ui
+
+    # Launch on a custom port without opening a browser
+    quiz-gen --ui --port 9000 --no-browser
+
+    # Parse a document from URL
+    quiz-gen https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139
+
+    # Parse a local HTML file and print the TOC
+    quiz-gen data/documents/html/regulation.html --print-toc
+
+    # Save to a custom output directory with custom filenames
+    quiz-gen regulation.html --output data/output --chunks my_chunks.json --toc my_toc.json
 """
 
 import argparse
@@ -18,7 +43,13 @@ from quiz_gen.__version__ import __version__
 from quiz_gen.parsers.html.eur_lex_parser import EURLexParser
 
 
-def launch_ui(host: str = "0.0.0.0", port: int = 8000, reload: bool = False) -> int:
+def launch_ui(
+    host: str = "0.0.0.0",
+    port: int = 8000,
+    reload: bool = False,
+    open_browser: bool = True,
+    log_level: str = "warning",
+) -> int:
     """Launch the quiz-gen web UI using uvicorn."""
     if _uvicorn is None:
         print(
@@ -26,8 +57,18 @@ def launch_ui(host: str = "0.0.0.0", port: int = 8000, reload: bool = False) -> 
             file=sys.stderr,
         )
         return 1
-    print(f"Starting quiz-gen UI at http://localhost:{port}")
-    _uvicorn.run("quiz_gen.ui.server:app", host=host, port=port, reload=reload)
+    url = f"http://localhost:{port}"
+    print(f"Starting quiz-gen UI at {url}")
+    if open_browser:
+        import webbrowser
+        webbrowser.open(url)
+    _uvicorn.run(
+        "quiz_gen.ui.server:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level=log_level,
+    )
     return 0
 
 
@@ -35,102 +76,97 @@ def create_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser."""
     parser = argparse.ArgumentParser(
         prog="quiz-gen",
-        description="Parse EUR-Lex regulatory documents and extract structured content into chunks and TOC.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Launch the web UI
-  quiz-gen --ui
-
-  # Launch on a custom port
-  quiz-gen --ui --port 9000
-
-  # Parse from URL
-  quiz-gen https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139
-  
-  # Parse local HTML file
-  quiz-gen data/documents/html/regulation.html
-  
-  # Specify output directory
-  quiz-gen --output data/output regulation.html
-  
-  # Specify custom output filenames
-  quiz-gen --chunks my_chunks.json --toc my_toc.json regulation.html
-  
-  # Print TOC to console
-  quiz-gen --print-toc regulation.html
-        """,
+        description="AI-powered quiz generator for EUR-Lex regulatory documents.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
+    # -- General ----------------------------------------------------------
     parser.add_argument(
         "input",
         nargs="?",
-        help="URL or path to local HTML file of EUR-Lex document (not required when using --ui)",
+        help="URL or path to a local HTML file of an EUR-Lex document (not required with --ui)",
     )
-
     parser.add_argument(
-        "--ui",
+        "-v", "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
+    parser.add_argument(
+        "--verbose",
         action="store_true",
-        help="Launch the interactive web UI",
+        help="Enable verbose output",
     )
 
-    parser.add_argument(
-        "--host",
-        type=str,
-        default="0.0.0.0",
-        help="Host to bind the UI server to (default: 0.0.0.0)",
-    )
-
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8000,
-        help="Port to run the UI server on (default: 8000)",
-    )
-
-    parser.add_argument(
-        "--reload",
-        action="store_true",
-        help="Enable auto-reload for the UI server (development mode)",
-    )
-
-    parser.add_argument(
-        "-o",
-        "--output",
+    # -- Document parsing -------------------------------------------------
+    parse_group = parser.add_argument_group("Document parsing")
+    parse_group.add_argument(
+        "-o", "--output",
         type=str,
         default="data/processed",
-        help="Output directory for generated files (default: data/processed)",
+        metavar="DIR",
+        help="Output directory for generated files",
     )
-
-    parser.add_argument(
+    parse_group.add_argument(
         "--chunks",
         type=str,
+        metavar="FILE",
         help="Custom filename for chunks JSON (default: <input>_chunks.json)",
     )
-
-    parser.add_argument(
+    parse_group.add_argument(
         "--toc",
         type=str,
+        metavar="FILE",
         help="Custom filename for TOC JSON (default: <input>_toc.json)",
     )
-
-    parser.add_argument(
+    parse_group.add_argument(
         "--print-toc",
         action="store_true",
         help="Print formatted table of contents to console",
     )
-
-    parser.add_argument(
+    parse_group.add_argument(
         "--no-save",
         action="store_true",
-        help="Don't save output files, only display stats",
+        help="Skip saving output files, only display stats",
     )
 
-    parser.add_argument(
-        "-v", "--version", action="version", version=f"%(prog)s {__version__}"
+    # -- Web UI -----------------------------------------------------------
+    ui_group = parser.add_argument_group("Web UI")
+    ui_group.add_argument(
+        "--ui",
+        action="store_true",
+        help="Launch the interactive web UI",
     )
-
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
+    ui_group.add_argument(
+        "--host",
+        type=str,
+        default="0.0.0.0",
+        metavar="HOST",
+        help="Host to bind the UI server to",
+    )
+    ui_group.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        metavar="PORT",
+        help="Port to run the UI server on",
+    )
+    ui_group.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Do not open a browser tab when starting the UI",
+    )
+    ui_group.add_argument(
+        "--reload",
+        action="store_true",
+        help="Enable auto-reload for the UI server (development mode)",
+    )
+    ui_group.add_argument(
+        "--log-level",
+        default="warning",
+        choices=["debug", "info", "warning", "error"],
+        metavar="LEVEL",
+        help="Log level for the UI server: debug, info, warning, error",
+    )
 
     return parser
 
@@ -249,7 +285,13 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.ui:
-        return launch_ui(host=args.host, port=args.port, reload=args.reload)
+        return launch_ui(
+            host=args.host,
+            port=args.port,
+            reload=args.reload,
+            open_browser=not args.no_browser,
+            log_level=args.log_level,
+        )
 
     if not args.input:
         parser.print_help()
