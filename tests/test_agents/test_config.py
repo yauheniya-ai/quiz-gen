@@ -113,3 +113,77 @@ def test_print_summary_outputs_status(tmp_path, capsys, monkeypatch):
     assert "OpenAI API Key: ✓ Set" in output
     assert "Anthropic API Key: ✗ Missing" in output
     assert "Conceptual Generator" in output
+
+
+def test_validate_reports_empty_providers_and_models(tmp_path, monkeypatch):
+    """Trigger errors.append for empty providers and models (lines 161-180)."""
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    config = AgentConfig(
+        openai_api_key="sk-test",  # Give sufficient key so API key check passes
+        anthropic_api_key="sk-anth",
+        openai_api_base=None,
+        anthropic_api_base=None,
+        conceptual_provider="",
+        practical_provider="",
+        judge_provider="",
+        validator_provider="",
+        refiner_provider="",
+        conceptual_model="",
+        practical_model="",
+        judge_model="",
+        validator_model="",
+        refiner_model="",
+        output_directory=str(tmp_path),
+        verbose=False,
+    )
+
+    with pytest.raises(ValueError) as exc:
+        config.validate()
+
+    message = str(exc.value)
+    assert "conceptual_provider must be set" in message
+    assert "practical_provider must be set" in message
+    assert "judge_provider must be set" in message
+    assert "validator_provider must be set" in message
+    assert "refiner_provider must be set" in message
+    assert "conceptual_model must be set" in message
+    assert "practical_model must be set" in message
+    assert "judge_model must be set" in message
+    assert "validator_model must be set" in message
+    assert "refiner_model must be set" in message
+
+
+def test_save_verbose_prints_path(tmp_path, capsys, monkeypatch):
+    """Saving with verbose=True triggers the 'Configuration saved to:' print (line 269)."""
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    config = AgentConfig(
+        openai_api_key="sk-test",
+        output_directory=str(tmp_path),
+        verbose=True,
+    )
+    config_path = tmp_path / "verbose_config.json"
+    config.save(str(config_path))
+
+    output = capsys.readouterr().out
+    assert "Configuration saved to:" in output
+    assert config_path.exists()
+
+
+def test_print_summary_with_anthropic_base_url(tmp_path, capsys, monkeypatch):
+    """print_summary shows the custom base URL line when anthropic_api_base is set."""
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    config = AgentConfig(
+        openai_api_key="sk-open",
+        anthropic_api_key="sk-anth",
+        anthropic_api_base="https://custom.anthropic.test",
+        output_directory=str(tmp_path),
+        verbose=False,
+    )
+
+    config.print_summary()
+    output = capsys.readouterr().out
+    assert "Custom Base URL: https://custom.anthropic.test" in output

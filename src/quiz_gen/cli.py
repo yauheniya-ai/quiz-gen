@@ -60,8 +60,13 @@ def launch_ui(
     url = f"http://localhost:{port}"
     print(f"Starting quiz-gen UI at {url}")
     if open_browser:
+        import threading
         import webbrowser
-        webbrowser.open(url)
+        def _open():
+            import time
+            time.sleep(1.5)
+            webbrowser.open(url)
+        threading.Thread(target=_open, daemon=True).start()
     _uvicorn.run(
         "quiz_gen.ui.server:app",
         host=host,

@@ -201,12 +201,21 @@ def test_launch_ui_no_browser(monkeypatch):
 
 
 def test_launch_ui_open_browser(monkeypatch):
-    """open_browser=True should call webbrowser.open with the correct URL."""
+    """open_browser=True should call webbrowser.open with the correct URL via a background thread."""
+    import threading
     mock_uvicorn = MagicMock()
     mock_browser = MagicMock()
+    opened_event = threading.Event()
+
+    def fake_open(url):
+        mock_browser(url)
+        opened_event.set()
+
     monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
-    with patch("webbrowser.open", mock_browser):
-        launch_ui(port=8000, open_browser=True)
+    with patch("webbrowser.open", fake_open):
+        with patch("time.sleep"):  # skip the 1.5s delay
+            launch_ui(port=8000, open_browser=True)
+    opened_event.wait(timeout=2)
     mock_browser.assert_called_once_with("http://localhost:8000")
 
 

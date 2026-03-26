@@ -101,6 +101,114 @@ def test_validate_invalid_qa_missing_option(invalid_qa_missing_option, sample_ch
         assert result["validator_model"] == "gpt-4o"
 
 
+_VALID_RESULT = '{"valid": true, "issues": [], "warnings": [], "checks_passed": {"has_4_options": true, "has_correct_answer": true, "has_all_explanations": true, "explanations_concise": true, "question_clear": true, "correct_explanation": true, "wrong_explanations_are_hints": true, "options_plausible": true, "question_unambiguous": true, "regulation_based": true}, "score": 10}'
+
+
+def test_validate_anthropic_provider(valid_qa, sample_chunk):
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text=_VALID_RESULT)]
+    with patch("src.quiz_gen.agents.validator.Anthropic") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_cls.return_value = mock_client
+        validator = Validator(provider="anthropic", api_key="sk-test", model="claude-3-haiku")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+        assert result["score"] == 10
+        assert result["validator_model"] == "claude-3-haiku"
+
+
+def test_validate_anthropic_markdown_fence(valid_qa, sample_chunk):
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text="```json\n" + _VALID_RESULT + "\n```")]
+    with patch("src.quiz_gen.agents.validator.Anthropic") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_cls.return_value = mock_client
+        validator = Validator(
+            provider="anthropic",
+            api_key="sk-test",
+            api_base="https://anthropic.test",
+        )
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+
+
+def test_validate_cohere_provider(valid_qa, sample_chunk):
+    mock_response = MagicMock()
+    mock_response.message.content = [MagicMock(text=_VALID_RESULT)]
+    with patch("src.quiz_gen.agents.validator.cohere") as mock_cohere_mod:
+        mock_client = MagicMock()
+        mock_client.chat.return_value = mock_response
+        mock_cohere_mod.ClientV2.return_value = mock_client
+        validator = Validator(provider="cohere", api_key="cohere-key", model="command-r")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+        assert result["validator_model"] == "command-r"
+
+
+def test_validate_cohere_markdown_fence(valid_qa, sample_chunk):
+    mock_response = MagicMock()
+    mock_response.message.content = [MagicMock(text="```\n" + _VALID_RESULT + "\n```")]
+    with patch("src.quiz_gen.agents.validator.cohere") as mock_cohere_mod:
+        mock_client = MagicMock()
+        mock_client.chat.return_value = mock_response
+        mock_cohere_mod.ClientV2.return_value = mock_client
+        validator = Validator(provider="cohere", api_key="cohere-key")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+
+
+def test_validate_gemini_provider(valid_qa, sample_chunk):
+    mock_response = MagicMock()
+    mock_response.text = _VALID_RESULT
+    with patch("src.quiz_gen.agents.validator.genai") as mock_genai:
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        validator = Validator(provider="google", api_key="gemini-key", model="gemini-pro")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+        assert result["validator_model"] == "gemini-pro"
+
+
+def test_validate_gemini_markdown_fence(valid_qa, sample_chunk):
+    mock_response = MagicMock()
+    mock_response.text = "```json\n" + _VALID_RESULT + "\n```"
+    with patch("src.quiz_gen.agents.validator.genai") as mock_genai:
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        validator = Validator(provider="gemini", api_key="gemini-key")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+
+
+def test_validate_mistral_provider(valid_qa, sample_chunk):
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock(message=MagicMock(content=_VALID_RESULT))]
+    with patch("src.quiz_gen.agents.validator.Mistral") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.chat.complete.return_value = mock_response
+        mock_cls.return_value = mock_client
+        validator = Validator(provider="mistral", api_key="mistral-key", model="mistral-large")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+        assert result["validator_model"] == "mistral-large"
+
+
+def test_validate_mistral_markdown_fence(valid_qa, sample_chunk):
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock(message=MagicMock(content="```json\n" + _VALID_RESULT + "\n```"))]
+    with patch("src.quiz_gen.agents.validator.Mistral") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.chat.complete.return_value = mock_response
+        mock_cls.return_value = mock_client
+        validator = Validator(provider="mistral", api_key="mistral-key")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+
+
 def test_validate_batch(valid_qa, invalid_qa_missing_option, sample_chunk):
     # Patch validate to return different results for each call
     with patch.object(
