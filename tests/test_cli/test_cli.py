@@ -86,6 +86,24 @@ def test_cli_verbose_error_traceback(tmp_path, monkeypatch, capsys):
     assert "File not found" in output
 
 
+def test_cli_url_verbose_exception_traceback(tmp_path, monkeypatch, capsys):
+    """Lines 219-221 (URL + verbose) and 278-284 (except Exception + verbose traceback).
+
+    EURLexParser raises so we travel: verbose print → parser init → except block → traceback.
+    """
+    with patch("quiz_gen.cli.EURLexParser", side_effect=RuntimeError("URL fetch failed")):
+        args = [
+            "https://example.com/document.html",
+            "-o", str(tmp_path),
+            "--verbose",
+            "--no-save",
+        ]
+        code, output = run_cli_with_args(args, monkeypatch, capsys)
+
+    assert code == 1
+    assert "URL fetch failed" in output
+
+
 def test_cli_no_input_no_ui(monkeypatch, capsys):
     """No input and no --ui should print help and return 1."""
     monkeypatch.setattr(sys, "argv", ["quiz-gen"])

@@ -52,6 +52,36 @@ pip install quiz-gen
 
 ## Quick Start
 
+### Multi-Agent Quiz Generation
+
+Quiz generation uses four specialized agents (conceptual, practical, validator, refiner, and judge). Providers are configurable per agent, with supported providers: **Anthropic**, **Cohere**, **Google**, **Mistral**, and **OpenAI**. Any text-generation model name from these providers can be passed directly. The package relies on provider defaults for generation parameters.
+
+<div align="center" style="width: 100%;">
+    <img src="https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/docs/images/AgentConfig.webp" alt="Multi-Agent Architecture and Configuration" style="width: 100%; height: auto;" />
+    <p><em>Multi-Agent Architecture and Configuration</em></p>
+</div>
+
+```python
+from quiz_gen.agents.workflow import QuizGenerationWorkflow
+from quiz_gen.agents.config import AgentConfig
+
+config = AgentConfig(
+    conceptual_provider="cohere",
+    conceptual_model="command-a-03-2025",
+    practical_provider="google",
+    practical_model="gemini-3-pro-preview",
+    validator_provider="openai",
+    validator_model="gpt-5.2-2025-12-11",
+    refiner_provider="anthropic",
+    refiner_model="claude-sonnet-4-5-20250929",
+    judge_provider="mistral",
+    judge_model="mistral-large-latest",
+)
+
+workflow = QuizGenerationWorkflow(config)
+result = workflow.run(chunk)
+```
+
 ### Parsing EUR-Lex Documents
 
 ```python
@@ -103,35 +133,6 @@ parser.print_toc()
 #     Article 2 - Scope
 ```
 
-### Multi-Agent Quiz Generation
-
-Quiz generation uses four specialized agents (conceptual, practical, validator, refiner, and judge). Providers are configurable per agent, with supported providers: **Anthropic**, **Cohere**, **Google**, **Mistral**, and **OpenAI**. Any text-generation model name from these providers can be passed directly. The package relies on provider defaults for generation parameters.
-
-<div align="center" style="width: 100%;">
-    <img src="https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/docs/images/AgentConfig.webp" alt="Multi-Agent Architecture and Configuration" style="width: 100%; height: auto;" />
-    <p><em>Multi-Agent Architecture and Configuration</em></p>
-</div>
-
-```python
-from quiz_gen.agents.workflow import QuizGenerationWorkflow
-from quiz_gen.agents.config import AgentConfig
-
-config = AgentConfig(
-    conceptual_provider="cohere",
-    conceptual_model="command-a-03-2025",
-    practical_provider="google",
-    practical_model="gemini-3-pro-preview",
-    validator_provider="openai",
-    validator_model="gpt-5.2-2025-12-11",
-    refiner_provider="anthropic",
-    refiner_model="claude-sonnet-4-5-20250929",
-    judge_provider="mistral",
-    judge_model="mistral-large-latest",
-)
-
-workflow = QuizGenerationWorkflow(config)
-result = workflow.run(chunk)
-```
 
 ## Development
 
@@ -156,18 +157,40 @@ black .
 ### Project Structure
 ```
 quiz-gen/
-├── data/             
-│   ├── raw/
-│   ├── processed/
-│   └── quizzes/
-├── src/
-│   └── quiz_gen/          # Module code here
-│       ├── agents/
-│       ├── parsers/
-│       └── ...
-├── examples/              # Example scripts
+├── data/                          # Local data files
+│   ├── raw/                       # Source HTML documents
+│   ├── processed/                 # Parsed chunks and TOC JSON
+│   └── quizzes/                   # Generated quiz output
+├── docs/                          # MkDocs documentation source
+├── examples/                      # Runnable example scripts
+│   ├── eur_lex_html_file.py
 │   ├── eur_lex_html_url.py
 │   └── quiz_gen_multi_model.py
+├── src/
+│   └── quiz_gen/                  # Package source
+│       ├── agents/                # Multi-agent system
+│       │   ├── config.py          # AgentConfig dataclass
+│       │   ├── conceptual_generator.py
+│       │   ├── practical_generator.py
+│       │   ├── validator.py
+│       │   ├── refiner.py
+│       │   ├── judge.py
+│       │   └── workflow.py        # LangGraph orchestration
+│       ├── parsers/
+│       │   └── html/
+│       │       └── eur_lex_parser.py
+│       ├── ui/                    # FastAPI + React static bundle
+│       │   ├── server.py
+│       │   ├── api.py
+│       │   └── static/
+│       ├── utils/
+│       │   └── helpers.py
+│       └── cli.py
+├── tests/
+│   ├── test_agents/
+│   ├── test_cli/
+│   ├── test_parsers/
+│   └── test_utils/
 ├── pyproject.toml
 ├── README.md
 ├── CHANGELOG.md
@@ -175,6 +198,81 @@ quiz-gen/
 ```
 
 ## API Reference
+
+### AgentConfig
+
+Dataclass that configures every agent in the multi-agent pipeline. API keys and base URLs are loaded automatically from environment variables when not provided directly.
+
+**Provider / model settings** (per agent – defaults shown):
+
+| Parameter | Default provider | Default model |
+|-----------|-----------------|---------------|
+| `conceptual_provider` / `conceptual_model` | `openai` | `gpt-4o` |
+| `practical_provider` / `practical_model` | `anthropic` | `claude-sonnet-4-20250514` |
+| `validator_provider` / `validator_model` | `openai` | `gpt-4o` |
+| `refiner_provider` / `refiner_model` | `openai` | `gpt-4o` |
+| `judge_provider` / `judge_model` | `anthropic` | `claude-sonnet-4-20250514` |
+
+Supported provider values: `openai`, `anthropic`, `google`, `mistral`, `cohere`.
+
+**Workflow settings**:
+- `auto_accept_valid: bool = False` — skip judge when validation already passes
+- `save_intermediate_results: bool = True`
+- `output_directory: str = "data/quizzes"`
+- `min_validation_score: int = 6` — minimum score (out of 10) to pass validation
+- `strict_validation: bool = True`
+- `max_retries: int = 3`
+- `verbose: bool = True`
+
+**Methods**:
+- `validate()` — raises `ValueError` if config is invalid
+- `save(filepath, verbose=False)` — write config to JSON
+- `load(filepath)` *(classmethod)* — load config from JSON
+- `print_summary()` — print a human-readable config table
+
+### QuizGenerationWorkflow
+
+LangGraph-based orchestration of the five-agent pipeline.
+
+```python
+from quiz_gen.agents.workflow import QuizGenerationWorkflow
+from quiz_gen.agents.config import AgentConfig
+
+config = AgentConfig()          # reads API keys from environment
+workflow = QuizGenerationWorkflow(config)
+
+# Single chunk
+result = workflow.run(chunk)
+
+# Batch
+results = workflow.run_batch(chunks, save_output=True, output_dir="data/quizzes")
+```
+
+**Methods**:
+- `run(chunk, improvement_feedback=None)` → `Dict` — run the full pipeline for one chunk; returns full state including `final_questions`, `judge_decision`, `validation_results`, and `errors`
+- `run_batch(chunks, save_output=True, output_dir="data/quizzes")` → `List[Dict]` — run for multiple chunks, optionally saving each result to JSON
+
+### Individual Agents
+
+Agents can be used standalone outside of the workflow:
+
+```python
+from quiz_gen.agents.conceptual_generator import ConceptualGenerator
+from quiz_gen.agents.practical_generator import PracticalGenerator
+from quiz_gen.agents.validator import Validator
+from quiz_gen.agents.refiner import Refiner
+from quiz_gen.agents.judge import Judge
+```
+
+| Class | Key method | Returns |
+|-------|------------|---------|
+| `ConceptualGenerator` | `generate(chunk, improvement_feedback=None)` | `Dict` question |
+| `PracticalGenerator` | `generate(chunk, improvement_feedback=None)` | `Dict` question |
+| `Validator` | `validate(qa, chunk)` / `validate_batch(qas, chunk)` | `Dict` / `List[Dict]` |
+| `Refiner` | `refine(qa, validation_result, chunk)` / `refine_batch(qas, validation_results, chunk)` | `Dict` / `List[Dict]` |
+| `Judge` | `judge(conceptual_qa, practical_qa, chunk)` | `Dict` with `decision` and `reasoning` |
+
+---
 
 ### EURLexParser
 
@@ -239,13 +337,12 @@ Currently supports:
 - Must contain `eli-subdivision` elements for proper structure identification
 - Supports multi-level hierarchies with chapters, sections, and articles
 
-## Roadmap
+## TODOs
 
-Future enhancements planned:
-
-- Support for additional document formats (PDF, DOCX, PPTX)
-- Multi-language support
-- Integration with learning management systems
+- [] Support for additional document formats (PDF, DOCX, PPTX)
+- [] Save results by project in a local database
+- [] Multi-language support for UI
+- [] Light/Dark scheme for UI
 
 ## License
 

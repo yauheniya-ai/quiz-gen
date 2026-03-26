@@ -831,3 +831,117 @@ def test_judge_questions_verbose(tmp_path, monkeypatch, sample_chunk, capsys):
 
     output = capsys.readouterr().out
     assert "Judging questions" in output
+
+
+# ── _validate_questions edge-case branches ─────────────────────────────────────
+
+def test_validate_questions_empty_state(tmp_path, monkeypatch, sample_chunk):
+    """Lines 253-255: else-branch when questions_to_validate is empty."""
+    workflow, _, _, _, validator = build_workflow(tmp_path, monkeypatch)
+
+    # State with neither conceptual_qa nor practical_qa
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": None,
+        "practical_qa": None,
+        "refined_conceptual_qa": None,
+        "refined_practical_qa": None,
+    }
+
+    result = workflow._validate_questions(state)
+    assert result["validation_results"] == []
+    assert result["all_valid"] is False
+    assert result["final_questions"] == []
+    validator.validate_batch.assert_not_called()
+
+
+def test_validate_questions_exception_handling(tmp_path, monkeypatch, sample_chunk):
+    """Lines 256-259: except-block when validator.validate_batch raises."""
+    workflow, _, _, _, validator = build_workflow(tmp_path, monkeypatch)
+
+    validator.validate_batch.side_effect = RuntimeError("Validator exploded")
+
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": {"question": "Q1"},
+        "practical_qa": None,
+        "refined_conceptual_qa": None,
+        "refined_practical_qa": None,
+        "errors": [],
+    }
+
+    result = workflow._validate_questions(state)
+    assert any("Validation error" in e for e in result["errors"])
+    assert "Validator exploded" in result["errors"][0]
+
+
+# ── _refine_questions partial-refinement re-validation branches ─────────────────
+
+def test_refine_questions_only_practical_refined_uses_original_conceptual(
+    tmp_path, monkeypatch, sample_chunk
+):
+    """Lines 345-346: elif conceptual_qa branch when refined_conceptual_qa is None
+    but refined_practical_qa is set (only practical was actually refined)."""
+    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(tmp_path, monkeypatch)
+
+    # Refiner returns two items: conceptual has no refiner_model, practical has it
+    refiner.refine_batch.return_value = [
+        {"question": "Q1 untouched"},                           # no refiner_model
+        {"question": "Q2 refined", "refiner_model": "gpt-4o"},  # refined
+    ]
+    validator.validate_batch.return_value = [
+        {"valid": True, "score": 10, "warnings": [], "issues": []},
+        {"valid": True, "score": 10, "warnings": [], "issues": []},
+    ]
+
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": {"question": "Q1 original"},
+        "practical_qa": {"question": "Q2 original"},
+        "validation_results": [
+            {"valid": False, "score": 4, "warnings": [], "issues": ["bad"], "question_type": "conceptual"},
+            {"valid": False, "score": 4, "warnings": [], "issues": ["bad"], "question_type": "practical"},
+        ],
+        "errors": [],
+    }
+
+    result = workflow._refine_questions(state)
+    # Only practical was refined; conceptual original used in re-validation
+    assert result.get("refined_practical_qa", {}).get("question") == "Q2 refined"
+    assert result.get("refined_conceptual_qa") is None
+    assert result["all_valid"] is True
+
+
+def test_refine_questions_only_conceptual_refined_uses_original_practical(
+    tmp_path, monkeypatch, sample_chunk
+):
+    """Lines 351-354: elif practical_qa branch when refined_practical_qa is None
+    but refined_conceptual_qa is set (only conceptual was actually refined)."""
+    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(tmp_path, monkeypatch)
+
+    # Refiner returns two items: conceptual is refined, practical has no refiner_model
+    refiner.refine_batch.return_value = [
+        {"question": "Q1 refined", "refiner_model": "gpt-4o"},  # refined
+        {"question": "Q2 untouched"},                           # no refiner_model
+    ]
+    validator.validate_batch.return_value = [
+        {"valid": True, "score": 10, "warnings": [], "issues": []},
+        {"valid": True, "score": 10, "warnings": [], "issues": []},
+    ]
+
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": {"question": "Q1 original"},
+        "practical_qa": {"question": "Q2 original"},
+        "validation_results": [
+            {"valid": False, "score": 4, "warnings": [], "issues": ["bad"], "question_type": "conceptual"},
+            {"valid": False, "score": 4, "warnings": [], "issues": ["bad"], "question_type": "practical"},
+        ],
+        "errors": [],
+    }
+
+    result = workflow._refine_questions(state)
+    # Only conceptual was refined; practical original used in re-validation
+    assert result.get("refined_conceptual_qa", {}).get("question") == "Q1 refined"
+    assert result.get("refined_practical_qa") is None
+    assert result["all_valid"] is True

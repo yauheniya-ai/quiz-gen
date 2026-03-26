@@ -1,5 +1,20 @@
 ## Changelog
 
+### Version 0.5.2 (2026-03-27)
+
+UI and test coverage improvements:
+- Fixed browser not opening reliably after `quiz-gen --ui`: browser is now opened in a daemon background thread with a 1.5 s delay so the uvicorn server has time to start before the tab is loaded
+- `launch_ui()` now accepts a `log_level` parameter (passed through to uvicorn) and an `open_browser` parameter; both are wired through `main()` via the `--log-level` and `--no-browser` flags
+- Expanded test coverage from 69 % to 93 % (186 tests passing)
+  - All five agent modules (`conceptual_generator`, `practical_generator`, `validator`, `refiner`, `judge`) now at 100 % coverage
+  - `agents/config.py` at 100 %, `agents/workflow.py` at 100 %, `cli.py` at 98 %
+  - Added opposite-fence-type tests (plain ` ``` ` vs ` ```json `) for every provider in every agent
+  - Added `test_refiner.py` from scratch (21 tests)
+  - Added verbose-mode workflow tests covering all `if self.config.verbose:` print branches
+  - Added edge-case tests: empty-state validation, validator exception handling, partial-refinement re-validation branches
+  - Added CLI test for URL + verbose path and exception traceback
+- Updated README: expanded Project Structure tree to reflect actual layout; added `AgentConfig`, `QuizGenerationWorkflow`, and Individual Agents sections to API Reference
+
 ### Version 0.5.1 (2026-03-26)
 
 CLI improvements:
