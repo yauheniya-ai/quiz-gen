@@ -592,3 +592,242 @@ def test_run_batch_no_save_when_disabled(tmp_path, monkeypatch, sample_chunk):
 
     assert len(results) == 1
     workflow._save_result.assert_not_called()
+
+
+# ─── Verbose mode tests ────────────────────────────────────────────────────────
+
+
+def build_verbose_workflow(tmp_path, monkeypatch):
+    """Build a workflow with verbose=True to cover print/verbose code paths."""
+    monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("MISTRAL_API_BASE", raising=False)
+    monkeypatch.delenv("GEMINI_API_BASE", raising=False)
+    config = AgentConfig(
+        openai_api_key="sk-openai-test",
+        anthropic_api_key="sk-anthropic-test",
+        openai_api_base="https://openai.test",
+        anthropic_api_base="https://anthropic.test",
+        output_directory=str(tmp_path),
+        verbose=True,  # ← Verbose enabled
+    )
+
+    conceptual = MagicMock()
+    conceptual.model = "gpt-4o"
+    practical = MagicMock()
+    practical.model = "claude-sonnet-4-20250514"
+    judge = MagicMock()
+    validator = MagicMock()
+    refiner = MagicMock()
+
+    monkeypatch.setattr(workflow_module, "ConceptualGenerator", MagicMock(return_value=conceptual))
+    monkeypatch.setattr(workflow_module, "PracticalGenerator", MagicMock(return_value=practical))
+    monkeypatch.setattr(workflow_module, "Judge", MagicMock(return_value=judge))
+    monkeypatch.setattr(workflow_module, "Validator", MagicMock(return_value=validator))
+    monkeypatch.setattr(workflow_module, "Refiner", MagicMock(return_value=refiner))
+
+    wf = workflow_module.QuizGenerationWorkflow(config=config)
+    return wf, conceptual, practical, judge, validator, refiner
+
+
+def test_generate_conceptual_verbose(tmp_path, monkeypatch, sample_chunk, capsys):
+    """Cover verbose print in _generate_conceptual."""
+    workflow, conceptual, _, _, _, _ = build_verbose_workflow(tmp_path, monkeypatch)
+    conceptual.generate.return_value = {"question": "Q1", "focus": "conceptual"}
+
+    state = {"chunk": sample_chunk, "improvement_feedback": None}
+    result = workflow._generate_conceptual(state)
+
+    assert result["conceptual_qa"]["question"] == "Q1"
+    output = capsys.readouterr().out
+    assert "Generating conceptual question" in output
+
+
+def test_generate_practical_verbose(tmp_path, monkeypatch, sample_chunk, capsys):
+    """Cover verbose print in _generate_practical."""
+    workflow, _, practical, _, _, _ = build_verbose_workflow(tmp_path, monkeypatch)
+    practical.generate.return_value = {"question": "Q2", "focus": "practical"}
+
+    state = {"chunk": sample_chunk, "improvement_feedback": None}
+    result = workflow._generate_practical(state)
+
+    assert result["practical_qa"]["question"] == "Q2"
+    output = capsys.readouterr().out
+    assert "Generating practical question" in output
+
+
+def test_validate_questions_verbose(tmp_path, monkeypatch, sample_chunk, capsys):
+    """Cover verbose print in _validate_questions."""
+    workflow, _, _, _, validator, _ = build_verbose_workflow(tmp_path, monkeypatch)
+    validator.validate_batch.return_value = [
+        {"valid": True, "score": 10, "issues": [], "warnings": []},
+    ]
+
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": {"question": "Q1"},
+        "practical_qa": None,
+        "refined_conceptual_qa": None,
+        "refined_practical_qa": None,
+    }
+
+    result = workflow._validate_questions(state)
+    assert result["all_valid"] is True
+
+    output = capsys.readouterr().out
+    assert "Validating questions" in output
+
+
+def test_validate_questions_verbose_with_refined(tmp_path, monkeypatch, sample_chunk, capsys):
+    """Cover verbose re-validation count block (lines 224-229)."""
+    workflow, _, _, _, validator, _ = build_verbose_workflow(tmp_path, monkeypatch)
+    validator.validate_batch.return_value = [
+        {"valid": True, "score": 10, "issues": [], "warnings": []},
+        {"valid": True, "score": 10, "issues": [], "warnings": []},
+    ]
+
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": {"question": "Q1 original"},
+        "practical_qa": {"question": "Q2 original"},
+        "refined_conceptual_qa": {"question": "Q1 refined", "refiner_model": "gpt"},
+        "refined_practical_qa": {"question": "Q2 refined", "refiner_model": "gpt"},
+    }
+
+    result = workflow._validate_questions(state)
+    assert result["all_valid"] is True
+
+    output = capsys.readouterr().out
+    assert "Re-validating" in output
+
+
+def test_refine_questions_verbose_with_refinement(tmp_path, monkeypatch, sample_chunk, capsys):
+    """Cover verbose prints in _refine_questions: received results, refining, storing, re-validate."""
+    workflow, _, _, _, validator, refiner = build_verbose_workflow(tmp_path, monkeypatch)
+
+    imperfect = {
+        "valid": True, "warnings": ["Could be clearer"], "issues": [], "score": 9,
+        "checks_passed": {}, "question_type": "conceptual",
+    }
+    refined_c = {"question": "Q1 refined", "focus": "conceptual", "refiner_model": "gpt-4o"}
+    refined_p = {"question": "Q2 refined", "focus": "practical", "refiner_model": "gpt-4o"}
+
+    refiner.refine_batch.return_value = [refined_c, refined_p]
+    validator.validate_batch.return_value = [
+        {"valid": True, "score": 10, "warnings": [], "issues": [], "question_type": "conceptual"},
+        {"valid": True, "score": 10, "warnings": [], "issues": [], "question_type": "practical"},
+    ]
+
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": {"question": "Q1", "focus": "conceptual"},
+        "practical_qa": {"question": "Q2", "focus": "practical"},
+        "validation_results": [imperfect, {**imperfect, "question_type": "practical"}],
+        "current_step": "validate_questions",
+        "errors": [],
+    }
+
+    result = workflow._refine_questions(state)
+    assert result["refined_conceptual_qa"]["question"] == "Q1 refined"
+    assert result["all_valid"] is True
+
+    output = capsys.readouterr().out
+    assert "Refining" in output or "Received" in output or "Re-validation" in output
+
+
+def test_refine_questions_verbose_all_perfect(tmp_path, monkeypatch, sample_chunk, capsys):
+    """Cover verbose 'All questions perfect' path."""
+    workflow, _, _, _, validator, refiner = build_verbose_workflow(tmp_path, monkeypatch)
+
+    perfect = {"valid": True, "warnings": [], "issues": [], "score": 10,
+               "checks_passed": {}, "question_type": "conceptual"}
+
+    # Refiner returns question without refiner_model (no refinement happened)
+    refiner.refine_batch.return_value = [{"question": "Q1"}]
+
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": {"question": "Q1"},
+        "practical_qa": None,
+        "validation_results": [perfect],
+        "current_step": "validate_questions",
+        "errors": [],
+    }
+
+    result = workflow._refine_questions(state)
+    output = capsys.readouterr().out
+    assert "perfect" in output or "Refining" in output or "Received" in output
+
+
+def test_refine_questions_verbose_error(tmp_path, monkeypatch, sample_chunk, capsys):
+    """Cover verbose error print and traceback in _refine_questions."""
+    workflow, _, _, _, _, refiner = build_verbose_workflow(tmp_path, monkeypatch)
+
+    refiner.refine_batch.side_effect = RuntimeError("Refine exploded")
+
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": {"question": "Q1"},
+        "practical_qa": None,
+        "validation_results": [{"valid": False, "score": 5, "warnings": [], "issues": []}],
+        "current_step": "validate_questions",
+        "errors": [],
+    }
+
+    result = workflow._refine_questions(state)
+    assert any("Refinement error" in e for e in result["errors"])
+    output = capsys.readouterr().out
+    assert "Refinement error" in output or "Refine exploded" in output
+
+
+def test_refine_questions_verbose_practical_only_edge_case(tmp_path, monkeypatch, sample_chunk, capsys):
+    """Cover verbose edge case: only practical question exists (no conceptual)."""
+    workflow, _, _, _, validator, refiner = build_verbose_workflow(tmp_path, monkeypatch)
+
+    imperfect = {"valid": False, "warnings": [], "issues": ["Bad"], "score": 5,
+                 "checks_passed": {}, "question_type": "practical"}
+    refined_p = {"question": "Q2 refined", "focus": "practical", "refiner_model": "gpt-4o"}
+
+    refiner.refine_batch.return_value = [refined_p]
+    validator.validate_batch.return_value = [
+        {"valid": True, "score": 10, "warnings": [], "issues": [], "question_type": "practical"},
+    ]
+
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": None,
+        "practical_qa": {"question": "Q2", "focus": "practical"},
+        "validation_results": [imperfect],
+        "current_step": "validate_questions",
+        "errors": [],
+    }
+
+    result = workflow._refine_questions(state)
+    assert result["refined_practical_qa"]["question"] == "Q2 refined"
+
+    output = capsys.readouterr().out
+    # Verbose output should mention edge case or refinement
+    assert "refined" in output.lower() or "Refining" in output or "Received" in output
+
+
+def test_judge_questions_verbose(tmp_path, monkeypatch, sample_chunk, capsys):
+    """Cover verbose print in _judge_questions."""
+    workflow, conceptual, practical, judge, _, _ = build_verbose_workflow(tmp_path, monkeypatch)
+
+    judge.judge.return_value = {"decision": "accept_both", "reasoning": "Both pass"}
+
+    state = {
+        "chunk": sample_chunk,
+        "conceptual_qa": {"question": "Q1", "focus": "conceptual"},
+        "practical_qa": {"question": "Q2", "focus": "practical"},
+        "refined_conceptual_qa": None,
+        "refined_practical_qa": None,
+        "validation_results": [],
+        "errors": [],
+    }
+
+    result = workflow._judge_questions(state)
+    assert result["judge_decision"] == "accept_both"
+
+    output = capsys.readouterr().out
+    assert "Judging questions" in output

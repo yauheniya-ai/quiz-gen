@@ -177,3 +177,75 @@ def test_generate_openai_provider(sample_chunk):
         result = agent.generate(sample_chunk)
         assert result["generator"] == "practical"
         assert result["model"] == "gpt-4o"
+
+
+# ─── Additional tests for opposite fence types and api_base ──────────────────
+
+
+def test_generate_anthropic_with_api_base(sample_chunk):
+    """Cover api_base branch (line 79) in practical generator anthropic init."""
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text=_PRACTICAL_JSON)]
+    with patch("src.quiz_gen.agents.practical_generator.Anthropic") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_cls.return_value = mock_client
+        agent = PracticalGenerator(
+            provider="anthropic",
+            api_key="sk-test",
+            api_base="https://custom.anthropic.test",
+        )
+        result = agent.generate(sample_chunk)
+        assert result["generator"] == "practical"
+
+
+def test_generate_anthropic_plain_fence(sample_chunk):
+    """Cover the elif '```' body for anthropic provider."""
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text="```\n" + _PRACTICAL_JSON + "\n```")]
+    with patch("src.quiz_gen.agents.practical_generator.Anthropic") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_cls.return_value = mock_client
+        agent = PracticalGenerator(provider="anthropic", api_key="sk-test")
+        result = agent.generate(sample_chunk)
+        assert result["correct_answer"] == "B"
+
+
+def test_generate_cohere_json_fence(sample_chunk):
+    """Cover the if '```json' body for cohere provider."""
+    mock_response = MagicMock()
+    mock_response.message.content = [MagicMock(text="```json\n" + _PRACTICAL_JSON + "\n```")]
+    with patch("src.quiz_gen.agents.practical_generator.cohere") as mock_cohere_mod:
+        mock_client = MagicMock()
+        mock_client.chat.return_value = mock_response
+        mock_cohere_mod.ClientV2.return_value = mock_client
+        agent = PracticalGenerator(provider="cohere", api_key="cohere-key")
+        result = agent.generate(sample_chunk)
+        assert result["correct_answer"] == "B"
+
+
+def test_generate_gemini_plain_fence(sample_chunk):
+    """Cover the elif '```' body for gemini provider."""
+    mock_response = MagicMock()
+    mock_response.text = "```\n" + _PRACTICAL_JSON + "\n```"
+    with patch("src.quiz_gen.agents.practical_generator.genai") as mock_genai:
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        agent = PracticalGenerator(provider="gemini", api_key="gemini-key")
+        result = agent.generate(sample_chunk)
+        assert result["correct_answer"] == "B"
+
+
+def test_generate_mistral_plain_fence(sample_chunk):
+    """Cover the elif '```' body for mistral provider."""
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock(message=MagicMock(content="```\n" + _PRACTICAL_JSON + "\n```"))]
+    with patch("src.quiz_gen.agents.practical_generator.Mistral") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.chat.complete.return_value = mock_response
+        mock_cls.return_value = mock_client
+        agent = PracticalGenerator(provider="mistral", api_key="mistral-key")
+        result = agent.generate(sample_chunk)
+        assert result["correct_answer"] == "B"

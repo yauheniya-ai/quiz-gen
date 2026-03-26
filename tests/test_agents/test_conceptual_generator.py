@@ -166,3 +166,58 @@ def test_generate_mistral_provider_markdown_fence(sample_chunk):
         agent = ConceptualGenerator(provider="mistral", api_key="mistral-key")
         result = agent.generate(sample_chunk)
         assert result["correct_answer"] == "A"
+
+
+# ─── Additional tests for opposite fence types (covers elif bodies) ──────────
+
+
+def test_generate_anthropic_plain_fence(sample_chunk):
+    """Cover the elif '```' body for anthropic provider."""
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text="```\n" + _CONCEPTUAL_JSON + "\n```")]
+    with patch("src.quiz_gen.agents.conceptual_generator.Anthropic") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_cls.return_value = mock_client
+        agent = ConceptualGenerator(provider="anthropic", api_key="sk-test")
+        result = agent.generate(sample_chunk)
+        assert result["correct_answer"] == "A"
+
+
+def test_generate_cohere_json_fence(sample_chunk):
+    """Cover the if '```json' body for cohere provider."""
+    mock_response = MagicMock()
+    mock_response.message.content = [MagicMock(text="```json\n" + _CONCEPTUAL_JSON + "\n```")]
+    with patch("src.quiz_gen.agents.conceptual_generator.cohere") as mock_cohere_mod:
+        mock_client = MagicMock()
+        mock_client.chat.return_value = mock_response
+        mock_cohere_mod.ClientV2.return_value = mock_client
+        agent = ConceptualGenerator(provider="cohere", api_key="cohere-key")
+        result = agent.generate(sample_chunk)
+        assert result["correct_answer"] == "A"
+
+
+def test_generate_gemini_plain_fence(sample_chunk):
+    """Cover the elif '```' body for gemini provider."""
+    mock_response = MagicMock()
+    mock_response.text = "```\n" + _CONCEPTUAL_JSON + "\n```"
+    with patch("src.quiz_gen.agents.conceptual_generator.genai") as mock_genai:
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        agent = ConceptualGenerator(provider="gemini", api_key="gemini-key")
+        result = agent.generate(sample_chunk)
+        assert result["correct_answer"] == "A"
+
+
+def test_generate_mistral_plain_fence(sample_chunk):
+    """Cover the elif '```' body for mistral provider."""
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock(message=MagicMock(content="```\n" + _CONCEPTUAL_JSON + "\n```"))]
+    with patch("src.quiz_gen.agents.conceptual_generator.Mistral") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.chat.complete.return_value = mock_response
+        mock_cls.return_value = mock_client
+        agent = ConceptualGenerator(provider="mistral", api_key="mistral-key")
+        result = agent.generate(sample_chunk)
+        assert result["correct_answer"] == "A"

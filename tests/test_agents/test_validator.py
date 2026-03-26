@@ -224,3 +224,58 @@ def test_validate_batch(valid_qa, invalid_qa_missing_option, sample_chunk):
         assert results[1]["valid"] is False
         assert results[0]["score"] == 10
         assert results[1]["score"] == 7
+
+
+# ─── Additional tests for opposite fence types ─────────────────────────
+
+
+def test_validate_anthropic_plain_fence(valid_qa, sample_chunk):
+    """Cover the elif '```' body for anthropic provider."""
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text="```\n" + _VALID_RESULT + "\n```")]
+    with patch("src.quiz_gen.agents.validator.Anthropic") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_cls.return_value = mock_client
+        validator = Validator(provider="anthropic", api_key="sk-test")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+
+
+def test_validate_cohere_json_fence(valid_qa, sample_chunk):
+    """Cover the if '```json' body for cohere provider."""
+    mock_response = MagicMock()
+    mock_response.message.content = [MagicMock(text="```json\n" + _VALID_RESULT + "\n```")]
+    with patch("src.quiz_gen.agents.validator.cohere") as mock_cohere_mod:
+        mock_client = MagicMock()
+        mock_client.chat.return_value = mock_response
+        mock_cohere_mod.ClientV2.return_value = mock_client
+        validator = Validator(provider="cohere", api_key="cohere-key")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+
+
+def test_validate_gemini_plain_fence(valid_qa, sample_chunk):
+    """Cover the elif '```' body for gemini provider."""
+    mock_response = MagicMock()
+    mock_response.text = "```\n" + _VALID_RESULT + "\n```"
+    with patch("src.quiz_gen.agents.validator.genai") as mock_genai:
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        validator = Validator(provider="gemini", api_key="gemini-key")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True
+
+
+def test_validate_mistral_plain_fence(valid_qa, sample_chunk):
+    """Cover the elif '```' body for mistral provider."""
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock(message=MagicMock(content="```\n" + _VALID_RESULT + "\n```"))]
+    with patch("src.quiz_gen.agents.validator.Mistral") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.chat.complete.return_value = mock_response
+        mock_cls.return_value = mock_client
+        validator = Validator(provider="mistral", api_key="mistral-key")
+        result = validator.validate(valid_qa, sample_chunk)
+        assert result["valid"] is True

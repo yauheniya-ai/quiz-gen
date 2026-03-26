@@ -284,3 +284,58 @@ def test_refine_invalid_validation_triggers_refinement(sample_qa, sample_chunk):
         result = refiner.refine(sample_qa, validation, sample_chunk)
         assert result["refiner_model"] == "gpt-4o"
         assert result["refinement_notes"] == "Improved question clarity."
+
+
+# ─── Additional tests for opposite fence types ────────────────────────────────
+
+
+def test_refine_anthropic_plain_fence(sample_qa, imperfect_validation, sample_chunk):
+    """Cover the elif '```' body for anthropic provider (line 141)."""
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text="```\n" + _REFINED_JSON + "\n```")]
+    with patch("src.quiz_gen.agents.refiner.Anthropic") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_cls.return_value = mock_client
+        refiner = Refiner(provider="anthropic", api_key="sk-test")
+        result = refiner.refine(sample_qa, imperfect_validation, sample_chunk)
+        assert result["correct_answer"] == "A"
+
+
+def test_refine_cohere_json_fence(sample_qa, imperfect_validation, sample_chunk):
+    """Cover the if '```json' body for cohere provider (line 153)."""
+    mock_response = MagicMock()
+    mock_response.message.content = [MagicMock(text="```json\n" + _REFINED_JSON + "\n```")]
+    with patch("src.quiz_gen.agents.refiner.cohere") as mock_cohere_mod:
+        mock_client = MagicMock()
+        mock_client.chat.return_value = mock_response
+        mock_cohere_mod.ClientV2.return_value = mock_client
+        refiner = Refiner(provider="cohere", api_key="cohere-key")
+        result = refiner.refine(sample_qa, imperfect_validation, sample_chunk)
+        assert result["correct_answer"] == "A"
+
+
+def test_refine_gemini_plain_fence(sample_qa, imperfect_validation, sample_chunk):
+    """Cover the elif '```' body for gemini provider (line 169)."""
+    mock_response = MagicMock()
+    mock_response.text = "```\n" + _REFINED_JSON + "\n```"
+    with patch("src.quiz_gen.agents.refiner.genai") as mock_genai:
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        refiner = Refiner(provider="gemini", api_key="gemini-key")
+        result = refiner.refine(sample_qa, imperfect_validation, sample_chunk)
+        assert result["correct_answer"] == "A"
+
+
+def test_refine_mistral_plain_fence(sample_qa, imperfect_validation, sample_chunk):
+    """Cover the elif '```' body for mistral provider (line 183)."""
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock(message=MagicMock(content="```\n" + _REFINED_JSON + "\n```"))]
+    with patch("src.quiz_gen.agents.refiner.Mistral") as mock_cls:
+        mock_client = MagicMock()
+        mock_client.chat.complete.return_value = mock_response
+        mock_cls.return_value = mock_client
+        refiner = Refiner(provider="mistral", api_key="mistral-key")
+        result = refiner.refine(sample_qa, imperfect_validation, sample_chunk)
+        assert result["correct_answer"] == "A"
