@@ -9,8 +9,26 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+try:
+    import uvicorn as _uvicorn
+except ImportError:
+    _uvicorn = None
+
 from quiz_gen.__version__ import __version__
 from quiz_gen.parsers.html.eur_lex_parser import EURLexParser
+
+
+def launch_ui(host: str = "0.0.0.0", port: int = 8000, reload: bool = False) -> int:
+    """Launch the quiz-gen web UI using uvicorn."""
+    if _uvicorn is None:
+        print(
+            "Error: uvicorn is required to launch the UI. Install it with: pip install uvicorn",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"Starting quiz-gen UI at http://localhost:{port}")
+    _uvicorn.run("quiz_gen.ui.server:app", host=host, port=port, reload=reload)
+    return 0
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -21,6 +39,12 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Launch the web UI
+  quiz-gen --ui
+
+  # Launch on a custom port
+  quiz-gen --ui --port 9000
+
   # Parse from URL
   quiz-gen https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139
   
@@ -39,7 +63,35 @@ Examples:
     )
 
     parser.add_argument(
-        "input", help="URL or path to local HTML file of EUR-Lex document"
+        "input",
+        nargs="?",
+        help="URL or path to local HTML file of EUR-Lex document (not required when using --ui)",
+    )
+
+    parser.add_argument(
+        "--ui",
+        action="store_true",
+        help="Launch the interactive web UI",
+    )
+
+    parser.add_argument(
+        "--host",
+        type=str,
+        default="0.0.0.0",
+        help="Host to bind the UI server to (default: 0.0.0.0)",
+    )
+
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port to run the UI server on (default: 8000)",
+    )
+
+    parser.add_argument(
+        "--reload",
+        action="store_true",
+        help="Enable auto-reload for the UI server (development mode)",
     )
 
     parser.add_argument(
@@ -195,6 +247,13 @@ def main() -> int:
     """Main entry point for CLI."""
     parser = create_parser()
     args = parser.parse_args()
+
+    if args.ui:
+        return launch_ui(host=args.host, port=args.port, reload=args.reload)
+
+    if not args.input:
+        parser.print_help()
+        return 1
 
     return parse_document(
         input_source=args.input,
