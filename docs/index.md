@@ -1,125 +1,112 @@
-# Quiz-Gen Documentation
+# quiz-gen
 
-Welcome to Quiz-Gen, an AI-powered toolkit for parsing and extracting structured content from regulatory, certification, and educational documentation.
+AI-powered toolkit for parsing EUR-Lex regulatory documents and generating structured quiz content using a configurable multi-agent pipeline.
 
 ## Overview
 
-Quiz-Gen specializes in transforming complex legal and technical documents into structured, machine-readable formats. It's designed for developers, researchers, and organizations working with regulatory documentation who need to extract, analyze, and process content at scale.
+quiz-gen transforms complex EU legal documents into JSON-structured content and generates high-quality multiple-choice questions via five coordinated AI agents. It ships as a self-contained Python package with a built-in web UI, a CLI, and a fully programmable API.
 
-### Key Features
+### Capabilities
 
-- **🔍 Intelligent Document Parsing**: Extract hierarchical structure from EUR-Lex and regulatory documents
-- **📊 Structured Output**: Generate clean JSON with chunks and table of contents
-- **🎯 Granular Content Extraction**: Chunk content at article and recital level with full hierarchy
-- **🌐 Flexible Input**: Support for both URLs and local HTML files
-- **⚡ CLI & Python API**: Use via command-line or programmatically in your code
-- **🧹 Smart Text Cleaning**: Preserve document structure while removing formatting artifacts
-- **📝 Complete Metadata**: Track IDs, hierarchy paths, and cross-references
+- **EUR-Lex document parser**: Extracts hierarchical structure, table of contents, and cleaned text from EU regulations, directives, and decisions
+- **Multi-agent quiz generation**: Five specialized agents (Conceptual Generator, Practical Generator, Validator, Refiner, Judge) orchestrated by a LangGraph workflow
+- **Configurable providers**: Each agent independently uses OpenAI, Anthropic, Google, Mistral, or Cohere
+- **Web UI**: Built-in browser interface for document parsing and quiz generation, served directly from the package via FastAPI
+- **CLI**: Flag-based command-line interface for document parsing and launching the web UI
+- **Python API**: Fully programmable access to the parser, agents, and workflow
 
-## What Can You Build?
+## Quick start
 
-### Education & Training
-- Generate quiz questions from regulatory content
-- Create structured study materials for certification exams
-- Build interactive learning platforms
-
-### Compliance & Legal
-- Analyze regulatory requirements systematically
-- Track changes across document versions
-- Build searchable knowledge bases
-
-### Research & Analysis
-- Extract data for legal research
-- Perform comparative analysis of regulations
-- Build citation networks
-
-### Automation
-- Automate document processing workflows
-- Generate reports from regulatory data
-- Build AI-powered legal assistants
-
-## Quick Example
+### Parse a document
 
 ```python
-from quiz_gen.parsers.html.eu_lex_parser import EURLexParser
+from quiz_gen import EURLexParser
 
-# Parse a regulation
-url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139"
+url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L_202401689"
 parser = EURLexParser(url=url)
 chunks, toc = parser.parse()
 
-# Access structured content
-print(f"Document: {toc['title']}")
+print(f"Title: {toc['title']}")
 print(f"Total chunks: {len(chunks)}")
 
-# Filter by type
-articles = [c for c in chunks if c.section_type.value == 'article']
-recitals = [c for c in chunks if c.section_type.value == 'recital']
-
-print(f"Articles: {len(articles)}, Recitals: {len(recitals)}")
+parser.save_chunks("data/processed/chunks.json")
+parser.save_toc("data/processed/toc.json")
 ```
 
-## Command-Line Interface
+### Generate quiz questions
+
+```python
+from quiz_gen.agents.workflow import QuizGenerationWorkflow
+from quiz_gen.agents.config import AgentConfig
+
+config = AgentConfig()  # reads API keys from environment variables
+workflow = QuizGenerationWorkflow(config)
+
+result = workflow.run(chunks[50])  # pass any RegulationChunk dict
+
+print(f"Judge decision: {result['judge_decision']}")
+for q in result["final_questions"]:
+    print(f"\n[{q['focus']}] {q['question']}")
+```
+
+### Launch the web UI
 
 ```bash
-# Parse from URL
-quiz-gen https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139
-
-# Parse local file
-quiz-gen data/documents/regulation.html
-
-# Specify output directory
-quiz-gen --output data/processed regulation.html
-
-# Print table of contents
-quiz-gen --print-toc regulation.html
+quiz-gen --ui
 ```
 
-## Supported Document Types
+Opens `http://localhost:8000` in the browser automatically. Custom port:
 
-Currently supports EUR-Lex HTML documents:
+```bash
+quiz-gen --ui --port 9000
+```
 
-- ✅ EU Regulations
-- ✅ EU Directives
-- ✅ EU Decisions
-- ✅ Annexes with tables
+## CLI reference
 
-## Architecture
+```bash
+# Parse from URL, save to data/processed/
+quiz-gen https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139
 
-### Document Structure
+# Parse a local file and print the table of contents
+quiz-gen data/raw/regulation.html --print-toc --no-save
+
+# Launch the web UI on a custom port without auto-opening the browser
+quiz-gen --ui --port 9000 --no-browser
+```
+
+See [CLI reference](cli.md) for the full option set.
+
+## Document structure
+
+EUR-Lex documents are extracted into a hierarchical structure:
 
 ```
 Document
-├── Title (Level 0)
-├── Preamble (Level 1)
-│   ├── Citation
-│   └── Recitals (Level 2)
-├── Enacting Terms (Level 1)
-│   └── Chapters (Level 2)
-│       ├── Articles (Level 3)
-│       └── Sections (Level 3, optional)
-│           └── Articles (Level 4)
-├── Concluding Formulas (Level 1)
-└── Annexes (Level 1)
+├── Title
+├── Preamble
+│   ├── Citation (combined into one chunk)
+│   └── Recitals (one chunk per recital)
+├── Enacting Terms
+│   └── Chapters
+│       ├── Articles
+│       └── Sections (when present)
+│           └── Articles
+├── Concluding Formulas
+└── Annexes
 ```
 
-### Content Chunks
+Each content unit becomes a `RegulationChunk` with `section_type`, `number`, `title`, `content`, `hierarchy_path`, and `metadata` fields.
 
-Each chunk contains:
-- **Type**: title, citation, recital, article, annex, concluding_formulas
-- **Number**: Sequential identifier (when applicable)
-- **Title**: Full title including subtitle
-- **Content**: Cleaned text content
-- **Hierarchy Path**: List of parent sections
-- **Metadata**: IDs, subtitles, and references
+## Supported document types
 
-### Table of Contents
+The parser handles EUR-Lex HTML documents:
 
-Hierarchical JSON structure with:
-- Document title
-- Nested sections and subsections
-- Links to all content elements
-- Type identifiers for each node
+- EU Regulations
+- EU Directives
+- EU Decisions
+- Annexes containing tables
+
+Documents must use the EUR-Lex HTML format with `eli-subdivision` elements for structure identification.
 
 ## Installation
 
@@ -127,48 +114,23 @@ Hierarchical JSON structure with:
 pip install quiz-gen
 ```
 
-### Requirements
+Requires Python 3.10 or higher.
 
-- Python 3.10 or higher
-- Dependencies: beautifulsoup4, lxml, requests
+## Next steps
 
-## Next Steps
-
-- **[Getting Started](getting-started.md)** - Installation and first steps
-- **[Parsers](parsers.md)** - Detailed parser documentation
-- **[API Reference](api.md)** - Complete API documentation
-- **[Examples](examples.md)** - Practical usage examples
-
-## Project Status
-
-Quiz-Gen is actively developed and maintained. Current focus:
-
-- ✅ EUR-Lex HTML parser (complete)
-- 🚧 AI-powered quiz generation (in development)
-- 📋 PDF document support (planned)
-- 📋 Multi-language support (planned)
-
-## Contributing
-
-We welcome contributions! Whether you're fixing bugs, adding features, or improving documentation:
-
-1. Check existing issues or create a new one
-2. Fork the repository
-3. Create a feature branch
-4. Submit a pull request
-
-See our [GitHub repository](https://github.com/yauheniya-ai/quiz-gen) for more details.
+- [Getting Started](getting-started.md) — installation and first examples
+- [Parsers](parsers.md) — EUR-Lex parser reference
+- [Agents](agents.md) — multi-agent quiz generation architecture
+- [CLI](cli.md) — command-line interface reference
+- [API Reference](api.md) — complete class and method documentation
+- [Examples](examples.md) — working code examples
 
 ## Support
 
-- **Documentation**: [https://quiz-gen.readthedocs.io](https://quiz-gen.readthedocs.io)
-- **Issues**: [GitHub Issue Tracker](https://github.com/yauheniya-ai/quiz-gen/issues)
-- **PyPI**: [https://pypi.org/project/quiz-gen](https://pypi.org/project/quiz-gen)
+- Documentation: [https://quiz-gen.readthedocs.io](https://quiz-gen.readthedocs.io)
+- Issues: [GitHub Issue Tracker](https://github.com/yauheniya-ai/quiz-gen/issues)
+- PyPI: [https://pypi.org/project/quiz-gen](https://pypi.org/project/quiz-gen)
 
 ## License
 
-Quiz-Gen is released under the MIT License. See [LICENSE](https://github.com/yauheniya-ai/quiz-gen/blob/main/LICENSE) for details.
-
----
-
-**Ready to get started?** Check out the [Getting Started guide](getting-started.md) →
+quiz-gen is released under the MIT License. See [LICENSE](https://github.com/yauheniya-ai/quiz-gen/blob/main/LICENSE) for details.

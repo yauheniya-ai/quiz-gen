@@ -32,7 +32,7 @@ All content is cleaned and formatted for optimal readability and downstream proc
 ### Parsing from URL
 
 ```python
-from quiz_gen.parsers.html.eu_lex_parser import EURLexParser
+from quiz_gen import EURLexParser
 
 # Initialize parser with EUR-Lex URL
 url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139"
@@ -49,6 +49,8 @@ print(f"Document: {toc['title']}")
 ### Parsing from Local File
 
 ```python
+from quiz_gen import EURLexParser
+
 # Read local HTML file
 with open('data/documents/regulation.html', 'r', encoding='utf-8') as f:
     html_content = f.read()
@@ -180,7 +182,7 @@ Individual chunks for each annex (including tables):
 ### Filtering Chunks by Type
 
 ```python
-from quiz_gen.models.chunk import SectionType
+from quiz_gen import SectionType
 
 # Get only articles
 articles = [c for c in chunks if c.section_type == SectionType.ARTICLE]
@@ -354,6 +356,10 @@ Documents must contain:
 
 Main parser class for EUR-Lex documents.
 
+```python
+from quiz_gen import EURLexParser
+```
+
 #### Constructor
 
 ```python
@@ -361,11 +367,10 @@ EURLexParser(url: str = None, html_content: str = None)
 ```
 
 **Parameters:**
-- `url` (str, optional): URL of EUR-Lex document to fetch
-- `html_content` (str, optional): HTML content string for parsing
+- `url` (str, optional): URL of a EUR-Lex document to fetch
+- `html_content` (str, optional): Raw HTML string to parse directly
 
-**Raises:**
-- `ValueError`: If neither url nor html_content provided
+One of `url` or `html_content` must be provided.
 
 #### Methods
 
@@ -419,14 +424,18 @@ Print formatted table of contents to console.
 
 Data class representing a parsed content chunk.
 
+```python
+from quiz_gen import RegulationChunk
+```
+
 #### Attributes
 
 - `section_type` (SectionType): Type of section
 - `number` (str | None): Section number
-- `title` (str): Full title with subtitle
-- `content` (str): Text content
-- `hierarchy_path` (List[str]): Parent sections list
-- `metadata` (Dict): Additional structured data
+- `title` (str): Full title including subtitle
+- `content` (str): Cleaned text content
+- `hierarchy_path` (list[str]): Ancestor titles from document root
+- `metadata` (dict): Additional structured data (`id`, `subtitle`, etc.)
 
 #### Methods
 
@@ -438,20 +447,24 @@ Convert chunk to dictionary for JSON serialization.
 
 ### SectionType
 
-Enumeration of document section types.
+Enumeration of document content types.
+
+```python
+from quiz_gen import SectionType
+```
 
 #### Values
 
 - `TITLE`: Document title
-- `PREAMBLE`: Preamble section
-- `CITATION`: Citation paragraph
+- `PREAMBLE`: Preamble section header
+- `CITATION`: Combined citation block
 - `RECITAL`: Individual recital
-- `ENACTING_TERMS`: Main content section
-- `CHAPTER`: Chapter division
-- `SECTION`: Section within chapter
+- `ENACTING_TERMS`: Enacting terms section header
+- `CHAPTER`: Chapter
+- `SECTION`: Section within a chapter
 - `ARTICLE`: Article (main content unit)
 - `CONCLUDING_FORMULAS`: Concluding signatures
-- `ANNEX`: Annex section
+- `ANNEX`: Annex
 
 ## Performance Considerations
 
@@ -469,14 +482,15 @@ Enumeration of document section types.
 ### Optimization Tips
 
 ```python
-# For batch processing, reuse parser instance
-parser = EURLexParser()
+from quiz_gen import EURLexParser
+
+# Create a new parser instance per document
 for html_file in html_files:
-    with open(html_file) as f:
-        parser.html_content = f.read()
+    with open(html_file, encoding="utf-8") as f:
+        html = f.read()
+    parser = EURLexParser(html_content=html)
     chunks, toc = parser.parse()
-    # Process chunks
-    parser.chunks.clear()  # Clear for next iteration
+    # process chunks ...
 ```
 
 ## Troubleshooting
@@ -499,13 +513,8 @@ print(f"Found {len(chapters)} chapters")
 ```
 
 **Issue: Text formatting problems**
-```python
-# Check cleaned text
-from quiz_gen.parsers.html.eu_lex_parser import EURLexParser
-text = "test (a)\n\ncontent"
-cleaned = EURLexParser._clean_combined_text(text)
-print(repr(cleaned))  # Should be: 'test (a) content'
-```
+
+Use `--verbose` on the CLI or inspect `chunk.content` directly to review how text was cleaned.
 
 ## Examples
 

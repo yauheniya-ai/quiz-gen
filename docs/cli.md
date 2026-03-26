@@ -166,24 +166,21 @@ Example output:
 ```
 Fetching document from URL: https://eur-lex.europa.eu/...
 Parsing document...
-  ✓ Title extracted
-  ✓ Preamble: 1 citation, 88 recitals
-  ✓ Enacting terms: 10 chapters, 141 articles
-  ✓ Concluding formulas: 1
-  ✓ Annexes: 10
 
-✓ Successfully parsed document
+ Successfully parsed document
   Title: Regulation (EU) 2018/1139 of the European Parliament...
   Total chunks: 242
-    title: 1
-    citation: 1
-    recital: 88
     article: 141
-    concluding_formulas: 1
+    recital: 88
     annex: 10
+    citation: 1
+    concluding_formulas: 1
+    title: 1
 
-✓ Files saved to: data/processed
+ Files saved to: data/processed
 ```
+
+When an error occurs in verbose mode, a full stack trace is printed to help diagnose the problem.
 
 #### `-v, --version`
 Display version information and exit.
@@ -194,7 +191,7 @@ quiz-gen --version
 
 Output:
 ```
-quiz-gen 0.1.1
+quiz-gen 0.5.2
 ```
 
 #### `-h, --help`
@@ -202,6 +199,60 @@ Show help message with all options and examples.
 
 ```bash
 quiz-gen --help
+```
+
+### Web UI Options
+
+The following options are only relevant when using `--ui`.
+
+#### `--ui`
+Launch the built-in web UI served by uvicorn. Opens the browser automatically.
+
+```bash
+quiz-gen --ui
+```
+
+#### `--host HOST`
+Host address to bind the UI server to.
+
+**Default:** `0.0.0.0` (all interfaces)
+
+```bash
+# Bind to localhost only
+quiz-gen --ui --host 127.0.0.1
+```
+
+#### `--port PORT`
+Port for the UI server.
+
+**Default:** `8000`
+
+```bash
+quiz-gen --ui --port 9000
+```
+
+#### `--reload`
+Enable auto-reload for development (restarts the server on code changes).
+
+```bash
+quiz-gen --ui --reload
+```
+
+#### `--no-browser`
+Prevent the CLI from automatically opening a browser tab.
+
+```bash
+quiz-gen --ui --no-browser
+```
+
+#### `--log-level LEVEL`
+Log verbosity for the uvicorn server.
+
+**Default:** `warning`
+**Choices:** `debug`, `info`, `warning`, `error`
+
+```bash
+quiz-gen --ui --log-level info
 ```
 
 ## Examples

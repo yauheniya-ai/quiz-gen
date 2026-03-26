@@ -301,14 +301,11 @@ config = AgentConfig(
 The system automatically loads configuration from a `.env` file:
 
 ```bash
-# Anthropic - Used for Claude models
-ANTHROPIC_API_KEY=your_anthropic_key
-
 OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
 MISTRAL_API_KEY=your_mistral_key
-GOOGLE_API_KEY=your_google_key
+GEMINI_API_KEY=your_google_key   # Google Gemini models
 COHERE_API_KEY=your_cohere_key
-# GEMINI_API_KEY is also supported as an alias for Google
 ```
 
 ## Usage
