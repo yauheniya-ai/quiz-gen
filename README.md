@@ -17,6 +17,33 @@ AI-powered quiz generator for regulatory documentation. Extract structured conte
 - **EUR-Lex Document Parser**: Parse and structure EU legal documents with full table of contents extraction
 - **Human-in-the-Loop**: Integrate human input throughout the workflow.
 
+## Tech Stack
+
+**Backend**
+- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> Python — core package language
+- <img src="https://api.iconify.design/devicon:fastapi.svg" width="16" height="16"> FastAPI — serves the web UI and REST API from within the package
+
+**AI Providers**
+- <img src="https://api.iconify.design/simple-icons:openai.svg" width="16" height="16"> OpenAI
+- <img src="https://api.iconify.design/logos:claude-icon.svg" width="16" height="16"> Anthropic
+- <img src="https://api.iconify.design/devicon:google.svg" width="16" height="16"> Google (Gemini)
+- <img src="https://api.iconify.design/logos:mistral-ai-icon.svg" width="16" height="16"> Mistral
+- <img src="https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/.github/.images/cohere-color.svg" width="16" height="16"> Cohere
+
+**Web UI**
+- <img src="https://api.iconify.design/devicon:react.svg" width="16" height="16"> React — interactive frontend
+- <img src="https://api.iconify.design/devicon:vitejs.svg" width="16" height="16"> Vite — fast dev server and production bundler (outputs to `quiz_gen/ui/static`)
+- <img src="https://api.iconify.design/devicon:tailwindcss.svg" width="16" height="16"> Tailwind CSS — utility-first styling
+- <img src="https://api.iconify.design/devicon:javascript.svg" width="16" height="16"> JavaScript (JSX) — component and API code
+
+**CLI**
+- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> argparse — flag-based CLI (`input`, `--output`, `--chunks`, `--toc`, `--print-toc`, `--no-save`, `--verbose`, `--version`)
+
+**Packaging**
+- <img src="https://api.iconify.design/devicon:pypi.svg" width="16" height="16"> PyPI — distributed as an installable Python package
+
+
+
 ## Installation
 
 ```bash
