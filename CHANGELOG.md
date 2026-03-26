@@ -1,5 +1,23 @@
 ## Changelog
 
+### Version 0.5.0 (2026-03-26)
+
+Interactive UI:
+- Added built-in web UI served directly from the `quiz_gen` package (no separate backend needed)
+- Added `quiz_gen.ui.server` — FastAPI server that serves both the API and the built frontend static files
+- Added `quiz_gen.ui.api` — API router with `/api/agent-config` and `/api/generate-quiz` endpoints
+- Frontend (React + Vite + Tailwind) builds directly into `quiz_gen/ui/static` via `npm run build`
+- Single server (`uvicorn quiz_gen.ui.server:app`) replaces the previous separate `backend/` and `frontend/` development setup
+- Supports document parsing via URL or file upload, TOC navigation, chunk preview, and quiz generation with configurable AI providers
+
+### Version 0.4.3 (2026-02-17)
+
+Prompt and documentation improvements:
+- Simplified and clarified system prompts for Validator, Refiner, and Judge agents with better role definitions and workflow context
+- Enhanced validator prompt to distinguish between critical issues and minor warnings for more nuanced feedback
+- Improved judge prompt to emphasize accept/reject decisions (not refinement) and handle 0-2 questions flexibly
+- Updated examples and documentation to reflect refined agent behavior and output formats
+
 ### Version 0.4.2 (2026-02-15)
 
 Critical Bug Fixes:

@@ -243,6 +243,6 @@ GitHub repository: https://github.com/yauheniya-ai/quiz-gen
 Contributions are welcome! Please ensure:
 
 1. Code follows PEP 8 style guidelines
-2. All tests pass
+2. All tests pass: `pytest --cov=src --cov-report=term-missing`
 3. New features include appropriate tests
 4. Documentation is updated
