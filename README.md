@@ -22,13 +22,8 @@ AI-powered quiz generator for regulatory documentation. Extract structured conte
 **Backend**
 - <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> Python — core package language
 - <img src="https://api.iconify.design/devicon:fastapi.svg" width="16" height="16"> FastAPI — serves the web UI and REST API from within the package
-
-**AI Providers**
-- <img src="https://api.iconify.design/simple-icons:openai.svg" width="16" height="16"> OpenAI
-- <img src="https://api.iconify.design/logos:claude-icon.svg" width="16" height="16"> Anthropic
-- <img src="https://api.iconify.design/devicon:google.svg" width="16" height="16"> Google (Gemini)
-- <img src="https://api.iconify.design/logos:mistral-ai-icon.svg" width="16" height="16"> Mistral
-- <img src="https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/.github/.images/cohere-color.svg" width="16" height="16"> Cohere
+- <img src="https://api.iconify.design/simple-icons:langgraph.svg" width="16" height="16"> LangGraph – multi-agent orchestration framework
+- <img src="https://api.iconify.design/prime:microchip-ai.svg" width="16" height="16"> AI Providers: <img src="https://api.iconify.design/logos:claude-icon.svg" width="16" height="16"> Anthropic (Claude), <img src="https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/.github/.images/cohere-color.svg" width="16" height="16"> Cohere, <img src="https://api.iconify.design/material-icon-theme:gemini-ai.svg" width="16" height="16"> Google (Gemini), <img src="https://api.iconify.design/logos:mistral-ai-icon.svg" width="16" height="16"> Mistral, <img src="https://api.iconify.design/simple-icons:openai.svg" width="16" height="16"> OpenAI
 
 **Web UI**
 - <img src="https://api.iconify.design/devicon:react.svg" width="16" height="16"> React — interactive frontend
