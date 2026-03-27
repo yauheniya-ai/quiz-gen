@@ -339,10 +339,10 @@ Currently supports:
 
 ## TODOs
 
-- [] Support for additional document formats (PDF, DOCX, PPTX)
-- [] Save results by project in a local database
-- [] Multi-language support for UI
-- [] Light/Dark scheme for UI
+- [ ] Save results by project in a local database
+- [ ] Support for additional document formats (PDF, DOCX, PPTX)
+- [ ] Multi-language support for UI
+- [ ] Light/Dark scheme for UI
 
 ## License
 
