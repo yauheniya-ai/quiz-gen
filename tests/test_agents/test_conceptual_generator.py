@@ -100,7 +100,9 @@ def test_generate_cohere_provider(sample_chunk):
         mock_client = MagicMock()
         mock_client.chat.return_value = mock_response
         mock_cohere_mod.ClientV2.return_value = mock_client
-        agent = ConceptualGenerator(provider="cohere", api_key="cohere-key", model="command-r-plus")
+        agent = ConceptualGenerator(
+            provider="cohere", api_key="cohere-key", model="command-r-plus"
+        )
         result = agent.generate(sample_chunk)
         assert result["generator"] == "conceptual"
         assert result["model"] == "command-r-plus"
@@ -108,7 +110,9 @@ def test_generate_cohere_provider(sample_chunk):
 
 def test_generate_cohere_provider_markdown_fence(sample_chunk):
     mock_response = MagicMock()
-    mock_response.message.content = [MagicMock(text="```\n" + _CONCEPTUAL_JSON + "\n```")]
+    mock_response.message.content = [
+        MagicMock(text="```\n" + _CONCEPTUAL_JSON + "\n```")
+    ]
     with patch("src.quiz_gen.agents.conceptual_generator.cohere") as mock_cohere_mod:
         mock_client = MagicMock()
         mock_client.chat.return_value = mock_response
@@ -125,7 +129,9 @@ def test_generate_gemini_provider(sample_chunk):
         mock_client = MagicMock()
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
-        agent = ConceptualGenerator(provider="google", api_key="gemini-key", model="gemini-pro")
+        agent = ConceptualGenerator(
+            provider="google", api_key="gemini-key", model="gemini-pro"
+        )
         result = agent.generate(sample_chunk)
         assert result["generator"] == "conceptual"
         assert result["model"] == "gemini-pro"
@@ -150,7 +156,9 @@ def test_generate_mistral_provider(sample_chunk):
         mock_client = MagicMock()
         mock_client.chat.complete.return_value = mock_response
         mock_cls.return_value = mock_client
-        agent = ConceptualGenerator(provider="mistral", api_key="mistral-key", model="mistral-large")
+        agent = ConceptualGenerator(
+            provider="mistral", api_key="mistral-key", model="mistral-large"
+        )
         result = agent.generate(sample_chunk)
         assert result["generator"] == "conceptual"
         assert result["model"] == "mistral-large"
@@ -158,7 +166,9 @@ def test_generate_mistral_provider(sample_chunk):
 
 def test_generate_mistral_provider_markdown_fence(sample_chunk):
     mock_response = MagicMock()
-    mock_response.choices = [MagicMock(message=MagicMock(content="```json\n" + _CONCEPTUAL_JSON + "\n```"))]
+    mock_response.choices = [
+        MagicMock(message=MagicMock(content="```json\n" + _CONCEPTUAL_JSON + "\n```"))
+    ]
     with patch("src.quiz_gen.agents.conceptual_generator.Mistral") as mock_cls:
         mock_client = MagicMock()
         mock_client.chat.complete.return_value = mock_response
@@ -187,7 +197,9 @@ def test_generate_anthropic_plain_fence(sample_chunk):
 def test_generate_cohere_json_fence(sample_chunk):
     """Cover the if '```json' body for cohere provider."""
     mock_response = MagicMock()
-    mock_response.message.content = [MagicMock(text="```json\n" + _CONCEPTUAL_JSON + "\n```")]
+    mock_response.message.content = [
+        MagicMock(text="```json\n" + _CONCEPTUAL_JSON + "\n```")
+    ]
     with patch("src.quiz_gen.agents.conceptual_generator.cohere") as mock_cohere_mod:
         mock_client = MagicMock()
         mock_client.chat.return_value = mock_response
@@ -213,7 +225,9 @@ def test_generate_gemini_plain_fence(sample_chunk):
 def test_generate_mistral_plain_fence(sample_chunk):
     """Cover the elif '```' body for mistral provider."""
     mock_response = MagicMock()
-    mock_response.choices = [MagicMock(message=MagicMock(content="```\n" + _CONCEPTUAL_JSON + "\n```"))]
+    mock_response.choices = [
+        MagicMock(message=MagicMock(content="```\n" + _CONCEPTUAL_JSON + "\n```"))
+    ]
     with patch("src.quiz_gen.agents.conceptual_generator.Mistral") as mock_cls:
         mock_client = MagicMock()
         mock_client.chat.complete.return_value = mock_response

@@ -125,7 +125,7 @@ Validate this question against all requirements.
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
             )
             content = response.message.content[0].text

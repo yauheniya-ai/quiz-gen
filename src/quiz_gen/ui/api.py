@@ -58,7 +58,7 @@ async def generate_quiz(request: QuizRequest):
         missing_list = ", ".join(sorted(missing_keys))
         raise HTTPException(
             status_code=400,
-            detail=f"Missing agent config. Set via /api/agent-config. Missing: {missing_list}"
+            detail=f"Missing agent config. Set via /api/agent-config. Missing: {missing_list}",
         )
     chunk = {
         "section_type": request.section_type or "section",
@@ -97,12 +97,8 @@ async def generate_quiz(request: QuizRequest):
                     question["hierarchy_path"] = chunk["hierarchy_path"]
             return {
                 "questions": questions,
-                "conceptual_generator": {
-                    "output": result.get("conceptual_qa", {})
-                },
-                "practical_generator": {
-                    "output": result.get("practical_qa", {})
-                },
+                "conceptual_generator": {"output": result.get("conceptual_qa", {})},
+                "practical_generator": {"output": result.get("practical_qa", {})},
                 "initial_validator": {
                     "results": result.get("initial_validation_results", [])
                 },

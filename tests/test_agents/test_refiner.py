@@ -77,7 +77,10 @@ def test_refine_perfect_returns_early(sample_qa, perfect_validation, sample_chun
     """Perfect validation (valid, score=10, no warnings/issues) should skip LLM call."""
     refiner = Refiner(api_key="test-key")
     result = refiner.refine(sample_qa, perfect_validation, sample_chunk)
-    assert result["refinement_notes"] == "No refinement needed (perfect score, no warnings or issues)"
+    assert (
+        result["refinement_notes"]
+        == "No refinement needed (perfect score, no warnings or issues)"
+    )
     # Original fields preserved
     assert result["question"] == sample_qa["question"]
     assert result["correct_answer"] == "A"
@@ -86,7 +89,13 @@ def test_refine_perfect_returns_early(sample_qa, perfect_validation, sample_chun
 def test_refine_with_none_warnings_and_issues(sample_qa, sample_chunk):
     """None warnings/issues should be treated as empty - but score < 10 triggers refinement."""
     # valid=True but score=8 means refinement IS needed
-    validation = {"valid": True, "warnings": None, "issues": None, "score": 8, "checks_passed": {}}
+    validation = {
+        "valid": True,
+        "warnings": None,
+        "issues": None,
+        "score": 8,
+        "checks_passed": {},
+    }
     mock_response = MagicMock()
     mock_response.choices = [MagicMock(message=MagicMock(content=_REFINED_JSON))]
     with patch("src.quiz_gen.agents.refiner.OpenAI") as mock_cls:
@@ -152,7 +161,9 @@ def test_refine_cohere_provider(sample_qa, imperfect_validation, sample_chunk):
         mock_client = MagicMock()
         mock_client.chat.return_value = mock_response
         mock_cohere_mod.ClientV2.return_value = mock_client
-        refiner = Refiner(provider="cohere", api_key="cohere-key", model="command-r-plus")
+        refiner = Refiner(
+            provider="cohere", api_key="cohere-key", model="command-r-plus"
+        )
         result = refiner.refine(sample_qa, imperfect_validation, sample_chunk)
         assert result["refiner_model"] == "command-r-plus"
         assert result["generator"] == "conceptual"
@@ -202,7 +213,9 @@ def test_refine_mistral_provider(sample_qa, imperfect_validation, sample_chunk):
         mock_client = MagicMock()
         mock_client.chat.complete.return_value = mock_response
         mock_cls.return_value = mock_client
-        refiner = Refiner(provider="mistral", api_key="mistral-key", model="mistral-large")
+        refiner = Refiner(
+            provider="mistral", api_key="mistral-key", model="mistral-large"
+        )
         result = refiner.refine(sample_qa, imperfect_validation, sample_chunk)
         assert result["refiner_model"] == "mistral-large"
         assert result["generator"] == "conceptual"
@@ -210,7 +223,9 @@ def test_refine_mistral_provider(sample_qa, imperfect_validation, sample_chunk):
 
 def test_refine_mistral_markdown_fence(sample_qa, imperfect_validation, sample_chunk):
     mock_response = MagicMock()
-    mock_response.choices = [MagicMock(message=MagicMock(content="```json\n" + _REFINED_JSON + "\n```"))]
+    mock_response.choices = [
+        MagicMock(message=MagicMock(content="```json\n" + _REFINED_JSON + "\n```"))
+    ]
     with patch("src.quiz_gen.agents.refiner.Mistral") as mock_cls:
         mock_client = MagicMock()
         mock_client.chat.complete.return_value = mock_response
@@ -235,7 +250,9 @@ def test_refine_preserves_metadata(sample_qa, imperfect_validation, sample_chunk
         assert result["model"] == "claude-test"
 
 
-def test_refine_preserves_unknown_generator(sample_qa, imperfect_validation, sample_chunk):
+def test_refine_preserves_unknown_generator(
+    sample_qa, imperfect_validation, sample_chunk
+):
     """If generator not in original QA, defaults to 'unknown'."""
     qa = {k: v for k, v in sample_qa.items() if k not in ("generator", "model")}
     mock_response = MagicMock()
@@ -249,7 +266,9 @@ def test_refine_preserves_unknown_generator(sample_qa, imperfect_validation, sam
         assert result["generator"] == "unknown"
 
 
-def test_refine_batch(sample_qa, imperfect_validation, perfect_validation, sample_chunk):
+def test_refine_batch(
+    sample_qa, imperfect_validation, perfect_validation, sample_chunk
+):
     """refine_batch should refine each qa/validation pair in order."""
     qa2 = {**sample_qa, "question": "Another question?", "focus": "practical"}
     with patch.object(
@@ -257,7 +276,10 @@ def test_refine_batch(sample_qa, imperfect_validation, perfect_validation, sampl
         "refine",
         side_effect=[
             {**sample_qa, "refinement_notes": "fixed 1"},
-            {**qa2, "refinement_notes": "No refinement needed (perfect score, no warnings or issues)"},
+            {
+                **qa2,
+                "refinement_notes": "No refinement needed (perfect score, no warnings or issues)",
+            },
         ],
     ):
         refiner = Refiner(api_key="test-key")
@@ -273,7 +295,13 @@ def test_refine_batch(sample_qa, imperfect_validation, perfect_validation, sampl
 
 def test_refine_invalid_validation_triggers_refinement(sample_qa, sample_chunk):
     """valid=False should always trigger refinement even if score is 10."""
-    validation = {"valid": False, "warnings": [], "issues": ["Bad question"], "score": 7, "checks_passed": {}}
+    validation = {
+        "valid": False,
+        "warnings": [],
+        "issues": ["Bad question"],
+        "score": 7,
+        "checks_passed": {},
+    }
     mock_response = MagicMock()
     mock_response.choices = [MagicMock(message=MagicMock(content=_REFINED_JSON))]
     with patch("src.quiz_gen.agents.refiner.OpenAI") as mock_cls:
@@ -305,7 +333,9 @@ def test_refine_anthropic_plain_fence(sample_qa, imperfect_validation, sample_ch
 def test_refine_cohere_json_fence(sample_qa, imperfect_validation, sample_chunk):
     """Cover the if '```json' body for cohere provider (line 153)."""
     mock_response = MagicMock()
-    mock_response.message.content = [MagicMock(text="```json\n" + _REFINED_JSON + "\n```")]
+    mock_response.message.content = [
+        MagicMock(text="```json\n" + _REFINED_JSON + "\n```")
+    ]
     with patch("src.quiz_gen.agents.refiner.cohere") as mock_cohere_mod:
         mock_client = MagicMock()
         mock_client.chat.return_value = mock_response
@@ -331,7 +361,9 @@ def test_refine_gemini_plain_fence(sample_qa, imperfect_validation, sample_chunk
 def test_refine_mistral_plain_fence(sample_qa, imperfect_validation, sample_chunk):
     """Cover the elif '```' body for mistral provider (line 183)."""
     mock_response = MagicMock()
-    mock_response.choices = [MagicMock(message=MagicMock(content="```\n" + _REFINED_JSON + "\n```"))]
+    mock_response.choices = [
+        MagicMock(message=MagicMock(content="```\n" + _REFINED_JSON + "\n```"))
+    ]
     with patch("src.quiz_gen.agents.refiner.Mistral") as mock_cls:
         mock_client = MagicMock()
         mock_client.chat.complete.return_value = mock_response

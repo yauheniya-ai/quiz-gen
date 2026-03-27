@@ -24,15 +24,19 @@ def run_cli_with_args(args, monkeypatch, capsys):
 
 # ── Parser tests ──────────────────────────────────────────────────────────────
 
+
 def test_cli_print_stats_and_save(tmp_path, monkeypatch, capsys):
     outdir = tmp_path
     chunks_file = outdir / "test_chunks.json"
     toc_file = outdir / "test_toc.json"
     args = [
         str(test_html_path),
-        "-o", str(outdir),
-        "--chunks", "test_chunks.json",
-        "--toc", "test_toc.json",
+        "-o",
+        str(outdir),
+        "--chunks",
+        "test_chunks.json",
+        "--toc",
+        "test_toc.json",
     ]
     code, output = run_cli_with_args(args, monkeypatch, capsys)
     assert code == 0, output
@@ -91,10 +95,13 @@ def test_cli_url_verbose_exception_traceback(tmp_path, monkeypatch, capsys):
 
     EURLexParser raises so we travel: verbose print → parser init → except block → traceback.
     """
-    with patch("quiz_gen.cli.EURLexParser", side_effect=RuntimeError("URL fetch failed")):
+    with patch(
+        "quiz_gen.cli.EURLexParser", side_effect=RuntimeError("URL fetch failed")
+    ):
         args = [
             "https://example.com/document.html",
-            "-o", str(tmp_path),
+            "-o",
+            str(tmp_path),
             "--verbose",
             "--no-save",
         ]
@@ -117,6 +124,7 @@ def test_cli_no_input_no_ui(monkeypatch, capsys):
 
 
 # ── get_default_filename tests ────────────────────────────────────────────────
+
 
 def test_get_default_filename_celex_url():
     url = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139"
@@ -148,15 +156,16 @@ def test_get_default_filename_local_file_stem():
 
 # ── --ui flag tests ───────────────────────────────────────────────────────────
 
+
 def test_cli_ui_launches_server(monkeypatch, capsys):
     """--ui should call uvicorn.run with correct arguments."""
     mock_uvicorn = MagicMock()
     monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
     monkeypatch.setattr(sys, "argv", ["quiz-gen", "--ui"])
     try:
-        code = cli.main()
-    except SystemExit as exc:
-        code = exc.code if isinstance(exc.code, int) else 0
+        cli.main()
+    except SystemExit:
+        pass
     captured = capsys.readouterr()
     assert "Starting quiz-gen UI" in captured.out
     mock_uvicorn.run.assert_called_once()
@@ -168,13 +177,18 @@ def test_cli_ui_custom_port(monkeypatch, capsys):
     monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
     monkeypatch.setattr(sys, "argv", ["quiz-gen", "--ui", "--port", "9000"])
     try:
-        code = cli.main()
-    except SystemExit as exc:
-        code = exc.code if isinstance(exc.code, int) else 0
+        cli.main()
+    except SystemExit:
+        pass
     captured = capsys.readouterr()
     assert "9000" in captured.out
     _, kwargs = mock_uvicorn.run.call_args
-    assert kwargs.get("port") == 9000 or mock_uvicorn.run.call_args[0][1] == 9000 or 9000 in mock_uvicorn.run.call_args.args or mock_uvicorn.run.call_args.kwargs.get("port") == 9000
+    assert (
+        kwargs.get("port") == 9000
+        or mock_uvicorn.run.call_args[0][1] == 9000
+        or 9000 in mock_uvicorn.run.call_args.args
+        or mock_uvicorn.run.call_args.kwargs.get("port") == 9000
+    )
 
 
 def test_launch_ui_missing_uvicorn(monkeypatch, capsys):
@@ -193,7 +207,11 @@ def test_launch_ui_success(monkeypatch):
     code = launch_ui(host="127.0.0.1", port=8000, open_browser=False)
     assert code == 0
     mock_uvicorn.run.assert_called_once_with(
-        "quiz_gen.ui.server:app", host="127.0.0.1", port=8000, reload=False, log_level="warning"
+        "quiz_gen.ui.server:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=False,
+        log_level="warning",
     )
 
 
@@ -204,7 +222,11 @@ def test_launch_ui_reload(monkeypatch):
     code = launch_ui(host="0.0.0.0", port=8000, reload=True, open_browser=False)
     assert code == 0
     mock_uvicorn.run.assert_called_once_with(
-        "quiz_gen.ui.server:app", host="0.0.0.0", port=8000, reload=True, log_level="warning"
+        "quiz_gen.ui.server:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="warning",
     )
 
 
@@ -221,6 +243,7 @@ def test_launch_ui_no_browser(monkeypatch):
 def test_launch_ui_open_browser(monkeypatch):
     """open_browser=True should call webbrowser.open with the correct URL via a background thread."""
     import threading
+
     mock_uvicorn = MagicMock()
     mock_browser = MagicMock()
     opened_event = threading.Event()
@@ -264,7 +287,9 @@ def test_cli_ui_log_level_flag(monkeypatch):
     """--ui --log-level debug should pass log_level=debug to uvicorn."""
     mock_uvicorn = MagicMock()
     monkeypatch.setattr("quiz_gen.cli._uvicorn", mock_uvicorn)
-    monkeypatch.setattr(sys, "argv", ["quiz-gen", "--ui", "--log-level", "debug", "--no-browser"])
+    monkeypatch.setattr(
+        sys, "argv", ["quiz-gen", "--ui", "--log-level", "debug", "--no-browser"]
+    )
     with patch("webbrowser.open"):
         try:
             cli.main()

@@ -15,19 +15,19 @@ load_dotenv()
 # Add parent directory to path for imports in main.
 
 
-ARTICLE =     {
+ARTICLE = {
     "section_type": "annex",
     "number": "II",
     "title": "ANNEX II - List of criminal offences referred to in Article 5(1), first subparagraph, point (h)(iii)",
     "content": "Criminal offences referred to in Article 5(1), first subparagraph, point (h)(iii):\n— terrorism,\n— trafficking in human beings,\n— sexual exploitation of children, and child pornography,\n— illicit trafficking in narcotic drugs or psychotropic substances,\n— illicit trafficking in weapons, munitions or explosives,\n— murder, grievous bodily injury,\n— illicit trade in human organs or tissue,\n— illicit trafficking in nuclear or radioactive materials,\n— kidnapping, illegal restraint or hostage-taking,\n— crimes within the jurisdiction of the International Criminal Court,\n— unlawful seizure of aircraft or ships,\n— rape,\n— environmental crime,\n— organised or armed robbery,\n— sabotage,\n— participation in a criminal organisation involved in one or more of the offences listed above.",
     "hierarchy_path": [
-      "REGULATION (EU) 2024/1689 OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL",
-      "ANNEX II - List of criminal offences referred to in Article 5(1), first subparagraph, point (h)(iii)"
+        "REGULATION (EU) 2024/1689 OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL",
+        "ANNEX II - List of criminal offences referred to in Article 5(1), first subparagraph, point (h)(iii)",
     ],
     "metadata": {
-      "id": "anx_II",
-      "subtitle": "List of criminal offences referred to in Article 5(1), first subparagraph, point (h)(iii)"
-    }
+        "id": "anx_II",
+        "subtitle": "List of criminal offences referred to in Article 5(1), first subparagraph, point (h)(iii)",
+    },
 }
 
 
@@ -125,7 +125,7 @@ def main():
     print("STEP 2: INITIAL VALIDATION (of original questions)")
     print("=" * 70)
     print()
-    
+
     if result.get("initial_validation_results"):
         for val_result in result["initial_validation_results"]:
             question_type = val_result.get("question_type", "unknown").capitalize()
@@ -134,13 +134,13 @@ def main():
             print(f"  Score: {val_result.get('score', 0)}/10")
             print(f"  Validator Model: {val_result.get('validator_model', 'N/A')}")
             print()
-            
+
             print(f"  Issues: {val_result.get('issues', []) or '[]'}")
             print(f"  Warnings: {val_result.get('warnings', []) or '[]'}")
             print()
-            
+
             checks = val_result.get("checks_passed", {})
-            print(f"  Checks Passed:")
+            print("  Checks Passed:")
             if checks:
                 for check_name, passed in checks.items():
                     status = "✓" if passed else "✗"
@@ -166,15 +166,21 @@ def main():
     if refined_conceptual:
         print("CONCEPTUAL QUESTION (refined):")
         print(f"  Refiner Model: {refined_conceptual.get('refiner_model', 'N/A')}")
-        print(f"  Original Generator: {refined_conceptual.get('generator', 'N/A')} / {refined_conceptual.get('model', 'N/A')}")
-        print(f"  Refinement Notes: {refined_conceptual.get('refinement_notes', 'N/A')}")
+        print(
+            f"  Original Generator: {refined_conceptual.get('generator', 'N/A')} / {refined_conceptual.get('model', 'N/A')}"
+        )
+        print(
+            f"  Refinement Notes: {refined_conceptual.get('refinement_notes', 'N/A')}"
+        )
         print(f"  Question: {refined_conceptual.get('question', 'N/A')[:100]}...")
         print()
 
     if refined_practical:
         print("PRACTICAL QUESTION (refined):")
         print(f"  Refiner Model: {refined_practical.get('refiner_model', 'N/A')}")
-        print(f"  Original Generator: {refined_practical.get('generator', 'N/A')} / {refined_practical.get('model', 'N/A')}")
+        print(
+            f"  Original Generator: {refined_practical.get('generator', 'N/A')} / {refined_practical.get('model', 'N/A')}"
+        )
         print(f"  Refinement Notes: {refined_practical.get('refinement_notes', 'N/A')}")
         print(f"  Question: {refined_practical.get('question', 'N/A')[:100]}...")
         print()
@@ -182,7 +188,7 @@ def main():
     if not refined_conceptual and not refined_practical:
         print("None (both questions had perfect scores: 10/10, no warnings or issues)")
         print()
-    
+
     # ========================================================================
     # STEP 4: RE-VALIDATION (after refinement)
     # ========================================================================
@@ -190,12 +196,12 @@ def main():
     print("STEP 4: RE-VALIDATION (after refinement)")
     print("=" * 70)
     print()
-    
+
     # Only show re-validation if refinement actually happened
     if refined_conceptual or refined_practical:
         print(f"All Valid: {result.get('all_valid', False)}")
         print()
-        
+
         if result.get("validation_results"):
             for val_result in result["validation_results"]:
                 question_type = val_result.get("question_type", "unknown").capitalize()
@@ -204,13 +210,13 @@ def main():
                 print(f"  Score: {val_result.get('score', 0)}/10")
                 print(f"  Validator Model: {val_result.get('validator_model', 'N/A')}")
                 print()
-                
+
                 print(f"  Issues: {val_result.get('issues', []) or '[]'}")
                 print(f"  Warnings: {val_result.get('warnings', []) or '[]'}")
                 print()
-                
+
                 checks = val_result.get("checks_passed", {})
-                print(f"  Checks Passed:")
+                print("  Checks Passed:")
                 if checks:
                     for check_name, passed in checks.items():
                         status = "✓" if passed else "✗"
@@ -315,7 +321,9 @@ def main():
                     "practical_qa": result.get("practical_qa"),
                 },
                 "step_2_initial_validation": {
-                    "initial_validation_results": result.get("initial_validation_results", []),
+                    "initial_validation_results": result.get(
+                        "initial_validation_results", []
+                    ),
                 },
                 "step_3_refinement": {
                     "refined_conceptual_qa": result.get("refined_conceptual_qa"),

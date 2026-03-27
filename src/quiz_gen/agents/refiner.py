@@ -96,17 +96,19 @@ Output format (JSON):
         # Get warnings and issues, handling None values
         warnings = validation_result.get("warnings") or []
         issues = validation_result.get("issues") or []
-        
+
         # Only skip refinement if perfect: valid, no warnings, no issues, score 10/10
         is_perfect = (
-            validation_result.get("valid") == True
+            validation_result.get("valid")
             and len(warnings) == 0
             and len(issues) == 0
             and validation_result.get("score") == 10
         )
-        
+
         if is_perfect:
-            qa["refinement_notes"] = "No refinement needed (perfect score, no warnings or issues)"
+            qa["refinement_notes"] = (
+                "No refinement needed (perfect score, no warnings or issues)"
+            )
             return qa
 
         # If we get here, the question needs refinement
@@ -145,7 +147,7 @@ Fix the identified issues AND address the warnings to improve the question quali
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
             )
             content = response.message.content[0].text
@@ -192,12 +194,12 @@ Fix the identified issues AND address the warnings to improve the question quali
                 response_format={"type": "json_object"},
             )
             result = json.loads(response.choices[0].message.content)
-        
+
         # Preserve original metadata
         result["refiner_model"] = self.model
         result["generator"] = qa.get("generator", "unknown")
         result["model"] = qa.get("model", "unknown")
-        
+
         return result
 
     def refine_batch(

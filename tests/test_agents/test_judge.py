@@ -166,7 +166,9 @@ def test_judge_with_none_practical(conceptual_qa, validation_results, sample_chu
         assert result["decision"] == "accept_both"
 
 
-def test_judge_cohere_provider(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_cohere_provider(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     mock_response = MagicMock()
     mock_response.message.content = [MagicMock(text=_JUDGE_JSON)]
     with patch("src.quiz_gen.agents.judge.cohere") as mock_cohere_mod:
@@ -174,24 +176,34 @@ def test_judge_cohere_provider(conceptual_qa, practical_qa, validation_results, 
         mock_client.chat.return_value = mock_response
         mock_cohere_mod.ClientV2.return_value = mock_client
         agent = Judge(provider="cohere", api_key="cohere-key", model="command-r-plus")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
         assert result["judge_model"] == "command-r-plus"
 
 
-def test_judge_cohere_markdown_fence(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_cohere_markdown_fence(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     mock_response = MagicMock()
-    mock_response.message.content = [MagicMock(text="```json\n" + _JUDGE_JSON + "\n```")]
+    mock_response.message.content = [
+        MagicMock(text="```json\n" + _JUDGE_JSON + "\n```")
+    ]
     with patch("src.quiz_gen.agents.judge.cohere") as mock_cohere_mod:
         mock_client = MagicMock()
         mock_client.chat.return_value = mock_response
         mock_cohere_mod.ClientV2.return_value = mock_client
         agent = Judge(provider="cohere", api_key="cohere-key")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
 
 
-def test_judge_gemini_provider(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_gemini_provider(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     mock_response = MagicMock()
     mock_response.text = _JUDGE_JSON
     with patch("src.quiz_gen.agents.judge.genai") as mock_genai:
@@ -199,12 +211,16 @@ def test_judge_gemini_provider(conceptual_qa, practical_qa, validation_results, 
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
         agent = Judge(provider="google", api_key="gemini-key", model="gemini-pro")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
         assert result["judge_model"] == "gemini-pro"
 
 
-def test_judge_gemini_markdown_fence(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_gemini_markdown_fence(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     mock_response = MagicMock()
     mock_response.text = "```json\n" + _JUDGE_JSON + "\n```"
     with patch("src.quiz_gen.agents.judge.genai") as mock_genai:
@@ -212,11 +228,15 @@ def test_judge_gemini_markdown_fence(conceptual_qa, practical_qa, validation_res
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
         agent = Judge(provider="gemini", api_key="gemini-key")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
 
 
-def test_judge_mistral_provider(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_mistral_provider(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     mock_response = MagicMock()
     mock_response.choices = [MagicMock(message=MagicMock(content=_JUDGE_JSON))]
     with patch("src.quiz_gen.agents.judge.Mistral") as mock_cls:
@@ -224,24 +244,34 @@ def test_judge_mistral_provider(conceptual_qa, practical_qa, validation_results,
         mock_client.chat.complete.return_value = mock_response
         mock_cls.return_value = mock_client
         agent = Judge(provider="mistral", api_key="mistral-key", model="mistral-large")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
         assert result["judge_model"] == "mistral-large"
 
 
-def test_judge_mistral_markdown_fence(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_mistral_markdown_fence(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     mock_response = MagicMock()
-    mock_response.choices = [MagicMock(message=MagicMock(content="```json\n" + _JUDGE_JSON + "\n```"))]
+    mock_response.choices = [
+        MagicMock(message=MagicMock(content="```json\n" + _JUDGE_JSON + "\n```"))
+    ]
     with patch("src.quiz_gen.agents.judge.Mistral") as mock_cls:
         mock_client = MagicMock()
         mock_client.chat.complete.return_value = mock_response
         mock_cls.return_value = mock_client
         agent = Judge(provider="mistral", api_key="mistral-key")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
 
 
-def test_judge_openai_provider(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_openai_provider(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     mock_response = MagicMock()
     mock_response.choices = [MagicMock(message=MagicMock(content=_JUDGE_JSON))]
     with patch("src.quiz_gen.agents.judge.OpenAI") as mock_cls:
@@ -249,7 +279,9 @@ def test_judge_openai_provider(conceptual_qa, practical_qa, validation_results, 
         mock_client.chat.completions.create.return_value = mock_response
         mock_cls.return_value = mock_client
         agent = Judge(provider="openai", api_key="openai-key", model="gpt-4o")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
         assert result["judge_model"] == "gpt-4o"
 
@@ -257,7 +289,9 @@ def test_judge_openai_provider(conceptual_qa, practical_qa, validation_results, 
 # ─── Additional tests for api_base and opposite fence types ───────────────
 
 
-def test_judge_anthropic_with_api_base(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_anthropic_with_api_base(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     """Cover api_base branch (line 74) in judge anthropic init."""
     mock_response = MagicMock()
     mock_response.content = [MagicMock(text=_JUDGE_JSON)]
@@ -270,11 +304,15 @@ def test_judge_anthropic_with_api_base(conceptual_qa, practical_qa, validation_r
             api_key="sk-test",
             api_base="https://custom.anthropic.test",
         )
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
 
 
-def test_judge_anthropic_plain_fence(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_anthropic_plain_fence(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     """Cover the elif '```' body for anthropic provider."""
     mock_response = MagicMock()
     mock_response.content = [MagicMock(text="```\n" + _JUDGE_JSON + "\n```")]
@@ -283,11 +321,15 @@ def test_judge_anthropic_plain_fence(conceptual_qa, practical_qa, validation_res
         mock_client.messages.create.return_value = mock_response
         mock_cls.return_value = mock_client
         agent = Judge(provider="anthropic", api_key="sk-test")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
 
 
-def test_judge_cohere_plain_fence(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_cohere_plain_fence(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     """Cover the elif '```' body for cohere provider."""
     mock_response = MagicMock()
     mock_response.message.content = [MagicMock(text="```\n" + _JUDGE_JSON + "\n```")]
@@ -296,11 +338,15 @@ def test_judge_cohere_plain_fence(conceptual_qa, practical_qa, validation_result
         mock_client.chat.return_value = mock_response
         mock_cohere_mod.ClientV2.return_value = mock_client
         agent = Judge(provider="cohere", api_key="cohere-key")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
 
 
-def test_judge_gemini_plain_fence(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_gemini_plain_fence(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     """Cover the elif '```' body for gemini provider."""
     mock_response = MagicMock()
     mock_response.text = "```\n" + _JUDGE_JSON + "\n```"
@@ -309,19 +355,26 @@ def test_judge_gemini_plain_fence(conceptual_qa, practical_qa, validation_result
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
         agent = Judge(provider="gemini", api_key="gemini-key")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
 
 
-def test_judge_mistral_plain_fence(conceptual_qa, practical_qa, validation_results, sample_chunk):
+def test_judge_mistral_plain_fence(
+    conceptual_qa, practical_qa, validation_results, sample_chunk
+):
     """Cover the elif '```' body for mistral provider."""
     mock_response = MagicMock()
-    mock_response.choices = [MagicMock(message=MagicMock(content="```\n" + _JUDGE_JSON + "\n```"))]
+    mock_response.choices = [
+        MagicMock(message=MagicMock(content="```\n" + _JUDGE_JSON + "\n```"))
+    ]
     with patch("src.quiz_gen.agents.judge.Mistral") as mock_cls:
         mock_client = MagicMock()
         mock_client.chat.complete.return_value = mock_response
         mock_cls.return_value = mock_client
         agent = Judge(provider="mistral", api_key="mistral-key")
-        result = agent.judge(conceptual_qa, practical_qa, validation_results, sample_chunk)
+        result = agent.judge(
+            conceptual_qa, practical_qa, validation_results, sample_chunk
+        )
         assert result["decision"] == "accept_both"
-

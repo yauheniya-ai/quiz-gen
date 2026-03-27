@@ -111,7 +111,9 @@ class AgentConfig:
             self.openai_api_base = os.getenv("OPENAI_API_BASE")
 
         if not self.anthropic_api_base:
-            self.anthropic_api_base = os.getenv("ANTHROPIC_API_BASE") or os.getenv("ANTHROPIC_BASE_URL")
+            self.anthropic_api_base = os.getenv("ANTHROPIC_API_BASE") or os.getenv(
+                "ANTHROPIC_BASE_URL"
+            )
 
         if not self.mistral_api_base:
             self.mistral_api_base = os.getenv("MISTRAL_API_BASE")
@@ -122,7 +124,6 @@ class AgentConfig:
         # Create output directory if it doesn't exist
         if self.output_directory:
             Path(self.output_directory).mkdir(parents=True, exist_ok=True)
-
 
     def validate(self) -> None:
         """
@@ -292,7 +293,9 @@ class AgentConfig:
         print("Agent Configuration Summary")
         print("=" * 70)
         print(f"OpenAI API Key: {'✓ Set' if self.openai_api_key else '✗ Missing'}")
-        print(f"Anthropic API Key: {'✓ Set' if self.anthropic_api_key else '✗ Missing'}")
+        print(
+            f"Anthropic API Key: {'✓ Set' if self.anthropic_api_key else '✗ Missing'}"
+        )
         if self.anthropic_api_base:
             print(f"  └─ Custom Base URL: {self.anthropic_api_base}")
         print(f"Mistral API Key: {'✓ Set' if self.mistral_api_key else '✗ Missing'}")

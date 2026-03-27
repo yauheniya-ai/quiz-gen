@@ -41,7 +41,9 @@ class QuizGenerationState(TypedDict):
 
     # Validation results
     initial_validation_results: Optional[List[Dict]]  # First validation (of originals)
-    validation_results: Optional[List[Dict]]  # Final validation (after refinement or originals if no refinement)
+    validation_results: Optional[
+        List[Dict]
+    ]  # Final validation (after refinement or originals if no refinement)
     all_valid: Optional[bool]
 
     # Final output
@@ -84,35 +86,55 @@ class QuizGenerationWorkflow:
             api_base=conceptual_base,
             provider=self.config.conceptual_provider,
             model=self.config.conceptual_model,
-            max_tokens=self.config.anthropic_max_tokens if self.config.conceptual_provider == "anthropic" else None,
+            max_tokens=(
+                self.config.anthropic_max_tokens
+                if self.config.conceptual_provider == "anthropic"
+                else None
+            ),
         )
         self.practical_gen = PracticalGenerator(
             api_key=practical_key,
             api_base=practical_base,
             provider=self.config.practical_provider,
             model=self.config.practical_model,
-            max_tokens=self.config.anthropic_max_tokens if self.config.practical_provider == "anthropic" else None,
+            max_tokens=(
+                self.config.anthropic_max_tokens
+                if self.config.practical_provider == "anthropic"
+                else None
+            ),
         )
         self.judge = Judge(
             api_key=judge_key,
             api_base=judge_base,
             provider=self.config.judge_provider,
             model=self.config.judge_model,
-            max_tokens=self.config.anthropic_max_tokens if self.config.judge_provider == "anthropic" else None,
+            max_tokens=(
+                self.config.anthropic_max_tokens
+                if self.config.judge_provider == "anthropic"
+                else None
+            ),
         )
         self.validator = Validator(
             api_key=validator_key,
             api_base=validator_base,
             provider=self.config.validator_provider,
             model=self.config.validator_model,
-            max_tokens=self.config.anthropic_max_tokens if self.config.validator_provider == "anthropic" else None,
+            max_tokens=(
+                self.config.anthropic_max_tokens
+                if self.config.validator_provider == "anthropic"
+                else None
+            ),
         )
         self.refiner = Refiner(
             api_key=refiner_key,
             api_base=refiner_base,
             provider=self.config.refiner_provider,
             model=self.config.refiner_model,
-            max_tokens=self.config.anthropic_max_tokens if self.config.refiner_provider == "anthropic" else None,
+            max_tokens=(
+                self.config.anthropic_max_tokens
+                if self.config.refiner_provider == "anthropic"
+                else None
+            ),
         )
 
         # Build graph
@@ -203,31 +225,39 @@ class QuizGenerationWorkflow:
             print("  → Validating questions...")
         try:
             state["current_step"] = "validate_questions"
-            
+
             # Determine which questions to validate
             # If refined questions exist, validate those; otherwise validate originals
             questions_to_validate = []
             question_types = []
-            
+
             # Check for refined questions first, fall back to originals
-            conceptual = state.get("refined_conceptual_qa") or state.get("conceptual_qa")
+            conceptual = state.get("refined_conceptual_qa") or state.get(
+                "conceptual_qa"
+            )
             practical = state.get("refined_practical_qa") or state.get("practical_qa")
-            
+
             if conceptual:
                 questions_to_validate.append(conceptual)
                 question_types.append("conceptual")
             if practical:
                 questions_to_validate.append(practical)
                 question_types.append("practical")
-            
+
             if self.config.verbose:
-                refined_count = sum([
-                    1 for q in [state.get("refined_conceptual_qa"), state.get("refined_practical_qa")] 
-                    if q is not None
-                ])
+                refined_count = sum(
+                    [
+                        1
+                        for q in [
+                            state.get("refined_conceptual_qa"),
+                            state.get("refined_practical_qa"),
+                        ]
+                        if q is not None
+                    ]
+                )
                 if refined_count > 0:
                     print(f"    → Re-validating {refined_count} refined question(s)")
-            
+
             # Only validate if we have questions
             if questions_to_validate:
                 # Validate each question
@@ -237,7 +267,7 @@ class QuizGenerationWorkflow:
                 # Add question_type metadata to each validation result
                 for i, val_result in enumerate(validation_results):
                     val_result["question_type"] = question_types[i]
-                
+
                 # Store as initial validation results
                 state["initial_validation_results"] = validation_results
                 state["validation_results"] = validation_results
@@ -265,11 +295,11 @@ class QuizGenerationWorkflow:
             print("  → Refining questions...")
         try:
             state["current_step"] = "refine_questions"
-            
+
             # Collect questions and their validation results
             questions_to_refine = []
             validation_results = state.get("validation_results", [])
-            
+
             if self.config.verbose:
                 print(f"    → Received {len(validation_results)} validation results")
                 for i, vr in enumerate(validation_results):
@@ -278,8 +308,10 @@ class QuizGenerationWorkflow:
                     score = vr.get("score")
                     warn_count = len(vr.get("warnings", []) or [])
                     issue_count = len(vr.get("issues", []) or [])
-                    print(f"      [{qtype}] Valid={valid}, Score={score}/10, Warnings={warn_count}, Issues={issue_count}")
-            
+                    print(
+                        f"      [{qtype}] Valid={valid}, Score={score}/10, Warnings={warn_count}, Issues={issue_count}"
+                    )
+
             # Count how many questions actually need refinement
             questions_needing_refinement = 0
             for vr in validation_results:
@@ -288,27 +320,31 @@ class QuizGenerationWorkflow:
                 score = vr.get("score", 10)
                 valid = vr.get("valid", True)
                 # Question needs refinement if not perfect
-                if not (valid and score == 10 and len(warnings) == 0 and len(issues) == 0):
+                if not (
+                    valid and score == 10 and len(warnings) == 0 and len(issues) == 0
+                ):
                     questions_needing_refinement += 1
-            
+
             if state.get("conceptual_qa"):
                 questions_to_refine.append(state["conceptual_qa"])
             if state.get("practical_qa"):
                 questions_to_refine.append(state["practical_qa"])
-            
+
             if self.config.verbose:
                 if questions_needing_refinement > 0:
-                    print(f"    → Refining {questions_needing_refinement} question(s)...")
+                    print(
+                        f"    → Refining {questions_needing_refinement} question(s)..."
+                    )
                 else:
-                    print(f"    → All questions perfect, no refinement needed")
-            
+                    print("    → All questions perfect, no refinement needed")
+
             # Refine each question
             refined_questions = self.refiner.refine_batch(
                 qas=questions_to_refine,
                 validation_results=validation_results,
-                chunk=state["chunk"]
+                chunk=state["chunk"],
             )
-            
+
             # Store refined questions back in state ONLY if they were actually refined
             # (Refiner adds "refiner_model" field only when LLM refinement occurred)
             if len(refined_questions) > 0 and state.get("conceptual_qa"):
@@ -316,27 +352,31 @@ class QuizGenerationWorkflow:
                     state["refined_conceptual_qa"] = refined_questions[0]
                     if self.config.verbose:
                         print("    → Stored refined conceptual question")
-            
+
             if len(refined_questions) > 1 and state.get("practical_qa"):
                 if "refiner_model" in refined_questions[1]:
                     state["refined_practical_qa"] = refined_questions[1]
                     if self.config.verbose:
                         print("    → Stored refined practical question")
-            elif len(refined_questions) == 1 and state.get("practical_qa") and not state.get("conceptual_qa"):
+            elif (
+                len(refined_questions) == 1
+                and state.get("practical_qa")
+                and not state.get("conceptual_qa")
+            ):
                 # Edge case: only practical question exists
                 if "refiner_model" in refined_questions[0]:
                     state["refined_practical_qa"] = refined_questions[0]
                     if self.config.verbose:
                         print("    → Stored refined practical question (edge case)")
-            
+
             # Re-validate refined questions
             if state.get("refined_conceptual_qa") or state.get("refined_practical_qa"):
                 if self.config.verbose:
                     print("  → Re-validating refined questions...")
-                
+
                 questions_to_revalidate = []
                 question_types = []
-                
+
                 if state.get("refined_conceptual_qa"):
                     questions_to_revalidate.append(state["refined_conceptual_qa"])
                     question_types.append("conceptual")
@@ -344,7 +384,7 @@ class QuizGenerationWorkflow:
                     # If not refined, use original
                     questions_to_revalidate.append(state["conceptual_qa"])
                     question_types.append("conceptual")
-                
+
                 if state.get("refined_practical_qa"):
                     questions_to_revalidate.append(state["refined_practical_qa"])
                     question_types.append("practical")
@@ -352,23 +392,25 @@ class QuizGenerationWorkflow:
                     # If not refined, use original
                     questions_to_revalidate.append(state["practical_qa"])
                     question_types.append("practical")
-                
+
                 # Re-validate
                 new_validation_results = self.validator.validate_batch(
                     qas=questions_to_revalidate, chunk=state["chunk"]
                 )
-                
+
                 # Add question_type metadata
                 for i, val_result in enumerate(new_validation_results):
                     val_result["question_type"] = question_types[i]
-                
+
                 # Update state with NEW validation results
                 state["validation_results"] = new_validation_results
                 state["all_valid"] = all(v["valid"] for v in new_validation_results)
-                
+
                 if self.config.verbose:
-                    print(f"    → Re-validation complete. All valid: {state['all_valid']}")
-                
+                    print(
+                        f"    → Re-validation complete. All valid: {state['all_valid']}"
+                    )
+
         except Exception as e:
             errors = state.get("errors", [])
             errors.append(f"Refinement error: {str(e)}")
@@ -376,6 +418,7 @@ class QuizGenerationWorkflow:
             if self.config.verbose:
                 print(f"    ✗ Refinement error: {str(e)}")
             import traceback
+
             traceback.print_exc()
         return state
 
@@ -384,25 +427,29 @@ class QuizGenerationWorkflow:
             print("  → Judging questions...")
         try:
             # Use refined questions if available, otherwise use originals
-            conceptual_qa = state.get("refined_conceptual_qa") or state.get("conceptual_qa")
-            practical_qa = state.get("refined_practical_qa") or state.get("practical_qa")
-            
+            conceptual_qa = state.get("refined_conceptual_qa") or state.get(
+                "conceptual_qa"
+            )
+            practical_qa = state.get("refined_practical_qa") or state.get(
+                "practical_qa"
+            )
+
             judge_result = self.judge.judge(
                 conceptual_qa=conceptual_qa,
                 practical_qa=practical_qa,
                 validation_results=state.get("validation_results"),
                 chunk=state["chunk"],
             )
-            
+
             # Store judge decision
             state["judge_decision"] = judge_result["decision"]
             state["judge_reasoning"] = judge_result["reasoning"]
             state["current_step"] = "judge_questions"
-            
+
             # Construct final_questions based on judge's decision
             final_questions = []
             decision = judge_result["decision"]
-            
+
             if decision == "accept_both":
                 final_questions = [conceptual_qa, practical_qa]
             elif decision == "accept_conceptual":
@@ -410,7 +457,7 @@ class QuizGenerationWorkflow:
             elif decision == "accept_practical":
                 final_questions = [practical_qa]
             # reject_both: final_questions remains empty []
-            
+
             # Add metadata to accepted questions
             for q in final_questions:
                 # Ensure generator and model metadata are present
@@ -425,8 +472,10 @@ class QuizGenerationWorkflow:
                         )
                 # Automatically populate source_reference from chunk hierarchy_path
                 hierarchy = state["chunk"].get("hierarchy_path", [])
-                q["source_reference"] = " > ".join(hierarchy) if hierarchy else "Unknown"
-            
+                q["source_reference"] = (
+                    " > ".join(hierarchy) if hierarchy else "Unknown"
+                )
+
             state["final_questions"] = final_questions
             state["judged_qas"] = final_questions
             return state

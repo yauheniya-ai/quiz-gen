@@ -95,13 +95,13 @@ Do NOT include the questions in your output - only your decision and reasoning.
         chunk: Dict,
     ) -> Dict:
         """Make final accept/reject decision on refined Q&As, using validator results"""
-        
+
         # Build prompt based on which questions exist
         user_prompt = f"""Original Content:
 {json.dumps(chunk, indent=2)}
 
 """
-        
+
         if conceptual_qa:
             user_prompt += f"""CONCEPTUAL Question:
 {json.dumps(conceptual_qa, indent=2)}
@@ -111,7 +111,7 @@ Do NOT include the questions in your output - only your decision and reasoning.
             user_prompt += """CONCEPTUAL Question: None (generation failed)
 
 """
-            
+
         if practical_qa:
             user_prompt += f"""PRACTICAL Question:
 {json.dumps(practical_qa, indent=2)}
@@ -121,7 +121,7 @@ Do NOT include the questions in your output - only your decision and reasoning.
             user_prompt += """PRACTICAL Question: None (generation failed)
 
 """
-        
+
         user_prompt += f"""VALIDATION RESULTS (from strict validator):
 {json.dumps(validation_results, indent=2)}
 
@@ -145,7 +145,7 @@ Do NOT include the questions in your output - only your decision and reasoning.
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
             )
             # Extract JSON from Cohere response

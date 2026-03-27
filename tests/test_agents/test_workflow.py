@@ -216,8 +216,12 @@ def build_workflow_with_refiner(tmp_path, monkeypatch):
     validator = MagicMock()
     refiner = MagicMock()
 
-    monkeypatch.setattr(workflow_module, "ConceptualGenerator", MagicMock(return_value=conceptual))
-    monkeypatch.setattr(workflow_module, "PracticalGenerator", MagicMock(return_value=practical))
+    monkeypatch.setattr(
+        workflow_module, "ConceptualGenerator", MagicMock(return_value=conceptual)
+    )
+    monkeypatch.setattr(
+        workflow_module, "PracticalGenerator", MagicMock(return_value=practical)
+    )
     monkeypatch.setattr(workflow_module, "Judge", MagicMock(return_value=judge))
     monkeypatch.setattr(workflow_module, "Validator", MagicMock(return_value=validator))
     monkeypatch.setattr(workflow_module, "Refiner", MagicMock(return_value=refiner))
@@ -227,7 +231,9 @@ def build_workflow_with_refiner(tmp_path, monkeypatch):
 
 
 def test_generate_conceptual_success(tmp_path, monkeypatch, sample_chunk):
-    workflow, conceptual, _, _, _, _ = build_workflow_with_refiner(tmp_path, monkeypatch)
+    workflow, conceptual, _, _, _, _ = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
     conceptual.generate.return_value = {
         "question": "Q1",
@@ -245,7 +251,9 @@ def test_generate_conceptual_success(tmp_path, monkeypatch, sample_chunk):
 
 
 def test_generate_conceptual_with_feedback(tmp_path, monkeypatch, sample_chunk):
-    workflow, conceptual, _, _, _, _ = build_workflow_with_refiner(tmp_path, monkeypatch)
+    workflow, conceptual, _, _, _, _ = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
     conceptual.generate.return_value = {"question": "Q1 refined"}
 
@@ -258,7 +266,9 @@ def test_generate_conceptual_with_feedback(tmp_path, monkeypatch, sample_chunk):
 
 
 def test_generate_conceptual_error(tmp_path, monkeypatch, sample_chunk):
-    workflow, conceptual, _, _, _, _ = build_workflow_with_refiner(tmp_path, monkeypatch)
+    workflow, conceptual, _, _, _, _ = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
     conceptual.generate.side_effect = RuntimeError("API error")
 
@@ -333,7 +343,9 @@ def test_get_provider_config_all_branches(tmp_path, monkeypatch):
 
 
 def test_refine_questions_with_refinement(tmp_path, monkeypatch, sample_chunk):
-    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(tmp_path, monkeypatch)
+    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
     imperfect_validation = {
         "valid": True,
@@ -356,15 +368,30 @@ def test_refine_questions_with_refinement(tmp_path, monkeypatch, sample_chunk):
 
     refiner.refine_batch.return_value = [refined_conceptual, refined_practical]
     validator.validate_batch.return_value = [
-        {"valid": True, "score": 10, "warnings": [], "issues": [], "question_type": "conceptual"},
-        {"valid": True, "score": 10, "warnings": [], "issues": [], "question_type": "practical"},
+        {
+            "valid": True,
+            "score": 10,
+            "warnings": [],
+            "issues": [],
+            "question_type": "conceptual",
+        },
+        {
+            "valid": True,
+            "score": 10,
+            "warnings": [],
+            "issues": [],
+            "question_type": "practical",
+        },
     ]
 
     state = {
         "chunk": sample_chunk,
         "conceptual_qa": {"question": "Q1", "focus": "conceptual"},
         "practical_qa": {"question": "Q2", "focus": "practical"},
-        "validation_results": [imperfect_validation, {**imperfect_validation, "question_type": "practical"}],
+        "validation_results": [
+            imperfect_validation,
+            {**imperfect_validation, "question_type": "practical"},
+        ],
         "current_step": "validate_questions",
         "errors": [],
     }
@@ -378,7 +405,9 @@ def test_refine_questions_with_refinement(tmp_path, monkeypatch, sample_chunk):
 
 def test_refine_questions_no_refinement_needed(tmp_path, monkeypatch, sample_chunk):
     """Questions not refined (no refiner_model in output) so refined state not stored."""
-    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(tmp_path, monkeypatch)
+    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
     perfect_validation = {
         "valid": True,
@@ -410,7 +439,9 @@ def test_refine_questions_no_refinement_needed(tmp_path, monkeypatch, sample_chu
 
 def test_refine_questions_only_practical(tmp_path, monkeypatch, sample_chunk):
     """Edge case: only practical question exists (no conceptual)."""
-    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(tmp_path, monkeypatch)
+    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
     imperfect_validation = {
         "valid": False,
@@ -428,7 +459,13 @@ def test_refine_questions_only_practical(tmp_path, monkeypatch, sample_chunk):
 
     refiner.refine_batch.return_value = [refined_practical]
     validator.validate_batch.return_value = [
-        {"valid": True, "score": 10, "warnings": [], "issues": [], "question_type": "practical"},
+        {
+            "valid": True,
+            "score": 10,
+            "warnings": [],
+            "issues": [],
+            "question_type": "practical",
+        },
     ]
 
     state = {
@@ -453,7 +490,9 @@ def test_refine_questions_error_handling(tmp_path, monkeypatch, sample_chunk):
         "chunk": sample_chunk,
         "conceptual_qa": {"question": "Q1"},
         "practical_qa": None,
-        "validation_results": [{"valid": False, "score": 5, "warnings": [], "issues": []}],
+        "validation_results": [
+            {"valid": False, "score": 5, "warnings": [], "issues": []}
+        ],
         "current_step": "validate_questions",
         "errors": [],
     }
@@ -463,9 +502,14 @@ def test_refine_questions_error_handling(tmp_path, monkeypatch, sample_chunk):
 
 
 def test_judge_questions_accept_conceptual(tmp_path, monkeypatch, sample_chunk):
-    workflow, conceptual, _, judge, _, _ = build_workflow_with_refiner(tmp_path, monkeypatch)
+    workflow, conceptual, _, judge, _, _ = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
-    judge.judge.return_value = {"decision": "accept_conceptual", "reasoning": "Only conceptual passes"}
+    judge.judge.return_value = {
+        "decision": "accept_conceptual",
+        "reasoning": "Only conceptual passes",
+    }
 
     state = {
         "chunk": sample_chunk,
@@ -484,9 +528,14 @@ def test_judge_questions_accept_conceptual(tmp_path, monkeypatch, sample_chunk):
 
 
 def test_judge_questions_accept_practical(tmp_path, monkeypatch, sample_chunk):
-    workflow, _, practical, judge, _, _ = build_workflow_with_refiner(tmp_path, monkeypatch)
+    workflow, _, practical, judge, _, _ = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
-    judge.judge.return_value = {"decision": "accept_practical", "reasoning": "Only practical passes"}
+    judge.judge.return_value = {
+        "decision": "accept_practical",
+        "reasoning": "Only practical passes",
+    }
 
     state = {
         "chunk": sample_chunk,
@@ -543,13 +592,27 @@ def test_judge_questions_error_handling(tmp_path, monkeypatch, sample_chunk):
     assert any("Judge error" in e for e in result["errors"])
 
 
-def test_judge_uses_refined_questions_when_available(tmp_path, monkeypatch, sample_chunk):
-    workflow, conceptual, practical, judge, _, _ = build_workflow_with_refiner(tmp_path, monkeypatch)
+def test_judge_uses_refined_questions_when_available(
+    tmp_path, monkeypatch, sample_chunk
+):
+    workflow, conceptual, practical, judge, _, _ = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
     judge.judge.return_value = {"decision": "accept_both", "reasoning": "Both pass"}
 
-    refined_c = {"question": "Q1 refined", "focus": "conceptual", "generator": "conceptual", "model": "gpt-4o"}
-    refined_p = {"question": "Q2 refined", "focus": "practical", "generator": "practical", "model": "claude-test"}
+    refined_c = {
+        "question": "Q1 refined",
+        "focus": "conceptual",
+        "generator": "conceptual",
+        "model": "gpt-4o",
+    }
+    refined_p = {
+        "question": "Q2 refined",
+        "focus": "practical",
+        "generator": "practical",
+        "model": "claude-test",
+    }
 
     state = {
         "chunk": sample_chunk,
@@ -575,8 +638,14 @@ def test_route_after_validation(tmp_path, monkeypatch):
     assert workflow._route_after_validation({"refined_conceptual_qa": None}) == "refine"
 
     # Has refined questions → go to judge
-    assert workflow._route_after_validation({"refined_conceptual_qa": {"question": "Q"}}) == "judge"
-    assert workflow._route_after_validation({"refined_practical_qa": {"question": "Q"}}) == "judge"
+    assert (
+        workflow._route_after_validation({"refined_conceptual_qa": {"question": "Q"}})
+        == "judge"
+    )
+    assert (
+        workflow._route_after_validation({"refined_practical_qa": {"question": "Q"}})
+        == "judge"
+    )
 
 
 def test_run_batch_no_save_when_disabled(tmp_path, monkeypatch, sample_chunk):
@@ -620,8 +689,12 @@ def build_verbose_workflow(tmp_path, monkeypatch):
     validator = MagicMock()
     refiner = MagicMock()
 
-    monkeypatch.setattr(workflow_module, "ConceptualGenerator", MagicMock(return_value=conceptual))
-    monkeypatch.setattr(workflow_module, "PracticalGenerator", MagicMock(return_value=practical))
+    monkeypatch.setattr(
+        workflow_module, "ConceptualGenerator", MagicMock(return_value=conceptual)
+    )
+    monkeypatch.setattr(
+        workflow_module, "PracticalGenerator", MagicMock(return_value=practical)
+    )
     monkeypatch.setattr(workflow_module, "Judge", MagicMock(return_value=judge))
     monkeypatch.setattr(workflow_module, "Validator", MagicMock(return_value=validator))
     monkeypatch.setattr(workflow_module, "Refiner", MagicMock(return_value=refiner))
@@ -678,7 +751,9 @@ def test_validate_questions_verbose(tmp_path, monkeypatch, sample_chunk, capsys)
     assert "Validating questions" in output
 
 
-def test_validate_questions_verbose_with_refined(tmp_path, monkeypatch, sample_chunk, capsys):
+def test_validate_questions_verbose_with_refined(
+    tmp_path, monkeypatch, sample_chunk, capsys
+):
     """Cover verbose re-validation count block (lines 224-229)."""
     workflow, _, _, _, validator, _ = build_verbose_workflow(tmp_path, monkeypatch)
     validator.validate_batch.return_value = [
@@ -701,21 +776,49 @@ def test_validate_questions_verbose_with_refined(tmp_path, monkeypatch, sample_c
     assert "Re-validating" in output
 
 
-def test_refine_questions_verbose_with_refinement(tmp_path, monkeypatch, sample_chunk, capsys):
+def test_refine_questions_verbose_with_refinement(
+    tmp_path, monkeypatch, sample_chunk, capsys
+):
     """Cover verbose prints in _refine_questions: received results, refining, storing, re-validate."""
-    workflow, _, _, _, validator, refiner = build_verbose_workflow(tmp_path, monkeypatch)
+    workflow, _, _, _, validator, refiner = build_verbose_workflow(
+        tmp_path, monkeypatch
+    )
 
     imperfect = {
-        "valid": True, "warnings": ["Could be clearer"], "issues": [], "score": 9,
-        "checks_passed": {}, "question_type": "conceptual",
+        "valid": True,
+        "warnings": ["Could be clearer"],
+        "issues": [],
+        "score": 9,
+        "checks_passed": {},
+        "question_type": "conceptual",
     }
-    refined_c = {"question": "Q1 refined", "focus": "conceptual", "refiner_model": "gpt-4o"}
-    refined_p = {"question": "Q2 refined", "focus": "practical", "refiner_model": "gpt-4o"}
+    refined_c = {
+        "question": "Q1 refined",
+        "focus": "conceptual",
+        "refiner_model": "gpt-4o",
+    }
+    refined_p = {
+        "question": "Q2 refined",
+        "focus": "practical",
+        "refiner_model": "gpt-4o",
+    }
 
     refiner.refine_batch.return_value = [refined_c, refined_p]
     validator.validate_batch.return_value = [
-        {"valid": True, "score": 10, "warnings": [], "issues": [], "question_type": "conceptual"},
-        {"valid": True, "score": 10, "warnings": [], "issues": [], "question_type": "practical"},
+        {
+            "valid": True,
+            "score": 10,
+            "warnings": [],
+            "issues": [],
+            "question_type": "conceptual",
+        },
+        {
+            "valid": True,
+            "score": 10,
+            "warnings": [],
+            "issues": [],
+            "question_type": "practical",
+        },
     ]
 
     state = {
@@ -735,12 +838,22 @@ def test_refine_questions_verbose_with_refinement(tmp_path, monkeypatch, sample_
     assert "Refining" in output or "Received" in output or "Re-validation" in output
 
 
-def test_refine_questions_verbose_all_perfect(tmp_path, monkeypatch, sample_chunk, capsys):
+def test_refine_questions_verbose_all_perfect(
+    tmp_path, monkeypatch, sample_chunk, capsys
+):
     """Cover verbose 'All questions perfect' path."""
-    workflow, _, _, _, validator, refiner = build_verbose_workflow(tmp_path, monkeypatch)
+    workflow, _, _, _, validator, refiner = build_verbose_workflow(
+        tmp_path, monkeypatch
+    )
 
-    perfect = {"valid": True, "warnings": [], "issues": [], "score": 10,
-               "checks_passed": {}, "question_type": "conceptual"}
+    perfect = {
+        "valid": True,
+        "warnings": [],
+        "issues": [],
+        "score": 10,
+        "checks_passed": {},
+        "question_type": "conceptual",
+    }
 
     # Refiner returns question without refiner_model (no refinement happened)
     refiner.refine_batch.return_value = [{"question": "Q1"}]
@@ -754,7 +867,7 @@ def test_refine_questions_verbose_all_perfect(tmp_path, monkeypatch, sample_chun
         "errors": [],
     }
 
-    result = workflow._refine_questions(state)
+    workflow._refine_questions(state)
     output = capsys.readouterr().out
     assert "perfect" in output or "Refining" in output or "Received" in output
 
@@ -769,7 +882,9 @@ def test_refine_questions_verbose_error(tmp_path, monkeypatch, sample_chunk, cap
         "chunk": sample_chunk,
         "conceptual_qa": {"question": "Q1"},
         "practical_qa": None,
-        "validation_results": [{"valid": False, "score": 5, "warnings": [], "issues": []}],
+        "validation_results": [
+            {"valid": False, "score": 5, "warnings": [], "issues": []}
+        ],
         "current_step": "validate_questions",
         "errors": [],
     }
@@ -780,17 +895,37 @@ def test_refine_questions_verbose_error(tmp_path, monkeypatch, sample_chunk, cap
     assert "Refinement error" in output or "Refine exploded" in output
 
 
-def test_refine_questions_verbose_practical_only_edge_case(tmp_path, monkeypatch, sample_chunk, capsys):
+def test_refine_questions_verbose_practical_only_edge_case(
+    tmp_path, monkeypatch, sample_chunk, capsys
+):
     """Cover verbose edge case: only practical question exists (no conceptual)."""
-    workflow, _, _, _, validator, refiner = build_verbose_workflow(tmp_path, monkeypatch)
+    workflow, _, _, _, validator, refiner = build_verbose_workflow(
+        tmp_path, monkeypatch
+    )
 
-    imperfect = {"valid": False, "warnings": [], "issues": ["Bad"], "score": 5,
-                 "checks_passed": {}, "question_type": "practical"}
-    refined_p = {"question": "Q2 refined", "focus": "practical", "refiner_model": "gpt-4o"}
+    imperfect = {
+        "valid": False,
+        "warnings": [],
+        "issues": ["Bad"],
+        "score": 5,
+        "checks_passed": {},
+        "question_type": "practical",
+    }
+    refined_p = {
+        "question": "Q2 refined",
+        "focus": "practical",
+        "refiner_model": "gpt-4o",
+    }
 
     refiner.refine_batch.return_value = [refined_p]
     validator.validate_batch.return_value = [
-        {"valid": True, "score": 10, "warnings": [], "issues": [], "question_type": "practical"},
+        {
+            "valid": True,
+            "score": 10,
+            "warnings": [],
+            "issues": [],
+            "question_type": "practical",
+        },
     ]
 
     state = {
@@ -812,7 +947,9 @@ def test_refine_questions_verbose_practical_only_edge_case(tmp_path, monkeypatch
 
 def test_judge_questions_verbose(tmp_path, monkeypatch, sample_chunk, capsys):
     """Cover verbose print in _judge_questions."""
-    workflow, conceptual, practical, judge, _, _ = build_verbose_workflow(tmp_path, monkeypatch)
+    workflow, conceptual, practical, judge, _, _ = build_verbose_workflow(
+        tmp_path, monkeypatch
+    )
 
     judge.judge.return_value = {"decision": "accept_both", "reasoning": "Both pass"}
 
@@ -834,6 +971,7 @@ def test_judge_questions_verbose(tmp_path, monkeypatch, sample_chunk, capsys):
 
 
 # ── _validate_questions edge-case branches ─────────────────────────────────────
+
 
 def test_validate_questions_empty_state(tmp_path, monkeypatch, sample_chunk):
     """Lines 253-255: else-branch when questions_to_validate is empty."""
@@ -877,16 +1015,19 @@ def test_validate_questions_exception_handling(tmp_path, monkeypatch, sample_chu
 
 # ── _refine_questions partial-refinement re-validation branches ─────────────────
 
+
 def test_refine_questions_only_practical_refined_uses_original_conceptual(
     tmp_path, monkeypatch, sample_chunk
 ):
     """Lines 345-346: elif conceptual_qa branch when refined_conceptual_qa is None
     but refined_practical_qa is set (only practical was actually refined)."""
-    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(tmp_path, monkeypatch)
+    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
     # Refiner returns two items: conceptual has no refiner_model, practical has it
     refiner.refine_batch.return_value = [
-        {"question": "Q1 untouched"},                           # no refiner_model
+        {"question": "Q1 untouched"},  # no refiner_model
         {"question": "Q2 refined", "refiner_model": "gpt-4o"},  # refined
     ]
     validator.validate_batch.return_value = [
@@ -899,8 +1040,20 @@ def test_refine_questions_only_practical_refined_uses_original_conceptual(
         "conceptual_qa": {"question": "Q1 original"},
         "practical_qa": {"question": "Q2 original"},
         "validation_results": [
-            {"valid": False, "score": 4, "warnings": [], "issues": ["bad"], "question_type": "conceptual"},
-            {"valid": False, "score": 4, "warnings": [], "issues": ["bad"], "question_type": "practical"},
+            {
+                "valid": False,
+                "score": 4,
+                "warnings": [],
+                "issues": ["bad"],
+                "question_type": "conceptual",
+            },
+            {
+                "valid": False,
+                "score": 4,
+                "warnings": [],
+                "issues": ["bad"],
+                "question_type": "practical",
+            },
         ],
         "errors": [],
     }
@@ -917,12 +1070,14 @@ def test_refine_questions_only_conceptual_refined_uses_original_practical(
 ):
     """Lines 351-354: elif practical_qa branch when refined_practical_qa is None
     but refined_conceptual_qa is set (only conceptual was actually refined)."""
-    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(tmp_path, monkeypatch)
+    workflow, _, _, _, validator, refiner = build_workflow_with_refiner(
+        tmp_path, monkeypatch
+    )
 
     # Refiner returns two items: conceptual is refined, practical has no refiner_model
     refiner.refine_batch.return_value = [
         {"question": "Q1 refined", "refiner_model": "gpt-4o"},  # refined
-        {"question": "Q2 untouched"},                           # no refiner_model
+        {"question": "Q2 untouched"},  # no refiner_model
     ]
     validator.validate_batch.return_value = [
         {"valid": True, "score": 10, "warnings": [], "issues": []},
@@ -934,8 +1089,20 @@ def test_refine_questions_only_conceptual_refined_uses_original_practical(
         "conceptual_qa": {"question": "Q1 original"},
         "practical_qa": {"question": "Q2 original"},
         "validation_results": [
-            {"valid": False, "score": 4, "warnings": [], "issues": ["bad"], "question_type": "conceptual"},
-            {"valid": False, "score": 4, "warnings": [], "issues": ["bad"], "question_type": "practical"},
+            {
+                "valid": False,
+                "score": 4,
+                "warnings": [],
+                "issues": ["bad"],
+                "question_type": "conceptual",
+            },
+            {
+                "valid": False,
+                "score": 4,
+                "warnings": [],
+                "issues": ["bad"],
+                "question_type": "practical",
+            },
         ],
         "errors": [],
     }

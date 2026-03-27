@@ -62,10 +62,13 @@ def launch_ui(
     if open_browser:
         import threading
         import webbrowser
+
         def _open():
             import time
+
             time.sleep(1.5)
             webbrowser.open(url)
+
         threading.Thread(target=_open, daemon=True).start()
     _uvicorn.run(
         "quiz_gen.ui.server:app",
@@ -92,7 +95,8 @@ def create_parser() -> argparse.ArgumentParser:
         help="URL or path to a local HTML file of an EUR-Lex document (not required with --ui)",
     )
     parser.add_argument(
-        "-v", "--version",
+        "-v",
+        "--version",
         action="version",
         version=f"%(prog)s {__version__}",
     )
@@ -105,7 +109,8 @@ def create_parser() -> argparse.ArgumentParser:
     # -- Document parsing -------------------------------------------------
     parse_group = parser.add_argument_group("Document parsing")
     parse_group.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         type=str,
         default="data/processed",
         metavar="DIR",

@@ -40,7 +40,7 @@ class TestParseJsonResponse:
 
     def test_parse_complex_json(self):
         """Complex nested JSON should parse correctly"""
-        content = '''```json
+        content = """```json
 {
     "question": "What is AI?",
     "options": {
@@ -57,7 +57,7 @@ class TestParseJsonResponse:
         "D": "This is wrong."
     }
 }
-```'''
+```"""
         result = parse_json_response(content)
         assert result["question"] == "What is AI?"
         assert len(result["options"]) == 4
@@ -96,15 +96,15 @@ class TestValidateQaStructure:
                 "A": "Artificial Intelligence",
                 "B": "Automated Interface",
                 "C": "Advanced Integration",
-                "D": "Analytical Instrument"
+                "D": "Analytical Instrument",
             },
             "correct_answer": "A",
             "explanations": {
                 "A": "This is correct.",
                 "B": "This is wrong.",
                 "C": "This is wrong.",
-                "D": "This is wrong."
-            }
+                "D": "This is wrong.",
+            },
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is True
@@ -115,7 +115,7 @@ class TestValidateQaStructure:
         qa = {
             "options": {"A": "1", "B": "2", "C": "3", "D": "4"},
             "correct_answer": "A",
-            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong", "D": "Wrong"}
+            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong", "D": "Wrong"},
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
@@ -126,7 +126,7 @@ class TestValidateQaStructure:
         qa = {
             "question": "What is AI?",
             "correct_answer": "A",
-            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong", "D": "Wrong"}
+            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong", "D": "Wrong"},
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
@@ -137,7 +137,7 @@ class TestValidateQaStructure:
         qa = {
             "question": "What is AI?",
             "options": {"A": "1", "B": "2", "C": "3", "D": "4"},
-            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong", "D": "Wrong"}
+            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong", "D": "Wrong"},
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
@@ -148,7 +148,7 @@ class TestValidateQaStructure:
         qa = {
             "question": "What is AI?",
             "options": {"A": "1", "B": "2", "C": "3", "D": "4"},
-            "correct_answer": "A"
+            "correct_answer": "A",
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
@@ -160,7 +160,7 @@ class TestValidateQaStructure:
             "question": "What is AI?",
             "options": {"A": "1", "B": "2", "C": "3"},
             "correct_answer": "A",
-            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong"}
+            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong"},
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
@@ -172,7 +172,7 @@ class TestValidateQaStructure:
             "question": "What is AI?",
             "options": {"1": "First", "2": "Second", "3": "Third", "4": "Fourth"},
             "correct_answer": "A",
-            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong", "D": "Wrong"}
+            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong", "D": "Wrong"},
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
@@ -184,7 +184,7 @@ class TestValidateQaStructure:
             "question": "What is AI?",
             "options": {"A": "1", "B": "2", "C": "3", "D": "4"},
             "correct_answer": "E",
-            "explanations": {"A": "Wrong", "B": "Wrong", "C": "Wrong", "D": "Wrong"}
+            "explanations": {"A": "Wrong", "B": "Wrong", "C": "Wrong", "D": "Wrong"},
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
@@ -196,7 +196,7 @@ class TestValidateQaStructure:
             "question": "What is AI?",
             "options": {"A": "1", "B": "2", "C": "3", "D": "4"},
             "correct_answer": "A",
-            "explanations": {"A": "Correct", "B": "Wrong"}
+            "explanations": {"A": "Correct", "B": "Wrong"},
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
@@ -208,11 +208,13 @@ class TestValidateQaStructure:
             "question": "What is AI?",
             "options": {"A": "1", "B": "2", "C": "3", "D": "4"},
             "correct_answer": "A",
-            "explanations": {"1": "One", "2": "Two", "3": "Three", "4": "Four"}
+            "explanations": {"1": "One", "2": "Two", "3": "Three", "4": "Four"},
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
-        assert any("Explanations must have keys A, B, C, D" in issue for issue in issues)
+        assert any(
+            "Explanations must have keys A, B, C, D" in issue for issue in issues
+        )
 
     def test_options_not_dict(self):
         """Options as non-dict should fail"""
@@ -220,7 +222,7 @@ class TestValidateQaStructure:
             "question": "What is AI?",
             "options": ["A", "B", "C", "D"],
             "correct_answer": "A",
-            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong", "D": "Wrong"}
+            "explanations": {"A": "Correct", "B": "Wrong", "C": "Wrong", "D": "Wrong"},
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
@@ -232,7 +234,7 @@ class TestValidateQaStructure:
             "question": "What is AI?",
             "options": {"A": "1", "B": "2", "C": "3", "D": "4"},
             "correct_answer": "A",
-            "explanations": ["Correct", "Wrong", "Wrong", "Wrong"]
+            "explanations": ["Correct", "Wrong", "Wrong", "Wrong"],
         }
         is_valid, issues = validate_qa_structure(qa)
         assert is_valid is False
@@ -249,7 +251,7 @@ class TestBuildChunkContext:
             "number": "42",
             "section_type": "article",
             "content": "All systems must be safe.",
-            "hierarchy_path": ["Regulation", "Chapter 4", "Article 42"]
+            "hierarchy_path": ["Regulation", "Chapter 4", "Article 42"],
         }
         result = build_chunk_context(chunk)
         assert "Section: Safety Requirements" in result
@@ -273,7 +275,7 @@ class TestBuildChunkContext:
             "title": "Test",
             "number": "1",
             "section_type": "section",
-            "content": "Test content"
+            "content": "Test content",
         }
         result = build_chunk_context(chunk)
         assert "Hierarchy:" not in result
@@ -285,7 +287,7 @@ class TestBuildChunkContext:
             "number": "1",
             "section_type": "section",
             "content": "Test content",
-            "hierarchy_path": []
+            "hierarchy_path": [],
         }
         result = build_chunk_context(chunk)
         assert "Hierarchy:" not in result
