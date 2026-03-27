@@ -339,6 +339,7 @@ Currently supports:
 
 ## TODOs
 
+- [ ] Integrate human feedback
 - [ ] Save results by project in a local database
 - [ ] Support for additional document formats (PDF, DOCX, PPTX)
 - [ ] Multi-language support for UI
