@@ -410,15 +410,6 @@ Currently supports:
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Citation
-
-If you use this software in academic work, please cite:
-
-```
-Varabyova, Y. (2026). Quiz Gen AI: AI-powered quiz generator for professional certification.
-GitHub repository: https://github.com/yauheniya-ai/quiz-gen
-```
-
 ## Support
 
 - Documentation: https://quiz-gen.readthedocs.io
