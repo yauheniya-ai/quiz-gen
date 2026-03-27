@@ -32,7 +32,7 @@ AI-powered quiz generator for regulatory documentation. Extract structured conte
 - <img src="https://api.iconify.design/devicon:tailwindcss.svg" width="16" height="16"> Tailwind CSS — utility-first styling
 
 **CLI**
-- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> argparse — flag-based CLI (`input`, `--output`, `--chunks`, `--toc`, `--print-toc`, `--no-save`, `--verbose`, `--version`)
+- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> argparse — flag-based CLI 
 
 **Packaging**
 - <img src="https://api.iconify.design/devicon:pypi.svg" width="16" height="16"> PyPI — distributed as an installable Python package
@@ -46,6 +46,16 @@ pip install quiz-gen
 ```
 
 ## Quick Start
+
+### Interactive UI
+
+Parse documents and generate quiz questions in an integrated responsive UI:
+
+```bash
+quiz-gen --ui
+```
+
+The UI lets you go from a raw document to a finished quiz without writing any code. You paste a EUR-Lex URL or upload an HTML file, click **Generate TOC**, and immediately see the full document structure in a navigable table of contents. Click any article to load its parsed content, optionally edit it inline to focus the AI on a specific passage, then click **Generate Quiz** to run the five-agent pipeline right there in the browser. Each agent's output — generator drafts, validator scores, refiner edits, and the judge's final decision — are displayed in collapsible sections so you can inspect exactly how the questions were produced and catch any issues before using them. This is faster for exploration and quality review than running scripts, because there is no round-trip to the terminal and no JSON to read manually.
 
 ### Multi-Agent Quiz Generation
 
@@ -305,6 +315,62 @@ Enumeration of document section types.
 - `SECTION`: Section within chapter
 - `ARTICLE`: Article (main content unit)
 - `ANNEX`: Annex section
+
+## CLI
+
+The `quiz-gen` command provides two independent modes: **document parsing** and **web UI**.
+
+### Document parsing
+
+```bash
+# Parse from URL and save chunks + TOC JSON
+quiz-gen https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32018R1139
+
+# Parse a local HTML file
+quiz-gen data/raw/regulation.html
+
+# Print the table of contents without saving any files
+quiz-gen --print-toc --no-save regulation.html
+
+# Save output to a custom directory with verbose logging
+quiz-gen --verbose --output results/ regulation.html
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `INPUT` | URL or local HTML path | required |
+| `-o, --output DIR` | Output directory for JSON files | `data/processed` |
+| `--chunks FILENAME` | Custom filename for chunks JSON | `<id>_chunks.json` |
+| `--toc FILENAME` | Custom filename for TOC JSON | `<id>_toc.json` |
+| `--no-save` | Parse and display statistics without writing files | — |
+| `--print-toc` | Print formatted table of contents to console | — |
+| `--verbose` | Show detailed progress and error stack traces | — |
+| `-v, --version` | Print version and exit | — |
+
+### Web UI
+
+```bash
+# Launch UI on http://localhost:8000 and open browser automatically
+quiz-gen --ui
+
+# Custom host and port
+quiz-gen --ui --host 127.0.0.1 --port 9000
+
+# Launch without opening a browser tab
+quiz-gen --ui --no-browser
+
+# Development mode with auto-reload and debug logging
+quiz-gen --ui --reload --log-level debug
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--ui` | Start the FastAPI/uvicorn server | — |
+| `--host HOST` | Server bind address | `0.0.0.0` |
+| `--port PORT` | Server port | `8000` |
+| `--reload` | Auto-reload on code changes (development) | — |
+| `--no-browser` | Do not open a browser tab on start | — |
+| `--log-level LEVEL` | Uvicorn log level (`debug`/`info`/`warning`/`error`) | `warning` |
 
 ## Use Cases
 
