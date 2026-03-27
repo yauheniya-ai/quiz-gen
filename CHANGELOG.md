@@ -2,14 +2,14 @@
 
 ### Version 0.5.3 (2026-03-27)
 
-Code quality and minor UI improvements:
-- Changed the application title in the UI header
+Code quality and UI migration to TypeScript:
 - Fixed 8 ruff lint errors across 6 files:
   - Removed extraneous `f` prefix from 3 plain string literals (`examples/quiz_gen_multi_model.py`, `agents/workflow.py`)
   - Replaced `== True` equality comparison with truthiness check in `agents/refiner.py`
   - Removed unused `typing.List` import from `ui/server.py`
   - Removed unused local variables `result` and `code` in test files
 - Reformatted 20 files with Black for consistent code style
+- UI migration to TypeScript
 
 ### Version 0.5.2 (2026-03-27)
 

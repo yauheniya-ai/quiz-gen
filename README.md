@@ -28,8 +28,8 @@ AI-powered quiz generator for regulatory documentation. Extract structured conte
 **Web UI**
 - <img src="https://api.iconify.design/devicon:react.svg" width="16" height="16"> React — interactive frontend
 - <img src="https://api.iconify.design/devicon:vitejs.svg" width="16" height="16"> Vite — fast dev server and production bundler (outputs to `quiz_gen/ui/static`)
+- <img src="https://api.iconify.design/devicon:typescript.svg" width="16" height="16"> Typescript — component and API code
 - <img src="https://api.iconify.design/devicon:tailwindcss.svg" width="16" height="16"> Tailwind CSS — utility-first styling
-- <img src="https://api.iconify.design/devicon:javascript.svg" width="16" height="16"> JavaScript (JSX) — component and API code
 
 **CLI**
 - <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> argparse — flag-based CLI (`input`, `--output`, `--chunks`, `--toc`, `--print-toc`, `--no-save`, `--verbose`, `--version`)
