@@ -403,6 +403,8 @@ Currently supports:
 ## TODOs
 
 - [x] Save results by project in a local database
+- [ ] Migrate CLI to Typer
+- [ ] Stream processing output while generating quizes
 - [ ] Integrate human feedback
 - [ ] Support for additional document formats (PDF, DOCX, PPTX)
 - [ ] Multi-language support for UI

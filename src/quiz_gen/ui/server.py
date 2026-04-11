@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from quiz_gen import EURLexParser
 from .api import router as quiz_router
 from ..storage import router as projects_router, save_document
+from ..__version__ import __version__
 from typing import Dict, Any
 import httpx
 import json as _json
@@ -52,6 +53,12 @@ app.add_middleware(
 def health_check():
     """Detailed health check."""
     return {"status": "healthy", "api": "ready"}
+
+
+@app.get("/api/info")
+def api_info():
+    """Return package metadata."""
+    return {"version": __version__, "name": "quiz-gen"}
 
 
 # Request/Response Models
