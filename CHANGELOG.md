@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.7.0 (2026-04-12)
+
+UI polish — header and footer:
+- `pip install quiz-gen` command moved to the header center as a monospace pill with a copy-to-clipboard button (icon switches to a checkmark for 2 s on click)
+- Added `Footer` component with links to PyPI, GitHub, API docs (Swagger), ReadTheDocs, and Changelog
+- Footer shows the live package version (`v0.x.x`) fetched dynamically from the new `GET /api/info` endpoint
+- Added `GET /api/info` endpoint to `quiz_gen.ui.server` returning `{"version": ..., "name": "quiz-gen"}` sourced from `importlib.metadata`
+
 ## Version 0.6.1 (2026-04-12)
 
 Project document and quiz persistence improvements:
