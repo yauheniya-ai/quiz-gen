@@ -20,22 +20,24 @@ AI-powered quiz generator for regulatory documentation. Extract structured conte
 ## Tech Stack
 
 **Backend**
-- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> Python — core package language
-- <img src="https://api.iconify.design/devicon:fastapi.svg" width="16" height="16"> FastAPI — serves the web UI and REST API from within the package
-- <img src="https://api.iconify.design/simple-icons:langgraph.svg" width="16" height="16"> LangGraph – multi-agent orchestration framework
+- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> [Python](https://www.python.org) — core package language
+- <img src="https://api.iconify.design/devicon:fastapi.svg" width="16" height="16"> [FastAPI](https://fastapi.tiangolo.com) — serves the web UI and REST API from within the package
+- <img src="https://api.iconify.design/simple-icons:langgraph.svg" width="16" height="16"> [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview) – multi-agent orchestration framework
 - <img src="https://api.iconify.design/prime:microchip-ai.svg" width="16" height="16"> AI Providers: <img src="https://api.iconify.design/logos:claude-icon.svg" width="16" height="16"> Anthropic (Claude), <img src="https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/.github/.images/cohere-color.svg" width="16" height="16"> Cohere, <img src="https://api.iconify.design/material-icon-theme:gemini-ai.svg" width="16" height="16"> Google (Gemini), <img src="https://api.iconify.design/logos:mistral-ai-icon.svg" width="16" height="16"> Mistral, <img src="https://api.iconify.design/simple-icons:openai.svg" width="16" height="16"> OpenAI
+- <img src="https://api.iconify.design/devicon:sqlite.svg" width="16" height="16"> [SQLite](https://sqlite.org) – local database for documents and quizes organized by projects
+
 
 **Web UI**
-- <img src="https://api.iconify.design/devicon:react.svg" width="16" height="16"> React — interactive frontend
-- <img src="https://api.iconify.design/devicon:vitejs.svg" width="16" height="16"> Vite — fast dev server and production bundler (outputs to `quiz_gen/ui/static`)
-- <img src="https://api.iconify.design/devicon:typescript.svg" width="16" height="16"> Typescript — component and API code
-- <img src="https://api.iconify.design/devicon:tailwindcss.svg" width="16" height="16"> Tailwind CSS — utility-first styling
+- <img src="https://api.iconify.design/devicon:react.svg" width="16" height="16"> [React](https://react.dev) — interactive frontend
+- <img src="https://api.iconify.design/devicon:vitejs.svg" width="16" height="16"> [Vite](https://vite.dev) — fast dev server and production bundler (outputs to `quiz_gen/ui/static`)
+- <img src="https://api.iconify.design/devicon:typescript.svg" width="16" height="16"> [TypeScript](https://www.typescriptlang.org) — component and API code
+- <img src="https://api.iconify.design/devicon:tailwindcss.svg" width="16" height="16"> [Tailwind CSS](https://tailwindcss.com) — utility-first styling
 
 **CLI**
-- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> argparse — flag-based CLI 
+- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> [argparse](https://docs.python.org/3/library/argparse.html) — flag-based CLI 
 
 **Packaging**
-- <img src="https://api.iconify.design/devicon:pypi.svg" width="16" height="16"> PyPI — distributed as an installable Python package
+- <img src="https://api.iconify.design/devicon:pypi.svg" width="16" height="16"> [PyPI](https://pypi.org/project/quiz-gen/) — distributed as an installable Python package
 
 
 
@@ -400,8 +402,8 @@ Currently supports:
 
 ## TODOs
 
+- [x] Save results by project in a local database
 - [ ] Integrate human feedback
-- [ ] Save results by project in a local database
 - [ ] Support for additional document formats (PDF, DOCX, PPTX)
 - [ ] Multi-language support for UI
 - [ ] Light/Dark scheme for UI

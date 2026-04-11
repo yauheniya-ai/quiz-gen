@@ -6,7 +6,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from quiz_gen import EURLexParser
 from .api import router as quiz_router
-from .projects import router as projects_router, save_document
+from ..storage import router as projects_router, save_document
 from typing import Dict, Any
 import httpx
 import json as _json
@@ -226,8 +226,7 @@ async def parse_document(request: ParseDocumentRequest):
                 doc_type="url",
                 url=request.url,
                 html_content=cached_html,
-                chunks_json=_json.dumps(chunks_data),
-            )
+                chunks_json=_json.dumps(chunks_data),                toc_json=_json.dumps(toc_data),            )
         except Exception as save_err:
             print(f"[projects] Failed to save document {request.doc_id}: {save_err}")
 
@@ -379,6 +378,7 @@ async def parse_file(file: UploadFile = File(...), doc_id: str = Form(...), proj
                 url=None,
                 html_content=html_text,
                 chunks_json=_json.dumps(chunks_data),
+                toc_json=_json.dumps(toc_data),
             )
         except Exception as save_err:
             print(f"[projects] Failed to save document {doc_id}: {save_err}")

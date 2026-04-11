@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 0.6.1 (2026-04-12)
+
+Project document and quiz persistence improvements:
+- Refactored `ui/projects.py` into `quiz_gen.storage.projects` module; `ui/projects.py` is now a re-export shim
+- Added `toc_json` column to the `documents` table (with automatic migration for existing DBs); TOC is now persisted alongside chunks on every parse
+- When selecting a project, all previously stored documents appear in the panel and the first document's chunks and TOC are loaded automatically
+- Added clickable document switching: clicking any document in the panel loads its stored chunks and TOC without re-parsing
+- Added `GET /api/projects/{project}/documents`, `GET /api/projects/{project}/documents/{id}`, `GET /api/projects/{project}/quizzes`, `GET /api/projects/{project}/quizzes/{id}` read endpoints
+- Added `DELETE /api/projects/{project}/documents/{id}` endpoint; deletes the DB row and the saved HTML file so removed documents do not reappear on reload
+- Added inline delete confirmation ("Delete? Yes / No") in the documents panel to prevent accidental removal
+- Added "Generated Quizzes" section to the quiz panel listing saved quizzes per project; clicking a saved quiz loads it without regenerating
+- Fixed stale TOC staying visible when switching documents or uploading a new file; TOC is now always cleared on document switch
+- Removed uninformative HTML/STORED/LINK type badges from the document list
+
 ## Version 0.6.0 (2026-04-12)
 
 Project database and persistence:
