@@ -6,8 +6,10 @@ from pathlib import Path
 from pydantic import BaseModel
 from quiz_gen import EURLexParser
 from .api import router as quiz_router
+from .projects import router as projects_router, save_document
 from typing import Dict, Any
 import httpx
+import json as _json
 
 BASE_DIR = Path(__file__).parent.parent.parent.parent  # quiz-gen/
 STATIC_DIR = BASE_DIR / "src" / "quiz_gen" / "ui" / "static"
@@ -20,6 +22,8 @@ html_metadata: Dict[str, dict] = {}  # Store metadata like source type
 
 # Mount quiz API
 app.include_router(quiz_router)
+# Mount project management API
+app.include_router(projects_router)
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -39,7 +43,7 @@ app.add_middleware(
         "http://127.0.0.1:8000",
     ],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -54,6 +58,8 @@ def health_check():
 class ParseDocumentRequest(BaseModel):
     url: str
     doc_id: str
+    project: str = "default"
+    doc_name: str | None = None
 
 
 class TOCItem(BaseModel):
@@ -210,6 +216,21 @@ async def parse_document(request: ParseDocumentRequest):
                     "metadata_id": title_metadata.get("id") if title_metadata else None,
                 }
                 toc_data["sections"] = [title_section] + toc_data["sections"]
+        # ── Persist document to project ─────────────────────────────
+        try:
+            cached_html = html_cache.get(request.doc_id)
+            save_document(
+                project=request.project,
+                doc_id=request.doc_id,
+                name=request.doc_name or request.url,
+                doc_type="url",
+                url=request.url,
+                html_content=cached_html,
+                chunks_json=_json.dumps(chunks_data),
+            )
+        except Exception as save_err:
+            print(f"[projects] Failed to save document {request.doc_id}: {save_err}")
+
         return {
             "success": True,
             "doc_id": request.doc_id,
@@ -225,7 +246,7 @@ async def parse_document(request: ParseDocumentRequest):
 
 
 @app.post("/api/parse-file")
-async def parse_file(file: UploadFile = File(...), doc_id: str = Form(...)):
+async def parse_file(file: UploadFile = File(...), doc_id: str = Form(...), project: str = Form("default")):
     """Parse uploaded HTML file and return TOC and chunks"""
     try:
         html_content = await file.read()
@@ -348,6 +369,20 @@ async def parse_file(file: UploadFile = File(...), doc_id: str = Form(...)):
                     "metadata_id": title_metadata.get("id") if title_metadata else None,
                 }
                 toc_data["sections"] = [title_section] + toc_data["sections"]
+        # ── Persist document to project ──────────────────────────────────────
+        try:
+            save_document(
+                project=project,
+                doc_id=doc_id,
+                name=file.filename or doc_id,
+                doc_type="html",
+                url=None,
+                html_content=html_text,
+                chunks_json=_json.dumps(chunks_data),
+            )
+        except Exception as save_err:
+            print(f"[projects] Failed to save document {doc_id}: {save_err}")
+
         return {
             "success": True,
             "doc_id": doc_id,
