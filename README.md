@@ -54,7 +54,7 @@ pip install quiz-gen
 Parse documents and generate quiz questions in an integrated responsive UI:
 
 ```bash
-quiz-gen --ui
+quiz-gen serve
 ```
 
 The UI lets you go from a raw document to a finished quiz without writing any code. You paste a EUR-Lex URL or upload an HTML file, click **Generate TOC**, and immediately see the full document structure in a navigable table of contents. Click any article to load its parsed content, optionally edit it inline to focus the AI on a specific passage, then click **Generate Quiz** to run the five-agent pipeline right there in the browser. Each agent's output — generator drafts, validator scores, refiner edits, and the judge's final decision — are displayed in collapsible sections so you can inspect exactly how the questions were produced and catch any issues before using them. This is faster for exploration and quality review than running scripts, because there is no round-trip to the terminal and no JSON to read manually.
@@ -353,16 +353,16 @@ quiz-gen --verbose --output results/ regulation.html
 
 ```bash
 # Launch UI on http://localhost:8000 and open browser automatically
-quiz-gen --ui
+quiz-gen serve
 
 # Custom host and port
-quiz-gen --ui --host 127.0.0.1 --port 9000
+quiz-gen serve --host 127.0.0.1 --port 9000
 
 # Launch without opening a browser tab
-quiz-gen --ui --no-browser
+quiz-gen serve --no-browser
 
 # Development mode with auto-reload and debug logging
-quiz-gen --ui --reload --log-level debug
+quiz-gen serve --reload --log-level debug
 ```
 
 | Option | Description | Default |
@@ -403,8 +403,8 @@ Currently supports:
 ## TODOs
 
 - [x] Save results by project in a local database
-- [x] Migrate CLI to Typer
-- [ ] Stream processing output while generating quizzes
+- [x] Migrate CLI from argparse to Typer + Rich 
+- [ ] Stream processing steps while generating quizzes
 - [ ] Integrate human feedback
 - [ ] Support for additional document formats (PDF, DOCX, PPTX)
 - [ ] Multi-language support for UI
