@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 0.8.0 (2026-04-12)
+
+CLI rewrite — Typer + Rich:
+- Replaced `argparse` with [Typer](https://typer.tiangolo.com/) for a modern, type-annotated CLI
+- Added [Rich](https://rich.readthedocs.io/) for styled terminal output (colored text, markup)
+- ASCII art banner in Tailwind blue-500 (`#3b82f6`) is printed on every invocation
+- Restructured CLI into explicit subcommands:
+  - `quiz-gen parse <INPUT>` — parse a URL or local HTML file (previously a bare positional argument)
+  - `quiz-gen serve` — launch the interactive web UI (previously `--ui` flag)
+- `--no-browser` flag retained on `serve` subcommand
+- All error and status messages now use Rich markup (`[red]`, `[dim]`, `[bold]`, etc.)
+- Added `typer>=0.12.0` and `rich>=13.0.0` to package dependencies
+- Updated CLI tests to use `typer.testing.CliRunner` and Rich-aware output capture
+
 ## Version 0.7.0 (2026-04-12)
 
 UI polish — header and footer:

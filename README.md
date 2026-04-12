@@ -34,7 +34,7 @@ AI-powered quiz generator for regulatory documentation. Extract structured conte
 - <img src="https://api.iconify.design/devicon:tailwindcss.svg" width="16" height="16"> [Tailwind CSS](https://tailwindcss.com) — utility-first styling
 
 **CLI**
-- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> [argparse](https://docs.python.org/3/library/argparse.html) — flag-based CLI 
+- <img src="https://api.iconify.design/devicon:typer.svg" width="16" height="16"> [Typer](https://typer.tiangolo.com/) — CLI based on standard Python type declarations
 
 **Packaging**
 - <img src="https://api.iconify.design/devicon:pypi.svg" width="16" height="16"> [PyPI](https://pypi.org/project/quiz-gen/) — distributed as an installable Python package
@@ -403,8 +403,8 @@ Currently supports:
 ## TODOs
 
 - [x] Save results by project in a local database
-- [ ] Migrate CLI to Typer
-- [ ] Stream processing output while generating quizes
+- [x] Migrate CLI to Typer
+- [ ] Stream processing output while generating quizzes
 - [ ] Integrate human feedback
 - [ ] Support for additional document formats (PDF, DOCX, PPTX)
 - [ ] Multi-language support for UI
