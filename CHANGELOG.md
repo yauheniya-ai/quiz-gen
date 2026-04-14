@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.8.5 (2026-04-14)
+
+Fix browser opening before server is ready:
+- Replaced fixed `time.sleep(1.5)` delay in `launch_ui()` with a polling loop that attempts `urllib.request.urlopen` every 0.5 s (up to 30 s) and only opens the browser once the server actually responds
+- The old hardcoded delay was too short on pipx/Python 3.14 installs where cold-start import of AI SDKs takes several seconds, causing the browser to show an error that required manual reloads
+
 ## Version 0.8.4 (2026-04-14)
 
 Fix `quiz-gen serve` broken when installed via pip/pipx:

@@ -136,8 +136,17 @@ def serve_cmd(
 
         def _open() -> None:
             import time
+            import urllib.request
+            import urllib.error
 
-            time.sleep(1.5)
+            # Poll until the server is accepting connections (up to 30 s)
+            for _ in range(60):
+                time.sleep(0.5)
+                try:
+                    urllib.request.urlopen(url, timeout=1)
+                    break
+                except Exception:
+                    pass
             webbrowser.open(url)
 
         threading.Thread(target=_open, daemon=True).start()
