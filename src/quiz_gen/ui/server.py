@@ -13,7 +13,7 @@ import httpx
 import json as _json
 
 BASE_DIR = Path(__file__).parent.parent.parent.parent  # quiz-gen/
-STATIC_DIR = BASE_DIR / "src" / "quiz_gen" / "ui" / "static"
+STATIC_DIR = Path(__file__).parent / "static"
 
 app = FastAPI(title="Quiz Gen – API", description="", version="0.1.0")
 
