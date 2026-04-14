@@ -7,7 +7,7 @@ from anthropic import Anthropic
 import cohere
 from google import genai
 from google.genai import types
-from mistralai import Mistral
+from mistralai.client import Mistral
 from openai import OpenAI
 import os
 import json

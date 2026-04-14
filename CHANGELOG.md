@@ -1,10 +1,16 @@
 # Changelog
 
+## Version 0.8.2 (2026-04-14)
+
+mistralai v2 import fix:
+- Updated import in all five agent modules (`conceptual_generator`, `practical_generator`, `validator`, `refiner`, `judge`) from `from mistralai import Mistral` to `from mistralai.client import Mistral`; the top-level `Mistral` export was removed in the mistralai v2 SDK
+- Bumped dependency pin to `mistralai>=2.0.0` to match the new import path
+- Fixes `ImportError: cannot import name 'Mistral' from 'mistralai'` when mistralai 2.x is installed (e.g. `pipx install quiz-gen` on Python 3.14)
+
 ## Version 0.8.1 (2026-04-14)
 
 Dependency fix — mistralai version pin:
 - Pinned `mistralai>=1.0.0` in package dependencies; versions before 1.0 did not export the `Mistral` client class, causing `ImportError: cannot import name 'Mistral' from 'mistralai'` on fresh installs (e.g. via pipx)
-- All agent modules already used the correct `from mistralai import Mistral` import introduced in the 1.0 SDK; no source changes required
 - Fixes install failures on Python 3.14 and any environment where pip/pipx resolved a pre-1.0 release
 
 ## Version 0.8.0 (2026-04-12)
