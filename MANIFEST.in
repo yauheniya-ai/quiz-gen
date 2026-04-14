@@ -1,0 +1,1 @@
+recursive-include src/quiz_gen/ui/static *

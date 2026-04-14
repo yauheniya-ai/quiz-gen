@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quiz-gen"
-version = "0.8.2"
+version = "0.8.3"
 description = "AI-powered quiz generator for regulatory, certification, and educational documentation"
 readme = "README.md"
 authors = [{name = "Yauheniya Varabyova"}]
@@ -64,6 +64,9 @@ quiz-gen = "quiz_gen.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"quiz_gen" = ["ui/static/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.8.3 (2026-04-14)
+
+Fix static files missing from installed package (`quiz-gen serve` broken):
+- Added `[tool.setuptools.package-data]` entry `"quiz_gen" = ["ui/static/**/*"]` to `pyproject.toml`; this is required for setuptools to bundle the built frontend into the wheel — `MANIFEST.in` alone only affects the source distribution (`.tar.gz`) and is ignored when pip/pipx installs from a wheel
+- Added `MANIFEST.in` with `recursive-include src/quiz_gen/ui/static *` to also cover the sdist
+- Without these changes, `quiz-gen serve` raised a 404 / served no UI because the `quiz_gen/ui/static/` directory was absent from the installed package
+
 ## Version 0.8.2 (2026-04-14)
 
 mistralai v2 import fix:
