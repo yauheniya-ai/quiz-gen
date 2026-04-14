@@ -32,7 +32,7 @@ dependencies = [
     "openai",
     "anthropic",
     "google-genai",
-    "mistralai",
+    "mistralai>=1.0.0",
     "python-dotenv",
     "fastapi>=0.110.0",
     "uvicorn[standard]>=0.29.0",

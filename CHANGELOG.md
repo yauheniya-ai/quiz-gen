@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.8.1 (2026-04-14)
+
+Dependency fix — mistralai version pin:
+- Pinned `mistralai>=1.0.0` in package dependencies; versions before 1.0 did not export the `Mistral` client class, causing `ImportError: cannot import name 'Mistral' from 'mistralai'` on fresh installs (e.g. via pipx)
+- All agent modules already used the correct `from mistralai import Mistral` import introduced in the 1.0 SDK; no source changes required
+- Fixes install failures on Python 3.14 and any environment where pip/pipx resolved a pre-1.0 release
+
 ## Version 0.8.0 (2026-04-12)
 
 CLI rewrite — Typer + Rich:
