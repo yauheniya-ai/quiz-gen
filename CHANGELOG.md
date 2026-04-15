@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.8.6 (2026-04-15)
+
+- Updated icon/favicon for the web UI to match the project branding
+- Refreshed header and footer color styling for a cleaner, more consistent look
+- Fixed `test_serve_open_browser` test: the `opened_event.wait()` call and all related patches (`time.sleep`, `urllib.request.urlopen`, `webbrowser.open`) are now kept active inside a single `with` block so the daemon thread that opens the browser runs with its dependencies fully mocked, preventing a 30-second real-sleep timeout that caused the assertion to fail
+
+
 ## Version 0.8.5 (2026-04-14)
 
 Fix browser opening before server is ready:

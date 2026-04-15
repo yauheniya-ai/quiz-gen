@@ -210,11 +210,18 @@ def test_serve_open_browser():
         mock_browser(url)
         opened_event.set()
 
-    with patch("quiz_gen.cli._uvicorn", mock_uvicorn):
-        with patch("webbrowser.open", fake_open):
-            with patch("time.sleep"):  # skip the 1.5 s delay
-                run_cli("serve")
-    opened_event.wait(timeout=2)
+    # All patches must remain active while the daemon thread runs.
+    # opened_event.wait() is inside the context so that time.sleep and
+    # urllib.request.urlopen stay mocked until webbrowser.open is called.
+    with (
+        patch("quiz_gen.cli._uvicorn", mock_uvicorn),
+        patch("webbrowser.open", fake_open),
+        patch("time.sleep"),  # eliminate the 0.5 s poll delay
+        patch("urllib.request.urlopen"),  # simulate server ready immediately
+    ):
+        run_cli("serve")
+        opened_event.wait(timeout=2)  # wait inside patch scope so mocks are still live
+
     mock_browser.assert_called_once_with("http://localhost:8000")
 
 
