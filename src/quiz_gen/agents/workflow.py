@@ -557,9 +557,9 @@ class QuizGenerationWorkflow:
         results = []
 
         for i, chunk in enumerate(chunks, 1):
-            print(f"\n{'#'*70}")
+            print(f"\n{'#' * 70}")
             print(f"# Chunk {i}/{len(chunks)}")
-            print(f"{'#'*70}")
+            print(f"{'#' * 70}")
 
             result = self.run(chunk)
             results.append(result)

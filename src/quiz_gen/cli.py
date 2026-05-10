@@ -29,7 +29,6 @@ Usage examples
     quiz-gen parse regulation.html --output data/output --chunks my_chunks.json --toc my_toc.json
 """
 
-import sys
 from collections import Counter
 from pathlib import Path
 from typing import Optional
@@ -71,7 +70,6 @@ app = typer.Typer(
     add_completion=False,
     rich_markup_mode="rich",
 )
-
 
 
 @app.callback(invoke_without_command=True)
@@ -264,9 +262,7 @@ def _parse_document(
         chunks, toc_data = parser.parse()
 
         console.print(f"\n[{BLUE}]✓[/{BLUE}] Successfully parsed document")
-        console.print(
-            f"  [dim]Title:[/dim] {toc_data.get('title', 'Unknown')[:80]}..."
-        )
+        console.print(f"  [dim]Title:[/dim] {toc_data.get('title', 'Unknown')[:80]}...")
         console.print(f"  [dim]Total chunks:[/dim] {len(chunks)}")
 
         types = Counter(c.section_type.value for c in chunks)

@@ -125,7 +125,9 @@ async def generate_quiz(request: QuizRequest):
             # ── Persist to project ──────────────────────────────────────
             quiz_id = f"quiz_{uuid.uuid4().hex[:12]}"
             try:
-                config_snapshot = {k: CURRENT_AGENT_CONFIG[k] for k in CURRENT_AGENT_CONFIG}
+                config_snapshot = {
+                    k: CURRENT_AGENT_CONFIG[k] for k in CURRENT_AGENT_CONFIG
+                }
                 save_quiz(
                     project=request.project,
                     quiz_id=quiz_id,
@@ -157,8 +159,7 @@ async def generate_quiz(request: QuizRequest):
                         },
                         "config": config_snapshot,
                         "raw_result": {
-                            k: v for k, v in result.items()
-                            if k != "final_questions"
+                            k: v for k, v in result.items() if k != "final_questions"
                         },
                         "final_questions": questions,
                     },

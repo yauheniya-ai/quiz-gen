@@ -233,7 +233,9 @@ async def parse_document(request: ParseDocumentRequest):
                 doc_type="url",
                 url=request.url,
                 html_content=cached_html,
-                chunks_json=_json.dumps(chunks_data),                toc_json=_json.dumps(toc_data),            )
+                chunks_json=_json.dumps(chunks_data),
+                toc_json=_json.dumps(toc_data),
+            )
         except Exception as save_err:
             print(f"[projects] Failed to save document {request.doc_id}: {save_err}")
 
@@ -252,7 +254,11 @@ async def parse_document(request: ParseDocumentRequest):
 
 
 @app.post("/api/parse-file")
-async def parse_file(file: UploadFile = File(...), doc_id: str = Form(...), project: str = Form("default")):
+async def parse_file(
+    file: UploadFile = File(...),
+    doc_id: str = Form(...),
+    project: str = Form("default"),
+):
     """Parse uploaded HTML file and return TOC and chunks"""
     try:
         html_content = await file.read()

@@ -119,12 +119,12 @@ Original Question:
 {json.dumps(qa, indent=2)}
 
 Validation Results:
-Valid: {validation_result.get('valid')}
-Checks Passed: {json.dumps([k for k, v in validation_result.get('checks_passed', {}).items() if v], indent=2)}
-Checks Failed: {json.dumps([k for k, v in validation_result.get('checks_passed', {}).items() if not v], indent=2)}
-Score: {validation_result.get('score')}/10
-Issues: {validation_result.get('issues', []) or 'None'}
-Warnings: {validation_result.get('warnings', []) or 'None'}
+Valid: {validation_result.get("valid")}
+Checks Passed: {json.dumps([k for k, v in validation_result.get("checks_passed", {}).items() if v], indent=2)}
+Checks Failed: {json.dumps([k for k, v in validation_result.get("checks_passed", {}).items() if not v], indent=2)}
+Score: {validation_result.get("score")}/10
+Issues: {validation_result.get("issues", []) or "None"}
+Warnings: {validation_result.get("warnings", []) or "None"}
 
 Fix the identified issues AND address the warnings to improve the question quality. Preserve the original question's intent and style. Output the refined question in JSON format.
 """

@@ -1,13 +1,10 @@
-import sys
 from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from rich.console import Console as RichConsole
 from typer.testing import CliRunner
 
-from quiz_gen import cli
 from quiz_gen.cli import _get_default_filename, app
 
 runner = CliRunner()

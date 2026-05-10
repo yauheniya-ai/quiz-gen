@@ -125,15 +125,21 @@ def _project_stats(name: str) -> dict:
     size_kb, doc_count, quiz_count = 0, 0, 0
     if root.exists():
         try:
-            size_kb = sum(f.stat().st_size for f in root.rglob("*") if f.is_file()) // 1024
+            size_kb = (
+                sum(f.stat().st_size for f in root.rglob("*") if f.is_file()) // 1024
+            )
         except OSError:
             pass
         db = _project_db_path(name)
         if db.exists():
             try:
                 with sqlite3.connect(db) as conn:
-                    doc_count = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
-                    quiz_count = conn.execute("SELECT COUNT(*) FROM quizzes").fetchone()[0]
+                    doc_count = conn.execute(
+                        "SELECT COUNT(*) FROM documents"
+                    ).fetchone()[0]
+                    quiz_count = conn.execute(
+                        "SELECT COUNT(*) FROM quizzes"
+                    ).fetchone()[0]
             except sqlite3.DatabaseError:
                 pass
     return {"size_kb": size_kb, "documents": doc_count, "quizzes": quiz_count}
@@ -142,6 +148,7 @@ def _project_stats(name: str) -> dict:
 # ---------------------------------------------------------------------------
 # Public project management
 # ---------------------------------------------------------------------------
+
 
 def list_projects(active_project: Optional[str] = None) -> list[dict]:
     _init_registry()
@@ -154,20 +161,24 @@ def list_projects(active_project: Optional[str] = None) -> list[dict]:
         name = row["name"]
         root = _project_root(name)
         stats = _project_stats(name)
-        is_active = (name == active_project) if active_project else (name == DEFAULT_PROJECT)
-        result.append({
-            "name":        name,
-            "path":        str(root),
-            "root":        str(QUIZ_GEN_HOME),
-            "description": row["description"],
-            "size_kb":     stats["size_kb"],
-            "documents":   stats["documents"],
-            "quizzes":     stats["quizzes"],
-            "is_default":  name == DEFAULT_PROJECT,
-            "is_active":   is_active,
-            "exists":      root.exists(),
-            "created_at":  row["created_at"],
-        })
+        is_active = (
+            (name == active_project) if active_project else (name == DEFAULT_PROJECT)
+        )
+        result.append(
+            {
+                "name": name,
+                "path": str(root),
+                "root": str(QUIZ_GEN_HOME),
+                "description": row["description"],
+                "size_kb": stats["size_kb"],
+                "documents": stats["documents"],
+                "quizzes": stats["quizzes"],
+                "is_default": name == DEFAULT_PROJECT,
+                "is_active": is_active,
+                "exists": root.exists(),
+                "created_at": row["created_at"],
+            }
+        )
     return result
 
 
@@ -185,17 +196,17 @@ def create_project(name: str, description: str = "") -> dict:
     _init_project_db(name)
     root = _project_root(name)
     return {
-        "name":        name,
-        "path":        str(root),
-        "root":        str(QUIZ_GEN_HOME),
+        "name": name,
+        "path": str(root),
+        "root": str(QUIZ_GEN_HOME),
         "description": description,
-        "size_kb":     0,
-        "documents":   0,
-        "quizzes":     0,
-        "is_default":  name == DEFAULT_PROJECT,
-        "is_active":   True,
-        "exists":      True,
-        "created_at":  _now_iso(),
+        "size_kb": 0,
+        "documents": 0,
+        "quizzes": 0,
+        "is_default": name == DEFAULT_PROJECT,
+        "is_active": True,
+        "exists": True,
+        "created_at": _now_iso(),
     }
 
 
@@ -222,6 +233,7 @@ def get_project_root(name: str) -> Path:
 # ---------------------------------------------------------------------------
 # Persistence helpers — called by API endpoints after parse / generate
 # ---------------------------------------------------------------------------
+
 
 def save_document(
     project: str,
@@ -276,7 +288,9 @@ def save_quiz(
     _init_project_db(project)
 
     quiz_path = root / "quizzes" / f"{quiz_id}.json"
-    quiz_path.write_text(_json.dumps(full_result, ensure_ascii=False, indent=2), encoding="utf-8")
+    quiz_path.write_text(
+        _json.dumps(full_result, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     db = _project_db_path(project)
     with sqlite3.connect(db) as conn:
@@ -306,13 +320,16 @@ def save_debug(project: str, quiz_id: str, debug_data: dict) -> Path:
     """Write full debug/trace JSON to debug/<quiz_id>.json."""
     root = _ensure_project_dirs(project)
     debug_path = root / "debug" / f"{quiz_id}.json"
-    debug_path.write_text(_json.dumps(debug_data, ensure_ascii=False, indent=2), encoding="utf-8")
+    debug_path.write_text(
+        _json.dumps(debug_data, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return debug_path
 
 
 # ---------------------------------------------------------------------------
 # Query helpers — called by API read endpoints
 # ---------------------------------------------------------------------------
+
 
 def list_project_documents(project: str) -> list[dict]:
     """Return lightweight metadata for all documents in a project (no content blobs)."""
@@ -344,7 +361,7 @@ def get_project_document(project: str, doc_id: str) -> Optional[dict]:
         return None
     doc = dict(row)
     doc["chunks"] = _json.loads(doc.pop("chunks_json") or "[]")
-    doc["toc"]    = _json.loads(doc.pop("toc_json")    or "null")
+    doc["toc"] = _json.loads(doc.pop("toc_json") or "null")
     return doc
 
 
@@ -391,7 +408,7 @@ def get_project_quiz(project: str, quiz_id: str) -> Optional[dict]:
         return None
     data = dict(row)
     data["questions"] = _json.loads(data.pop("questions_json") or "[]")
-    data["config"]    = _json.loads(data.pop("config_json")    or "{}")
+    data["config"] = _json.loads(data.pop("config_json") or "{}")
     return data
 
 
@@ -408,6 +425,7 @@ class CreateProjectRequest(BaseModel):
 
 
 # ── Project CRUD ─────────────────────────────────────────────────────────────
+
 
 @router.get("/projects")
 def api_list_projects(active_project: Optional[str] = None):
@@ -433,6 +451,7 @@ def api_delete_project(name: str, keep_files: bool = False):
 
 # ── Documents ────────────────────────────────────────────────────────────────
 
+
 @router.get("/projects/{project}/documents")
 def api_list_documents(project: str):
     """List all documents stored in a project."""
@@ -444,7 +463,10 @@ def api_get_document(project: str, doc_id: str):
     """Return chunks and TOC for a stored document."""
     doc = get_project_document(project, doc_id)
     if not doc:
-        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found in project '{project}'.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Document '{doc_id}' not found in project '{project}'.",
+        )
     return doc
 
 
@@ -469,6 +491,7 @@ def api_delete_document(project: str, doc_id: str):
 
 # ── Quizzes ───────────────────────────────────────────────────────────────────
 
+
 @router.get("/projects/{project}/quizzes")
 def api_list_quizzes(project: str):
     """List all quizzes stored in a project."""
@@ -480,5 +503,8 @@ def api_get_quiz(project: str, quiz_id: str):
     """Return full quiz data for a stored quiz."""
     quiz = get_project_quiz(project, quiz_id)
     if not quiz:
-        raise HTTPException(status_code=404, detail=f"Quiz '{quiz_id}' not found in project '{project}'.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Quiz '{quiz_id}' not found in project '{project}'.",
+        )
     return quiz

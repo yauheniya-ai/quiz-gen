@@ -421,9 +421,11 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ### Contributing
 
-Contributions are welcome! Please ensure:
+Contributions are welcome!
 
-1. Code follows PEP 8 style guidelines
-2. All tests pass: `pytest --cov=src --cov-report=term-missing`
-3. New features include appropriate tests
-4. Documentation is updated
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-change`) and make your changes
+3. Run the test suite: `pytest --cov=src --cov-report=term-missing`
+4. Format and lint: `ruff format src/ tests/ && ruff check src/ tests/`
+5. Update the documentation
+6. Submit a pull request

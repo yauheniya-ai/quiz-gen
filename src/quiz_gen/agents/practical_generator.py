@@ -96,12 +96,12 @@ Guidelines:
         """Generate a practical question from a regulation chunk"""
 
         user_prompt = f"""Regulation Content:
-Section: {chunk.get('title', 'Unknown')}
-Number: {chunk.get('number', 'N/A')}
-Type: {chunk.get('section_type', 'Unknown')}
-Content: {chunk.get('content', '')}
+Section: {chunk.get("title", "Unknown")}
+Number: {chunk.get("number", "N/A")}
+Type: {chunk.get("section_type", "Unknown")}
+Content: {chunk.get("content", "")}
 
-Hierarchy: {' > '.join(chunk.get('hierarchy_path', []))}
+Hierarchy: {" > ".join(chunk.get("hierarchy_path", []))}
 """
 
         if improvement_feedback:

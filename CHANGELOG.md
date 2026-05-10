@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.8.6 (2026-05-10)
+
+- Fixed linting errors using ruff
+
 ## Version 0.8.6 (2026-04-15)
 
 - Updated icon/favicon for the web UI to match the project branding
