@@ -20,24 +20,24 @@ AI-powered quiz generator for regulatory documentation. Extract structured conte
 ## Tech Stack
 
 **Backend**
-- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> [Python](https://www.python.org) — core package language
-- <img src="https://api.iconify.design/devicon:fastapi.svg" width="16" height="16"> [FastAPI](https://fastapi.tiangolo.com) — serves the web UI and REST API from within the package
-- <img src="https://api.iconify.design/simple-icons:langgraph.svg" width="16" height="16"> [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview) – multi-agent orchestration framework
-- <img src="https://api.iconify.design/prime:microchip-ai.svg" width="16" height="16"> AI Providers: <img src="https://api.iconify.design/logos:claude-icon.svg" width="16" height="16"> Anthropic (Claude), <img src="https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/.github/.images/cohere-color.svg" width="16" height="16"> Cohere, <img src="https://api.iconify.design/material-icon-theme:gemini-ai.svg" width="16" height="16"> Google (Gemini), <img src="https://api.iconify.design/logos:mistral-ai-icon.svg" width="16" height="16"> Mistral, <img src="https://api.iconify.design/simple-icons:openai.svg" width="16" height="16"> OpenAI
-- <img src="https://api.iconify.design/devicon:sqlite.svg" width="16" height="16"> [SQLite](https://sqlite.org) – local database for documents and quizes organized by projects
+- ![Python](https://api.iconify.design/devicon:python.svg?height=16) [Python](https://www.python.org) — core package language
+- ![FastAPI](https://api.iconify.design/devicon:fastapi.svg?height=16) [FastAPI](https://fastapi.tiangolo.com) — serves the web UI and REST API from within the package
+- ![LangGraph](https://api.iconify.design/simple-icons:langgraph.svg?height=16) [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview) – multi-agent orchestration framework
+- ![AI](https://api.iconify.design/prime:microchip-ai.svg?height=16) AI Providers: ![Anthropic](https://api.iconify.design/logos:claude-icon.svg?height=16) Anthropic (Claude), ![Cohere](https://raw.githubusercontent.com/yauheniya-ai/quiz-gen/main/.github/.images/cohere-color.svg?height=16) Cohere, ![Google](https://api.iconify.design/material-icon-theme:gemini-ai.svg?height=16) Google (Gemini), ![Mistral](https://api.iconify.design/logos:mistral-ai-icon.svg?height=16) Mistral, ![OpenAI](https://api.iconify.design/simple-icons:openai.svg?height=16) OpenAI
+- ![SQLite](https://api.iconify.design/devicon:sqlite.svg?height=16) [SQLite](https://sqlite.org) – local database for documents and quizes organized by projects
 
 
 **Web UI**
-- <img src="https://api.iconify.design/devicon:react.svg" width="16" height="16"> [React](https://react.dev) — interactive frontend
-- <img src="https://api.iconify.design/devicon:vitejs.svg" width="16" height="16"> [Vite](https://vite.dev) — fast dev server and production bundler (outputs to `quiz_gen/ui/static`)
-- <img src="https://api.iconify.design/devicon:typescript.svg" width="16" height="16"> [TypeScript](https://www.typescriptlang.org) — component and API code
-- <img src="https://api.iconify.design/devicon:tailwindcss.svg" width="16" height="16"> [Tailwind CSS](https://tailwindcss.com) — utility-first styling
+- ![React](https://api.iconify.design/devicon:react.svg?height=16) [React](https://react.dev) — interactive frontend
+- ![Vite](https://api.iconify.design/devicon:vitejs.svg?height=16) [Vite](https://vite.dev) — fast dev server and production bundler (outputs to `quiz_gen/ui/static`)
+- ![TypeScript](https://api.iconify.design/devicon:typescript.svg?height=16) [TypeScript](https://www.typescriptlang.org) — component and API code
+- ![Tailwind CSS](https://api.iconify.design/devicon:tailwindcss.svg?height=16) [Tailwind CSS](https://tailwindcss.com) — utility-first styling
 
 **CLI**
-- <img src="https://api.iconify.design/devicon:typer.svg" width="16" height="16"> [Typer](https://typer.tiangolo.com/) — CLI based on standard Python type declarations
+- ![Typer](https://api.iconify.design/devicon:typer.svg?height=16) [Typer](https://typer.tiangolo.com/) — CLI based on standard Python type declarations
 
 **Packaging**
-- <img src="https://api.iconify.design/devicon:pypi.svg" width="16" height="16"> [PyPI](https://pypi.org/project/quiz-gen/) — distributed as an installable Python package
+- ![PyPI](https://api.iconify.design/devicon:pypi.svg?height=16) [PyPI](https://pypi.org/project/quiz-gen/) — distributed as an installable Python package
 
 
 
